@@ -179,32 +179,45 @@
       }
     }
 
-    @media screen and (max-width: 600px) and (min-width: 481px) {
+   @media screen and (max-width: 480px) {
+  .container {
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+  }
+
   lottie-player {
-    width: 350px;
-    height: 350px;
+    width: 100% !important;
+    max-width: 400px;
+    height: auto !important;
+    margin-bottom: 1rem;
+  }
+
+  .signup-box {
+    width: 100%;
+    max-width: 90%;
+    padding: 1rem;
+  }
+
+  .signup-box h2 {
+    font-size: 1.3rem;
+  }
+
+  .signup-box input,
+  .signup-box button {
+    font-size: 0.9rem;
+    padding: 0.5rem;
+  }
+
+  .social-signin button {
+    font-size: 0.85rem;
+  }
+
+  .login-link {
+    font-size: 0.9rem;
   }
 }
 
-
-      .signup-box {
-        padding: 1rem;
-      }
-
-      .signup-box h2 {
-        font-size: 1.3rem;
-      }
-
-      .signup-box input,
-      .signup-box button {
-        font-size: 0.9rem;
-        padding: 0.5rem;
-      }
-
-      .social-signin button {
-        font-size: 0.85rem;
-      }
-    }
   </style>
 </head>
 
