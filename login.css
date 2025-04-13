@@ -1,0 +1,87 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #000;
+    color: #fff;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    width: 100%;
+    gap: 2rem;
+  }
+
+  .auth-header {
+    font-size: 2rem;
+    color: #f00;
+    margin-bottom: 1.5rem;
+    letter-spacing: 2px;
+  }
+
+  .signup-box {
+    background: #111;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+    width: 100%;
+    max-width: 350px;
+    border: 1px solid #f00;
+  }
+
+  .signup-box h2 {
+    text-align: center;
+    color: #f00;
+    margin-bottom: 1rem;
+  }
+
+  .signup-box input {
+    width: 100%;
+    padding: 0.7rem;
+    margin: 0.5rem 0;
+    background: #222;
+    color: #fff;
+    border: 1px solid #f00;
+    border-radius: 6px;
+  }
+
+  .signup-box input:focus {
+    outline: none;
+    border-color: #ff4444;
+    box-shadow: 0 0 5px #ff4444;
+  }
+
+  .signup-box button {
+    width: 100%;
+    padding: 0.7rem;
+    background: #f00;
+    color: white;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 1rem;
+    transition: background 0.3s ease;
+  }
+
+  .signup-box button:hover {
+    background: #cc0000;
+  }
+
+  /* Lottie animation styling */
+  lottie-player {
+    width: 750px;
+    height: 750px;
+    flex-shrink: 0;
+  }
