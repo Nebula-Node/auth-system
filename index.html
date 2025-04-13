@@ -21,15 +21,23 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      overflow: hidden;
     }
 
     .container {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      max-width: 1200px;
+      max-width: 1400px;
       width: 100%;
       gap: 2rem;
+      padding: 2rem;
+    }
+
+    lottie-player {
+      width: 900px;
+      height: 900px;
+      flex-shrink: 0;
     }
 
     .signup-box {
@@ -38,7 +46,7 @@
       border-radius: 12px;
       box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
       width: 100%;
-      max-width: 350px;
+      max-width: 400px;
       border: 1px solid #f00;
     }
 
@@ -79,12 +87,6 @@
 
     .signup-box button:hover {
       background: #cc0000;
-    }
-
-    lottie-player {
-      width: 750px;
-      height: 750px;
-      flex-shrink: 0;
     }
 
     .social-signin {
@@ -139,54 +141,33 @@
       margin-top: 1rem;
     }
 
-    /* ✅ Responsive Styles (with larger lottie on mobile) */
+    @media screen and (max-width: 1024px) {
+      lottie-player {
+        width: 500px;
+        height: 500px;
+      }
+    }
+
     @media screen and (max-width: 768px) {
       .container {
         flex-direction: column;
         align-items: center;
-        padding: 1rem;
       }
 
       lottie-player {
-        width: 400px;
-        height: 400px;
+        width: 300px;
+        height: 300px;
       }
 
       .signup-box {
-        width: 100%;
         max-width: 90%;
-        padding: 1.5rem;
-        margin-top: 1rem;
-      }
-
-      .signup-box h2 {
-        font-size: 1.5rem;
-      }
-
-      .signup-box input,
-      .signup-box button {
-        font-size: 1rem;
-        padding: 0.6rem;
-      }
-
-      .social-signin button {
-        font-size: 0.9rem;
-        padding: 0.6rem;
-      }
-
-      .login-link {
-        font-size: 0.9rem;
       }
     }
 
     @media screen and (max-width: 480px) {
       lottie-player {
-        width: 320px;
-        height: 320px;
-      }
-
-      .signup-box {
-        padding: 1rem;
+        width: 220px;
+        height: 220px;
       }
 
       .signup-box h2 {
@@ -196,7 +177,6 @@
       .signup-box input,
       .signup-box button {
         font-size: 0.9rem;
-        padding: 0.5rem;
       }
 
       .social-signin button {
@@ -213,15 +193,16 @@
     <div class="signup-box">
       <h2>Sign Up</h2>
       <form id="signupForm">
-        <input type="text" name="username" id="username" placeholder="Username" required />
-        <input type="email" name="email" id="email" placeholder="Email" required />
-        <input type="password" name="password" id="password" placeholder="Password" required />
+        <input type="text" id="username" placeholder="Username" required />
+        <input type="email" id="email" placeholder="Email" required />
+        <input type="password" id="password" placeholder="Password" required />
         <button type="submit">Create Account</button>
       </form>
 
       <div class="social-signin">
         <p>Or sign in with:</p>
         <button id="googleSignIn">
+          <!-- Google SVG -->
           <svg viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg">
             <path fill="#4285f4" d="M533.5 278.4c0-17.3-1.6-34.3-4.7-50.7H272v95.9h146.9c-6.4 34.8-25.9 64.2-55.2 83.8v69.3h89.1c52.1-48 80.7-118.8 80.7-198.3z"/>
             <path fill="#34a853" d="M272 544.3c73.5 0 135.1-24.3 180.1-66.1l-89.1-69.3c-24.7 16.6-56.4 26.4-91 26.4-69.9 0-129.2-47.2-150.4-110.6H30v69.7c45.3 89.2 137.2 149.9 242 149.9z"/>
@@ -231,20 +212,21 @@
           Continue with Google
         </button>
         <button id="appleSignIn">
+          <!-- Apple SVG -->
           <svg viewBox="0 0 848 1000" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-            <path d="M789 748c-8 19-17 38-27 55-14 24-26 42-36 53-14 17-29 35-48 53-19 18-39 32-61 43-24 11-48 17-74 17-19 0-42-6-70-17s-53-17-77-17c-26 0-53 6-81 17-29 11-52 17-70 17-27 0-53-6-77-17-24-11-46-27-66-46-23-21-42-45-58-72-18-29-32-63-44-101-12-38-17-75-17-110 0-61 13-113 39-155 20-34 46-61 79-81 33-19 68-29 105-29 22 0 50 6 83 17 34 11 55 17 63 17 5 0 23-6 55-17 30-9 59-14 86-14 57 0 105 24 143 71-57 35-86 84-86 147 0 44 12 81 37 112 22 27 51 45 87 56zm-163-700c0 34-13 67-39 100-31 37-67 59-106 56 0-3 1-8 2-15 3-32 16-64 39-94 21-26 47-46 78-59 10-4 19-7 27-7 1 6 1 13 1 19z"/>
+            <path d="M789 748c..."/>
           </svg>
           Continue with Apple
         </button>
       </div>
 
       <p class="login-link">
-        Already have an account? <a href="login.html" style="color: red; text-decoration: none;">Log in here</a>
+        Already have an account? <a href="login.html" style="color: red;">Log in here</a>
       </p>
     </div>
   </div>
 
-  <!-- Firebase Script -->
+  <!-- Firebase JS SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import {
@@ -260,7 +242,7 @@
       apiKey: "AIzaSyBOAnbROT6CrHIYpPR29Tl0dZAy1ab41F8",
       authDomain: "signup-auth-ad445.firebaseapp.com",
       projectId: "signup-auth-ad445",
-      storageBucket: "signup-auth-ad445.firebasestorage.app",
+      storageBucket: "signup-auth-ad445.appspot.com",
       messagingSenderId: "486601898869",
       appId: "1:486601898869:web:54ab61f00020e26645713c",
       measurementId: "G-1CSG0CSSZR"
@@ -281,18 +263,18 @@
         const user = userCredential.user;
 
         await addDoc(collection(db, "users"), {
-          username: username,
-          email: email,
+          username,
+          email,
           uid: user.uid,
           provider: "email",
           createdAt: new Date()
         });
 
-        alert('User registered successfully!');
+        alert("User registered successfully!");
         window.location.href = "dashboard.html";
       } catch (error) {
-        console.error('Error during sign up:', error.message);
-        alert('Sign Up failed: ' + error.message);
+        console.error("Signup error:", error);
+        alert("Error: " + error.message);
       }
     });
 
@@ -321,6 +303,7 @@
     const appleProvider = new OAuthProvider('apple.com');
     appleProvider.addScope("email");
     appleProvider.addScope("name");
+
     document.getElementById("appleSignIn").addEventListener("click", async () => {
       try {
         const result = await signInWithPopup(auth, appleProvider);
