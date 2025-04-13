@@ -6,6 +6,54 @@
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
   <title>Login - Auth System</title>
   <link rel="stylesheet" href="login.css">
+  <style>
+    .social-signin {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .social-signin button {
+      width: 100%;
+      margin: 8px 0;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    #googleSignIn {
+      background-color: white;
+      color: #db4437;
+      border-color: #db4437;
+    }
+
+    #googleSignIn:hover {
+      background-color: #db4437;
+      color: white;
+    }
+
+    #appleSignIn {
+      background-color: white;
+      color: #000;
+      border-color: #000;
+    }
+
+    #appleSignIn:hover {
+      background-color: #000;
+      color: white;
+    }
+
+    .social-signin svg {
+      width: 20px;
+      height: 20px;
+    }
+  </style>
 </head>
 
 <body>
@@ -28,6 +76,26 @@
         <button type="submit">Log In Account</button>
       </form>
 
+      <!-- Social Sign-In -->
+      <div class="social-signin">
+        <p>Or sign in with:</p>
+        <button id="googleSignIn">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+            <path fill="#EA4335" d="M24 9.5c3.7 0 7 1.3 9.6 3.9l7.2-7.2C36.2 2.4 30.6 0 24 0 14.6 0 6.4 5.6 2.4 13.6l8.4 6.5C13.4 13 18.3 9.5 24 9.5z"/>
+            <path fill="#4285F4" d="M46.1 24.5c0-1.5-.1-3-.4-4.5H24v9h12.4c-1.1 3-3.3 5.5-6.4 7.2l9.9 7.7c5.7-5.3 9-13.1 9-21.4z"/>
+            <path fill="#FBBC05" d="M10.8 28.1C9.5 24.8 9.5 21.2 10.8 17.9L2.4 11.4c-3.4 6.8-3.4 14.9 0 21.7l8.4-6.5z"/>
+            <path fill="#34A853" d="M24 48c6.5 0 12.2-2.1 16.2-5.6l-9.9-7.7c-2.7 1.8-6.2 2.8-10.3 2.8-5.7 0-10.6-3.5-12.7-8.4l-8.4 6.5C6.4 42.4 14.6 48 24 48z"/>
+          </svg>
+          Continue with Google
+        </button>
+        <button id="appleSignIn">
+          <svg viewBox="0 0 24 24" fill="currentColor" height="20" width="20">
+            <path d="M16.365 1.43c0 1.14-.472 2.136-1.222 2.902-.777.79-1.95 1.4-3.112 1.317a3.243 3.243 0 0 1-.016-.482c0-1.06.472-2.124 1.25-2.905.33-.342.76-.632 1.245-.842.477-.21.99-.318 1.55-.35.005.12.005.24.005.36zM12.082 6.457c1.23 0 2.135.42 2.776 1.254.655.844.96 2.03.888 3.546-.06 1.283-.417 2.826-1.09 4.634-.682 1.83-1.293 3.15-1.84 3.962-.562.826-1.176 1.24-1.843 1.24-.574 0-1.127-.215-1.662-.645-.544-.43-1.045-.646-1.512-.646-.482 0-.998.216-1.55.645-.544.43-1.035.645-1.47.645-.71 0-1.347-.495-1.91-1.483-.575-1.006-1.14-2.35-1.69-4.04-.58-1.777-.87-3.243-.87-4.393 0-1.695.472-3.05 1.416-4.065C4.907 7.1 6.08 6.57 7.39 6.57c.695 0 1.318.223 1.868.67.544.44.98.66 1.308.66.296 0 .718-.208 1.262-.625.54-.41 1.13-.617 1.752-.617z" />
+          </svg>
+          Continue with Apple
+        </button>
+      </div>
+
       <p class="signup-link">
         Don't have an account? 
         <a href="sign up.html" style="color: red; text-decoration: none;">Sign up here</a>
@@ -35,11 +103,17 @@
     </div>
   </div>
 
-  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import { 
+      getAuth, 
+      signInWithEmailAndPassword, 
+      GoogleAuthProvider, 
+      OAuthProvider, 
+      signInWithRedirect, 
+      getRedirectResult 
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getFirestore, collection, query, where, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDJJXIRHOm__HnLSKI0vdnPKnVLVb7fMr4",
@@ -55,6 +129,7 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    // Email/Password Login
     document.getElementById("loginForm").addEventListener("submit", async function (e) {
       e.preventDefault();
 
@@ -72,30 +147,121 @@
           return;
         }
 
-        // If user is found in database, allow login
-        signInWithEmailAndPassword(auth, email, password)
-          .then(() => {
-            alert("Login successful!");
-            fetch("loginpages/dashboard.html")
-              .then(response => {
-                if (response.ok) {
-                  window.location.href = "loginpages/dashboard.html";
-                } else {
-                  window.location.href = "404.html";
-                }
-              })
-              .catch(() => {
-                window.location.href = "404.html";
-              });
-          })
-          .catch((error) => {
-            alert("Login failed: " + error.message);
-          });
-
+        // If user is found, allow login
+        await signInWithEmailAndPassword(auth, email, password);
+        alert("Login successful!");
+        try {
+          const response = await fetch("loginpages/dashboard.html");
+          if (response.ok) {
+            window.location.href = "loginpages/dashboard.html";
+          } else {
+            window.location.href = "404.html";
+          }
+        } catch {
+          window.location.href = "404.html";
+        }
       } catch (error) {
-        console.error("Error checking user in database: ", error);
-        alert("Something went wrong. Try again later.");
+        console.error("Login error:", error);
+        alert("Login failed: " + error.message);
       }
+    });
+
+    // Google Sign-In
+    const googleProvider = new GoogleAuthProvider();
+    document.getElementById("googleSignIn").addEventListener("click", async () => {
+      try {
+        await signInWithRedirect(auth, googleProvider);
+      } catch (error) {
+        console.error("Google Sign-In Error:", error);
+        alert("Google sign-in failed: " + error.message);
+      }
+    });
+
+    // Handle Google redirect result
+    getRedirectResult(auth).then(async (result) => {
+      if (result) {
+        const user = result.user;
+        // Check if user exists in Firestore
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("uid", "==", user.uid));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+          // Add new user to Firestore
+          await addDoc(collection(db, "users"), {
+            username: user.displayName || "Google User",
+            email: user.email,
+            uid: user.uid,
+            provider: "google",
+            createdAt: new Date()
+          });
+        }
+
+        alert("Signed in with Google!");
+        try {
+          const response = await fetch("loginpages/dashboard.html");
+          if (response.ok) {
+            window.location.href = "loginpages/dashboard.html";
+          } else {
+            window.location.href = "404.html";
+          }
+        } catch {
+          window.location.href = "404.html";
+        }
+      }
+    }).catch((error) => {
+      console.error("Google Sign-In Redirect Error:", error);
+      alert("Google sign-in failed: " + error.message);
+    });
+
+    // Apple Sign-In
+    const appleProvider = new OAuthProvider("apple.com");
+    appleProvider.addScope("email");
+    appleProvider.addScope("name");
+    document.getElementById("appleSignIn").addEventListener("click", async () => {
+      try {
+        await signInWithRedirect(auth, appleProvider);
+      } catch (error) {
+        console.error("Apple Sign-In Error:", error);
+        alert("Apple sign-in failed: " + error.message);
+      }
+    });
+
+    // Handle Apple redirect result
+    getRedirectResult(auth).then(async (result) => {
+      if (result && result.providerId === "apple.com") {
+        const user = result.user;
+        // Check if user exists in Firestore
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("uid", "==", user.uid));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+          // Add new user to Firestore
+          await addDoc(collection(db, "users"), {
+            username: user.displayName || "Apple User",
+            email: user.email || "No email provided",
+            uid: user.uid,
+            provider: "apple",
+            createdAt: new Date()
+          });
+        }
+
+        alert("Signed in with Apple!");
+        try {
+          const response = await fetch("loginpages/dashboard.html");
+          if (response.ok) {
+            window.location.href = "loginpages/dashboard.html";
+          } else {
+            window.location.href = "404.html";
+          }
+        } catch {
+          window.location.href = "404.html";
+        }
+      }
+    }).catch((error) => {
+      console.error("Apple Sign-In Redirect Error:", error);
+      alert("Apple sign-in failed: " + error.message);
     });
   </script>
 </body>
