@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://unpkg.com; style-src 'self'; connect-src 'self' https://*.firebaseio.com https://accounts.google.com; object-src 'none';">
-  <script src="https://unpkg.com/@lottiefiles/lottie-player@2.0.4/dist/lottie-player.js"></script>
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
   <title>Auth System</title>
 
   <style>
@@ -18,23 +17,19 @@
       font-family: 'Segoe UI', sans-serif;
       background: #000;
       color: #fff;
-      min-height: 100vh;
+      height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      overflow-x: hidden;
     }
 
     .container {
       display: flex;
-      flex-direction: row;
-      justify-content: center;
+      justify-content: space-between;
       align-items: center;
       max-width: 1200px;
       width: 100%;
       gap: 2rem;
-      padding: 1rem;
-      flex-wrap: wrap;
     }
 
     .signup-box {
@@ -45,15 +40,12 @@
       width: 100%;
       max-width: 350px;
       border: 1px solid #f00;
-      flex: 1;
-      min-width: 300px;
     }
 
     .signup-box h2 {
       text-align: center;
       color: #f00;
       margin-bottom: 1rem;
-      font-size: 1.8rem;
     }
 
     .signup-box input {
@@ -64,7 +56,6 @@
       color: #fff;
       border: 1px solid #f00;
       border-radius: 6px;
-      font-size: 1rem;
     }
 
     .signup-box input:focus {
@@ -84,7 +75,6 @@
       cursor: pointer;
       margin-top: 1rem;
       transition: background 0.3s ease;
-      font-size: 1rem;
     }
 
     .signup-box button:hover {
@@ -95,18 +85,11 @@
       width: 750px;
       height: 750px;
       flex-shrink: 0;
-      max-width: 100%;
-      max-height: 70vh;
     }
 
     .social-signin {
       text-align: center;
       margin-top: 20px;
-    }
-
-    .social-signin p {
-      font-size: 1rem;
-      margin-bottom: 0.5rem;
     }
 
     .social-signin button {
@@ -157,37 +140,25 @@
       cursor: pointer;
       color: red;
       text-decoration: none;
-      font-size: 1rem;
-    }
-
-    @media screen and (max-width: 1024px) {
-      .container {
-        flex-direction: column;
-        align-items: center;
-      }
-
-      lottie-player {
-        width: 500px;
-        height: 500px;
-        max-height: 50vh;
-      }
-
-      .signup-box {
-        max-width: 400px;
-        padding: 1.5rem;
-      }
     }
 
     @media screen and (max-width: 768px) {
+      .container {
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem;
+      }
+
       lottie-player {
-        width: 400px;
-        height: 400px;
-        max-height: 40vh;
+        width: 300px;
+        height: 300px;
       }
 
       .signup-box {
-        max-width: 350px;
-        padding: 1.2rem;
+        width: 100%;
+        max-width: 90%;
+        padding: 1.5rem;
+        margin-top: 1rem;
       }
 
       .signup-box h2 {
@@ -196,18 +167,13 @@
 
       .signup-box input,
       .signup-box button {
+        font-size: 1rem;
         padding: 0.6rem;
-        font-size: 0.9rem;
       }
 
       .social-signin button {
         font-size: 0.9rem;
         padding: 0.6rem;
-      }
-
-      .social-signin svg {
-        width: 18px;
-        height: 18px;
       }
 
       .toggle-link {
@@ -219,11 +185,9 @@
       lottie-player {
         width: 300px;
         height: 300px;
-        max-height: 35vh;
       }
 
       .signup-box {
-        max-width: 90%;
         padding: 1rem;
       }
 
@@ -233,21 +197,11 @@
 
       .signup-box input,
       .signup-box button {
+        font-size: 0.9rem;
         padding: 0.5rem;
-        font-size: 0.85rem;
       }
 
       .social-signin button {
-        font-size: 0.85rem;
-        padding: 0.5rem;
-      }
-
-      .social-signin svg {
-        width: 16px;
-        height: 16px;
-      }
-
-      .toggle-link {
         font-size: 0.85rem;
       }
     }
@@ -258,7 +212,7 @@
   <div class="container">
     <!-- Lottie Animation -->
     <lottie-player
-      src="Animation%20-%201744470672068.json"
+      src="Animation - 1744470672068.json"
       background="transparent"
       speed="1"
       loop
@@ -352,18 +306,6 @@
       const username = document.getElementById('username').value;
 
       try {
-        // Basic validation
-        if (isSignUp) {
-          if (!/^[a-zA-Z0-9]{3,20}$/.test(username)) {
-            alert('Username must be 3-20 alphanumeric characters.');
-            return;
-          }
-          if (password.length < 8) {
-            alert('Password must be at least 8 characters.');
-            return;
-          }
-        }
-
         if (isSignUp) {
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
           const user = userCredential.user;
@@ -383,33 +325,18 @@
         }
         window.location.href = "dashboard.html";
       } catch (error) {
-        console.error('Auth Error:', error);
-        const errorMessages = {
-          'auth/email-already-in-use': 'This email is already registered.',
-          'auth/invalid-email': 'Invalid email format.',
-          'auth/weak-password': 'Password is too weak.',
-          'auth/user-not-found': 'No account found with this email.',
-          'auth/wrong-password': 'Incorrect password.',
-          default: 'An error occurred. Please try again.'
-        };
-        alert(`${isSignUp ? 'Sign Up' : 'Log In'} failed: ${errorMessages[error.code] || errorMessages.default}`);
+        console.error('Error:', error.message);
+        alert(`${isSignUp ? 'Sign Up' : 'Log In'} failed: ${error.message}`);
       }
     });
 
     const googleProvider = new GoogleAuthProvider();
     document.getElementById("googleSignIn").addEventListener("click", async () => {
-      console.log("Google Sign-In button clicked");
       try {
         await signInWithRedirect(auth, googleProvider);
-        console.log("Google redirect initiated");
       } catch (error) {
         console.error("Google Sign-In Error:", error);
-        const errorMessages = {
-          'auth/unauthorized-domain': 'This domain is not authorized for OAuth operations.',
-          'auth/network-request-failed': 'Network error. Please check your connection.',
-          default: 'An error occurred during Google sign-in.'
-        };
-        alert(errorMessages[error.code] || errorMessages.default);
+        alert("Google sign-in failed: " + error.message);
       }
     });
 
@@ -417,60 +344,34 @@
     appleProvider.addScope("email");
     appleProvider.addScope("name");
     document.getElementById("appleSignIn").addEventListener("click", async () => {
-      console.log("Apple Sign-In button clicked");
       try {
         await signInWithRedirect(auth, appleProvider);
-        console.log("Apple redirect initiated");
       } catch (error) {
         console.error("Apple Sign-In Error:", error);
-        const errorMessages = {
-          'auth/unauthorized-domain': 'This domain is not authorized for OAuth operations.',
-          'auth/network-request-failed': 'Network error. Please check your connection.',
-          default: 'An error occurred during Apple sign-in.'
-        };
-        alert(errorMessages[error.code] || errorMessages.default);
+        alert("Apple sign-in failed: " + error.message);
       }
     });
 
-    // Handle redirect result on page load
-    console.log("Checking for redirect result...");
     getRedirectResult(auth).then(async (result) => {
-      console.log("Redirect result:", result);
-      if (result && result.user) {
+      if (result) {
         const user = result.user;
         const providerId = result.providerId;
-        try {
-          await addDoc(collection(db, "users"), {
-            username: user.displayName || (providerId === 'google.com' ? "Google User" : "Apple User"),
-            email: user.email || "No email provided",
-            uid: user.uid,
-            provider: providerId === 'google.com' ? "google" : "apple",
-            createdAt: new Date()
-          });
-          console.log("User data successfully written to Firestore");
-          alert(`Signed in with ${providerId === 'google.com' ? 'Google' : 'Apple'}!`);
-          window.location.href = "dashboard.html";
-        } catch (firestoreError) {
-          console.error("Firestore Write Error:", firestoreError);
-          if (firestoreError.code === 'permission-denied') {
-            alert("Failed to save user data: Insufficient permissions in Firestore.");
-          } else {
-            alert("Failed to save user data: " + (firestoreError.message || "Unknown error"));
-          }
-        }
-      } else {
-        console.log("No redirect result available");
+
+        await addDoc(collection(db, "users"), {
+          username: user.displayName || (providerId === 'google.com' ? "Google User" : "Apple User"),
+          email: user.email || "No email provided",
+          uid: user.uid,
+          provider: providerId === 'google.com' ? "google" : "apple",
+          createdAt: new Date()
+        });
+
+        alert(`Signed in with ${providerId === 'google.com' ? 'Google' : 'Apple'}!`);
+        window.location.href = "dashboard.html";
       }
     }).catch((error) => {
       console.error("Redirect Sign-In Error:", error);
-      const errorMessages = {
-        'auth/unauthorized-domain': 'This domain is not authorized for OAuth operations.',
-        'auth/network-request-failed': 'Network error. Please check your connection.',
-        'permission-denied': 'Insufficient permissions to complete the operation.',
-        default: 'An error occurred during sign-in.'
-      };
-      alert(errorMessages[error.code] || errorMessages.default);
+      alert("Sign-in failed: " + error.message);
     });
   </script>
 </body>
-</html>
+</html> so pls fix it so that i can copy it ok 
