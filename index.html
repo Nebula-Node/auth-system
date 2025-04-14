@@ -251,7 +251,7 @@
     </div>
   </div>
 
- <script type="module">
+<script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import {
         getAuth,
@@ -307,7 +307,6 @@
 
         try {
             if (isSignUp) {
-                // Check if username already exists
                 const usernameQuery = query(collection(db, "users"), where("username", "==", username));
                 const usernameSnapshot = await getDocs(usernameQuery);
                 if (!usernameSnapshot.empty) {
@@ -340,6 +339,10 @@
     const googleProvider = new GoogleAuthProvider();
     document.getElementById("googleSignIn").addEventListener("click", async () => {
         try {
+            // Ensure Google provider has proper scopes
+            googleProvider.addScope('profile');
+            googleProvider.addScope('email');
+            
             const result = await signInWithPopup(auth, googleProvider);
             const user = result.user;
 
@@ -348,20 +351,31 @@
             const userSnapshot = await getDocs(userQuery);
 
             if (userSnapshot.empty) {
-                await addDoc(collection(db, "users"), {
-                    username: user.displayName || "Google User",
-                    email: user.email,
-                    uid: user.uid,
-                    provider: "google",
-                    createdAt: new Date()
-                });
+                try {
+                    await addDoc(collection(db, "users"), {
+                        username: user.displayName || "Google User",
+                        email: user.email || "No email provided",
+                        uid: user.uid,
+                        provider: "google",
+                        createdAt: new Date()
+                    });
+                } catch (firestoreError) {
+                    console.error("Firestore write error:", firestoreError);
+                    throw new Error("Failed to save user data: " + firestoreError.message);
+                }
             }
 
             alert('Signed in with Google!');
             window.location.href = "dashboard.html";
         } catch (error) {
             console.error("Google Sign-In Error:", error);
-            alert("Google sign-in failed: " + error.message);
+            let errorMessage = error.message;
+            if (error.code === 'auth/popup-closed-by-user') {
+                errorMessage = "Google sign-in was cancelled";
+            } else if (error.code === 'auth/network-request-failed') {
+                errorMessage = "Network error - please check your connection";
+            }
+            alert("Google sign-in failed: " + errorMessage);
         }
     });
 
@@ -373,7 +387,6 @@
             const result = await signInWithPopup(auth, appleProvider);
             const user = result.user;
 
-            // Check if user already exists in Firestore
             const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
             const userSnapshot = await getDocs(userQuery);
 
