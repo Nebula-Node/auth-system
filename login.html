@@ -263,7 +263,8 @@
       signInWithEmailAndPassword,
       GoogleAuthProvider,
       OAuthProvider,
-      signInWithPopup
+      signInWithRedirect,
+      getRedirectResult
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
     import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
@@ -294,6 +295,11 @@
     const clearError = () => {
       errorMessage.textContent = "";
       errorMessage.style.display = "none";
+    };
+
+    // Sanitize username to prevent injection
+    const sanitizeUsername = (username) => {
+      return username.replace(/[^a-zA-Z0-9]/g, '');
     };
 
     // Email/Password login
@@ -339,8 +345,7 @@
     const googleProvider = new GoogleAuthProvider();
     document.getElementById("googleSignIn").addEventListener("click", async () => {
       try {
-        const result = await signInWithPopup(auth, googleProvider);
-        await handleSocialLogin(result);
+        await signInWithRedirect(auth, googleProvider);
       } catch (error) {
         console.error("Google sign-in error:", error);
         showError("Google sign-in failed: " + error.message);
@@ -352,8 +357,7 @@
     appleProvider.addScope("email name");
     document.getElementById("appleSignIn").addEventListener("click", async () => {
       try {
-        const result = await signInWithPopup(auth, appleProvider);
-        await handleSocialLogin(result);
+        await signInWithRedirect(auth, appleProvider);
       } catch (error) {
         console.error("Apple sign-in error:", error);
         showError("Apple sign-in failed: " + error.message);
@@ -361,24 +365,29 @@
     });
 
     // Handle social login and Firestore user entry
-    async function handleSocialLogin(result) {
-      const user = result.user;
-      const usersRef = collection(db, "users");
-      const q = query(usersRef, where("uid", "==", user.uid));
-      const querySnapshot = await getDocs(q);
+    getRedirectResult(auth).then(async (result) => {
+      if (result) {
+        const user = result.user;
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("uid", "==", user.uid));
+        const querySnapshot = await getDocs(q);
 
-      if (querySnapshot.empty) {
-        await addDoc(usersRef, {
-          username: user.displayName || "User",
-          email: user.email || "unknown",
-          uid: user.uid,
-          provider: result.providerId,
-          createdAt: new Date()
-        });
+        if (querySnapshot.empty) {
+          await addDoc(usersRef, {
+            username: sanitizeUsername(user.displayName || "User"),
+            email: user.email || "unknown",
+            uid: user.uid,
+            provider: result.providerId,
+            createdAt: new Date()
+          });
+        }
+
+        window.location.href = "loginpages/dashboard.html";
       }
-
-      window.location.href = "loginpages/dashboard.html";
-    }
+    }).catch((error) => {
+      console.error("Redirect sign-in error:", error);
+      showError("Sign-in failed: " + error.message);
+    });
   </script>
 </body>
 </html>
