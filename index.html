@@ -4,9 +4,205 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+  
   <title>Signup - Auth System</title>
   <style>
-    /* ...[Your existing styles remain unchanged]... */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #000;
+      color: #fff;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      width: 100%;
+      gap: 2rem;
+    }
+
+    .signup-box {
+      background: #111;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+      width: 100%;
+      max-width: 350px;
+      border: 1px solid #f00;
+    }
+
+    .signup-box h2 {
+      text-align: center;
+      color: #f00;
+      margin-bottom: 1rem;
+    }
+
+    .signup-box input {
+      width: 100%;
+      padding: 0.7rem;
+      margin: 0.5rem 0;
+      background: #222;
+      color: #fff;
+      border: 1px solid #f00;
+      border-radius: 6px;
+    }
+
+    .signup-box input:focus {
+      outline: none;
+      border-color: #ff4444;
+      box-shadow: 0 0 5px #ff4444;
+    }
+
+    .signup-box button {
+      width: 100%;
+      padding: 0.7rem;
+      background: #f00;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 1rem;
+      transition: background 0.3s ease;
+    }
+
+    .signup-box button:hover {
+      background: #cc0000;
+    }
+
+    lottie-player {
+      width: 750px;
+      height: 750px;
+      flex-shrink: 0;
+    }
+
+    .social-signin {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .social-signin button {
+      width: 100%;
+      margin: 8px 0;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    #googleSignIn {
+      background-color: white;
+      color: #db4437;
+      border-color: #db4437;
+    }
+
+    #googleSignIn:hover {
+      background-color: #db4437;
+      color: white;
+    }
+
+    #appleSignIn {
+      background-color: white;
+      color: #000;
+      border-color: #000;
+    }
+
+    #appleSignIn:hover {
+      background-color: #000;
+      color: white;
+    }
+
+    .social-signin svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .login-link {
+      text-align: center;
+      margin-top: 1rem;
+    }
+
+    /* ✅ Responsive Styles */
+    @media screen and (max-width: 768px) {
+      .container {
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem;
+      }
+
+      lottie-player {
+        width: 300px;
+        height: 300px;
+      }
+
+      .signup-box {
+        width: 100%;
+        max-width: 90%;
+        padding: 1.5rem;
+        margin-top: 1rem;
+      }
+
+      .signup-box h2 {
+        font-size: 1.5rem;
+      }
+
+      .signup-box input,
+      .signup-box button {
+        font-size: 1rem;
+        padding: 0.6rem;
+      }
+
+      .social-signin button {
+        font-size: 0.9rem;
+        padding: 0.6rem;
+      }
+
+      .login-link {
+        font-size: 0.9rem;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      lottie-player {
+        width: 300px;
+        height: 300px;
+      }
+
+      .signup-box {
+        padding: 1rem;
+      }
+
+      .signup-box h2 {
+        font-size: 1.3rem;
+      }
+
+      .signup-box input,
+      .signup-box button {
+        font-size: 0.9rem;
+        padding: 0.5rem;
+      }
+
+      .social-signin button {
+        font-size: 0.85rem;
+      }
+    }
   </style>
 </head>
 
