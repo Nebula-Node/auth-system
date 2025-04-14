@@ -18,19 +18,23 @@
       font-family: 'Segoe UI', sans-serif;
       background: #000;
       color: #fff;
-      height: 100vh;
+      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
+      overflow-x: hidden;
     }
 
     .container {
       display: flex;
-      justify-content: space-between;
+      flex-direction: row;
+      justify-content: center;
       align-items: center;
       max-width: 1200px;
       width: 100%;
       gap: 2rem;
+      padding: 1rem;
+      flex-wrap: wrap;
     }
 
     .signup-box {
@@ -41,12 +45,15 @@
       width: 100%;
       max-width: 350px;
       border: 1px solid #f00;
+      flex: 1;
+      min-width: 300px;
     }
 
     .signup-box h2 {
       text-align: center;
       color: #f00;
       margin-bottom: 1rem;
+      font-size: 1.8rem;
     }
 
     .signup-box input {
@@ -57,6 +64,7 @@
       color: #fff;
       border: 1px solid #f00;
       border-radius: 6px;
+      font-size: 1rem;
     }
 
     .signup-box input:focus {
@@ -76,6 +84,7 @@
       cursor: pointer;
       margin-top: 1rem;
       transition: background 0.3s ease;
+      font-size: 1rem;
     }
 
     .signup-box button:hover {
@@ -86,11 +95,18 @@
       width: 750px;
       height: 750px;
       flex-shrink: 0;
+      max-width: 100%;
+      max-height: 70vh;
     }
 
     .social-signin {
       text-align: center;
       margin-top: 20px;
+    }
+
+    .social-signin p {
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
     }
 
     .social-signin button {
@@ -141,25 +157,37 @@
       cursor: pointer;
       color: red;
       text-decoration: none;
+      font-size: 1rem;
     }
 
-    @media screen and (max-width: 768px) {
+    @media screen and (max-width: 1024px) {
       .container {
         flex-direction: column;
         align-items: center;
-        padding: 1rem;
       }
 
       lottie-player {
-        width: 300px;
-        height: 300px;
+        width: 500px;
+        height: 500px;
+        max-height: 50vh;
       }
 
       .signup-box {
-        width: 100%;
-        max-width: 90%;
+        max-width: 400px;
         padding: 1.5rem;
-        margin-top: 1rem;
+      }
+    }
+
+    @media screen and (max-width: 768px) {
+      lottie-player {
+        width: 400px;
+        height: 400px;
+        max-height: 40vh;
+      }
+
+      .signup-box {
+        max-width: 350px;
+        padding: 1.2rem;
       }
 
       .signup-box h2 {
@@ -168,13 +196,18 @@
 
       .signup-box input,
       .signup-box button {
-        font-size: 1rem;
         padding: 0.6rem;
+        font-size: 0.9rem;
       }
 
       .social-signin button {
         font-size: 0.9rem;
         padding: 0.6rem;
+      }
+
+      .social-signin svg {
+        width: 18px;
+        height: 18px;
       }
 
       .toggle-link {
@@ -186,9 +219,11 @@
       lottie-player {
         width: 300px;
         height: 300px;
+        max-height: 35vh;
       }
 
       .signup-box {
+        max-width: 90%;
         padding: 1rem;
       }
 
@@ -198,11 +233,21 @@
 
       .signup-box input,
       .signup-box button {
-        font-size: 0.9rem;
         padding: 0.5rem;
+        font-size: 0.85rem;
       }
 
       .social-signin button {
+        font-size: 0.85rem;
+        padding: 0.5rem;
+      }
+
+      .social-signin svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      .toggle-link {
         font-size: 0.85rem;
       }
     }
@@ -213,7 +258,7 @@
   <div class="container">
     <!-- Lottie Animation -->
     <lottie-player
-      src="Animation - 1744470672068.json"
+      src="Animation%20-%201744470672068.json"
       background="transparent"
       speed="1"
       loop
