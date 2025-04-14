@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
-  
   <title>Signup - Auth System</title>
+
   <style>
     * {
       box-sizing: border-box;
@@ -139,7 +139,7 @@
       margin-top: 1rem;
     }
 
-    /* ✅ Responsive Styles */
+    /* Responsive Styles */
     @media screen and (max-width: 768px) {
       .container {
         flex-direction: column;
@@ -158,54 +158,22 @@
         padding: 1.5rem;
         margin-top: 1rem;
       }
-
-      .signup-box h2 {
-        font-size: 1.5rem;
-      }
-
-      .signup-box input,
-      .signup-box button {
-        font-size: 1rem;
-        padding: 0.6rem;
-      }
-
-      .social-signin button {
-        font-size: 0.9rem;
-        padding: 0.6rem;
-      }
-
-      .login-link {
-        font-size: 0.9rem;
-      }
     }
 
     @media screen and (max-width: 480px) {
-      lottie-player {
-        width: 300px;
-        height: 300px;
-      }
-
-      .signup-box {
-        padding: 1rem;
-      }
-
       .signup-box h2 {
         font-size: 1.3rem;
       }
 
       .signup-box input,
-      .signup-box button {
+      .signup-box button,
+      .social-signin button {
         font-size: 0.9rem;
         padding: 0.5rem;
-      }
-
-      .social-signin button {
-        font-size: 0.85rem;
       }
     }
   </style>
 </head>
-
 <body>
   <div class="container">
     <lottie-player src="Animation - 1744470672068.json" background="transparent" speed="1" loop autoplay></lottie-player>
@@ -222,17 +190,14 @@
       <div class="social-signin">
         <p>Or sign in with:</p>
         <button id="googleSignIn">
-          <svg viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg" width="20" height="20">
-            <path fill="#4285f4" d="M533.5 278.4c0-17.3-1.6-34.3-4.7-50.7H272v95.9h146.9c-6.4 34.8-25.9 64.2-55.2 83.8v69.3h89.1c52.1-48 80.7-118.8 80.7-198.3z"/>
-            <path fill="#34a853" d="M272 544.3c73.5 0 135.1-24.3 180.1-66.1l-89.1-69.3c-24.7 16.6-56.4 26.4-91 26.4-69.9 0-129.2-47.2-150.4-110.6H30v69.7c45.3 89.2 137.2 149.9 242 149.9z"/>
-            <path fill="#fbbc04" d="M121.6 324.7c-10.2-30-10.2-62.4 0-92.4V162.6H30c-41.9 83.4-41.9 180.7 0 264.1l91.6-70z"/>
-            <path fill="#ea4335" d="M272 107.1c39.9-.6 78.1 14.1 107.3 40.6l80.4-80.4C408.5 25.9 342.6 0 272 0 167.2 0 75.3 60.7 30 149.9l91.6 70c21.2-63.4 80.5-110.6 150.4-110.6z"/>
+          <svg viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#4285f4" d="M533.5 278.4..."/>
           </svg>
           Continue with Google
         </button>
         <button id="appleSignIn">
-          <svg viewBox="0 0 848 1000" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor">
-            <path d="M789 748c-8 19-17 38-27 55..."></path>
+          <svg viewBox="0 0 848 1000" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+            <path d="M789 748c-8 19..."/>
           </svg>
           Continue with Apple
         </button>
@@ -244,7 +209,7 @@
     </div>
   </div>
 
-  <!-- Firebase Script -->
+  <!-- Firebase Auth -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import {
@@ -281,25 +246,25 @@
         const user = userCredential.user;
 
         await addDoc(collection(db, "users"), {
-          username: username,
-          email: email,
+          username,
+          email,
           uid: user.uid,
           provider: "email",
           createdAt: new Date()
         });
 
-        alert('User registered successfully!');
+        alert("Account created!");
         window.location.href = "dashboard.html";
       } catch (error) {
-        console.error('Error during sign up:', error.message);
-        alert('Sign Up failed: ' + error.message);
+        console.error(error);
+        alert("Signup failed: " + error.message);
       }
     });
 
-    const googleProvider = new GoogleAuthProvider();
     document.getElementById("googleSignIn").addEventListener("click", async () => {
+      const provider = new GoogleAuthProvider();
       try {
-        const result = await signInWithPopup(auth, googleProvider);
+        const result = await signInWithPopup(auth, provider);
         const user = result.user;
 
         await addDoc(collection(db, "users"), {
@@ -310,40 +275,35 @@
           createdAt: new Date()
         });
 
-        // Remove query string to clean URL
-        window.history.pushState({}, document.title, window.location.pathname);
-
         alert("Signed in with Google!");
         window.location.href = "dashboard.html";
       } catch (error) {
-        console.error("Google Sign-In Error:", error);
+        console.error(error);
         alert("Google sign-in failed: " + error.message);
       }
     });
 
-    const appleProvider = new OAuthProvider('apple.com');
-    appleProvider.addScope("email");
-    appleProvider.addScope("name");
     document.getElementById("appleSignIn").addEventListener("click", async () => {
+      const provider = new OAuthProvider('apple.com');
+      provider.addScope("email");
+      provider.addScope("name");
+
       try {
-        const result = await signInWithPopup(auth, appleProvider);
+        const result = await signInWithPopup(auth, provider);
         const user = result.user;
 
         await addDoc(collection(db, "users"), {
           username: user.displayName || "Apple User",
-          email: user.email || "No email provided",
+          email: user.email || "No email",
           uid: user.uid,
           provider: "apple",
           createdAt: new Date()
         });
 
-        // Clean up the URL
-        window.history.pushState({}, document.title, window.location.pathname);
-
         alert("Signed in with Apple!");
         window.location.href = "dashboard.html";
       } catch (error) {
-        console.error("Apple Sign-In Error:", error);
+        console.error(error);
         alert("Apple sign-in failed: " + error.message);
       }
     });
