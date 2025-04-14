@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@2.0.4/dist/lottie-player.js"></script>
   <title>Auth System</title>
 
   <style>
@@ -259,8 +259,7 @@
       signInWithEmailAndPassword,
       GoogleAuthProvider,
       OAuthProvider,
-      signInWithRedirect,
-      getRedirectResult
+      signInWithPopup
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
     import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
@@ -306,6 +305,18 @@
       const username = document.getElementById('username').value;
 
       try {
+        // Basic validation
+        if (isSignUp) {
+          if (!/^[a-zA-Z0-9]{3,20}$/.test(username)) {
+            alert('Username must be 3-20 alphanumeric characters.');
+            return;
+          }
+          if (password.length < 8) {
+            alert('Password must be at least 8 characters.');
+            return;
+          }
+        }
+
         if (isSignUp) {
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
           const user = userCredential.user;
@@ -325,18 +336,41 @@
         }
         window.location.href = "dashboard.html";
       } catch (error) {
-        console.error('Error:', error.message);
-        alert(`${isSignUp ? 'Sign Up' : 'Log In'} failed: ${error.message}`);
+        console.error('Auth Error:', error);
+        const errorMessages = {
+          'auth/email-already-in-use': 'This email is already registered.',
+          'auth/invalid-email': 'Invalid email format.',
+          'auth/weak-password': 'Password is too weak.',
+          'auth/user-not-found': 'No account found with this email.',
+          'auth/wrong-password': 'Incorrect password.',
+          default: 'An error occurred. Please try again.'
+        };
+        alert(`${isSignUp ? 'Sign Up' : 'Log In'} failed: ${errorMessages[error.code] || errorMessages.default}`);
       }
     });
 
     const googleProvider = new GoogleAuthProvider();
     document.getElementById("googleSignIn").addEventListener("click", async () => {
+      console.log("Google Sign-In button clicked");
       try {
-        await signInWithRedirect(auth, googleProvider);
+        const result = await signInWithPopup(auth, googleProvider);
+        console.log("Google Sign-In result:", result);
+        const user = result.user;
+
+        await addDoc(collection(db, "users"), {
+          username: user.displayName || "Google User",
+          email: user.email || "No email provided",
+          uid: user.uid,
+          provider: "google",
+          createdAt: new Date()
+        });
+
+        console.log("User data written to Firestore");
+        alert("Signed in with Google!");
+        window.location.href = "dashboard.html";
       } catch (error) {
         console.error("Google Sign-In Error:", error);
-        alert("Google sign-in failed: " + error.message);
+        alert("Google sign-in failed: " + (error.message || "Unknown error"));
       }
     });
 
@@ -344,33 +378,27 @@
     appleProvider.addScope("email");
     appleProvider.addScope("name");
     document.getElementById("appleSignIn").addEventListener("click", async () => {
+      console.log("Apple Sign-In button clicked");
       try {
-        await signInWithRedirect(auth, appleProvider);
-      } catch (error) {
-        console.error("Apple Sign-In Error:", error);
-        alert("Apple sign-in failed: " + error.message);
-      }
-    });
-
-    getRedirectResult(auth).then(async (result) => {
-      if (result) {
+        const result = await signInWithPopup(auth, appleProvider);
+        console.log("Apple Sign-In result:", result);
         const user = result.user;
-        const providerId = result.providerId;
 
         await addDoc(collection(db, "users"), {
-          username: user.displayName || (providerId === 'google.com' ? "Google User" : "Apple User"),
+          username: user.displayName || "Apple User",
           email: user.email || "No email provided",
           uid: user.uid,
-          provider: providerId === 'google.com' ? "google" : "apple",
+          provider: "apple",
           createdAt: new Date()
         });
 
-        alert(`Signed in with ${providerId === 'google.com' ? 'Google' : 'Apple'}!`);
+        console.log("User data written to Firestore");
+        alert("Signed in with Apple!");
         window.location.href = "dashboard.html";
+      } catch (error) {
+        console.error("Apple Sign-In Error:", error);
+        alert("Apple sign-in failed: " + (error.message || "Unknown error"));
       }
-    }).catch((error) => {
-      console.error("Redirect Sign-In Error:", error);
-      alert("Sign-in failed: " + error.message);
     });
   </script>
 </body>
