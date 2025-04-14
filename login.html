@@ -98,6 +98,7 @@
     .forgot-password {
       text-align: center;
       margin-top: 0.5rem;
+      cursor: pointer;
       color: #f00;
       font-size: 0.9rem;
       text-decoration: none;
@@ -246,7 +247,7 @@
             <path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>
           </svg>
         </div>
-        <a href="reset-password.html" class="forgot-password" id="forgotPassword">Forgot Password?</a>
+        <p class="forgot-password" id="forgotPassword">Forgot Password?</p>
         <p id="error-message" class="error-message" role="alert"></p>
         <button type="submit">Log In</button>
       </form>
@@ -285,7 +286,8 @@
       GoogleAuthProvider,
       OAuthProvider,
       signInWithRedirect,
-      getRedirectResult
+      getRedirectResult,
+      sendPasswordResetEmail
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
     import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
@@ -305,6 +307,7 @@
     const db = getFirestore(app);
 
     const errorMessage = document.getElementById("error-message");
+    const forgotPasswordLink = document.getElementById("forgotPassword");
     const emailInput = document.getElementById("email");
     const passwordInput = document.getElementById("password");
     const togglePassword = document.getElementById("togglePassword");
@@ -313,6 +316,16 @@
     const showError = (message) => {
       errorMessage.textContent = message;
       errorMessage.style.display = "block";
+    };
+
+    // Show success message
+    const showSuccess = (message) => {
+      errorMessage.textContent = message;
+      errorMessage.style.color = "#00ff00";
+      errorMessage.style.display = "block";
+      setTimeout(() => {
+        errorMessage.style.color = "#ff4444";
+      }, 3000);
     };
 
     // Clear error message
@@ -326,71 +339,54 @@
       return username.replace(/[^a-zA-Z0-9]/g, '');
     };
 
-    // Password toggle functionality with 2-second auto-revert
+    // Password toggle functionality
     let isPasswordVisible = false;
-    let autoHideTimeout = null;
-
-    const togglePasswordVisibility = () => {
-      // Clear any existing timeout
-      if (autoHideTimeout) {
-        clearTimeout(autoHideTimeout);
-        autoHideTimeout = null;
-      }
-
+    togglePassword.addEventListener('click', (e) => {
+      e.preventDefault();
       isPasswordVisible = !isPasswordVisible;
       passwordInput.type = isPasswordVisible ? 'text' : 'password';
       togglePassword.innerHTML = isPasswordVisible 
         ? `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />`
         : `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>`;
-
-      // Animate input and icon
-      passwordInput.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-      togglePassword.style.transition = 'opacity 0.3s ease';
-      passwordInput.style.opacity = '0.7';
-      passwordInput.style.transform = 'scale(0.98)';
-      togglePassword.style.opacity = '0.7';
-
-      setTimeout(() => {
-        passwordInput.style.opacity = '1';
-        passwordInput.style.transform = 'scale(1)';
-        togglePassword.style.opacity = '1';
-      }, 300);
-
-      // Auto-revert after 2 seconds if visible
-      if (isPasswordVisible) {
-        autoHideTimeout = setTimeout(() => {
-          isPasswordVisible = false;
-          passwordInput.type = 'password';
-          togglePassword.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>`;
-
-          // Animate on revert
-          passwordInput.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-          togglePassword.style.transition = 'opacity 0.3s ease';
-          passwordInput.style.opacity = '0.7';
-          passwordInput.style.transform = 'scale(0.98)';
-          togglePassword.style.opacity = '0.7';
-
-          setTimeout(() => {
-            passwordInput.style.opacity = '1';
-            passwordInput.style.transform = 'scale(1)';
-            togglePassword.style.opacity = '1';
-          }, 300);
-
-          autoHideTimeout = null;
-        }, 2000);
-      }
-    };
-
-    togglePassword.addEventListener('click', (e) => {
-      e.preventDefault();
-      togglePasswordVisibility();
     });
 
-    // Ensure eye is closed on page load
-    window.addEventListener('load', () => {
-      isPasswordVisible = false;
-      passwordInput.type = 'password';
-      togglePassword.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>`;
+    // Forgot Password functionality
+    forgotPasswordLink.addEventListener("click", async (e) => {
+      e.preventDefault();
+      clearError();
+      const email = emailInput.value.trim();
+
+      if (!email) {
+        showError("Please enter your email address first.");
+        return;
+      }
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showError("Please enter a valid email address.");
+        return;
+      }
+
+      try {
+        await sendPasswordResetEmail(auth, email);
+        showSuccess("Password reset email sent! Check your inbox.");
+        emailInput.value = "";
+        passwordInput.value = "";
+      } catch (error) {
+        console.error("Password reset error:", error);
+        switch (error.code) {
+          case "auth/invalid-email":
+            showError("Invalid email address.");
+            break;
+          case "auth/user-not-found":
+            showError("No account found with this email.");
+            break;
+          case "auth/too-many-requests":
+            showError("Too many attempts. Please try again later.");
+            break;
+          default:
+            showError("Failed to send reset email: " + error.message);
+        }
+      }
     });
 
     // Email/Password login
@@ -481,4 +477,4 @@
     });
   </script>
 </body>
-</html>
+</html> 
