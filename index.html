@@ -251,27 +251,27 @@
     </div>
   </div>
 
-  <script type="module">
+ <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import {
-      getAuth,
-      createUserWithEmailAndPassword,
-      signInWithEmailAndPassword,
-      GoogleAuthProvider,
-      OAuthProvider,
-      signInWithRedirect,
-      getRedirectResult
+        getAuth,
+        createUserWithEmailAndPassword,
+        signInWithEmailAndPassword,
+        GoogleAuthProvider,
+        OAuthProvider,
+        signInWithPopup,
+        onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyBOAnbROT6CrHIYpPR29Tl0dZAy1ab41F8",
-      authDomain: "signup-auth-ad445.firebaseapp.com",
-      projectId: "signup-auth-ad445",
-      storageBucket: "signup-auth-ad445.firebasestorage.app",
-      messagingSenderId: "486601898869",
-      appId: "1:486601898869:web:54ab61f00020e26645713c",
-      measurementId: "G-1CSG0CSSZR"
+        apiKey: "AIzaSyBOAnbROT6CrHIYpPR29Tl0dZAy1ab41F8",
+        authDomain: "signup-auth-ad445.firebaseapp.com",
+        projectId: "signup-auth-ad445",
+        storageBucket: "signup-auth-ad445.firebasestorage.app",
+        messagingSenderId: "486601898869",
+        appId: "1:486601898869:web:54ab61f00020e26645713c",
+        measurementId: "G-1CSG0CSSZR"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -287,91 +287,120 @@
     const usernameInput = document.getElementById('username');
 
     const updateForm = () => {
-      authTitle.textContent = isSignUp ? 'Sign Up' : 'Log In';
-      authButton.textContent = isSignUp ? 'Sign Up' : 'Log In';
-      toggleAuth.textContent = isSignUp ? 'Already have an account? Log in here' : 'Don’t have an account? Sign up here';
-      usernameInput.style.display = isSignUp ? 'block' : 'none';
-      usernameInput.required = isSignUp;
+        authTitle.textContent = isSignUp ? 'Sign Up' : 'Log In';
+        authButton.textContent = isSignUp ? 'Sign Up' : 'Log In';
+        toggleAuth.textContent = isSignUp ? 'Already have an account? Log in here' : 'Don’t have an account? Sign up here';
+        usernameInput.style.display = isSignUp ? 'block' : 'none';
+        usernameInput.required = isSignUp;
     };
 
     toggleAuth.addEventListener('click', () => {
-      isSignUp = !isSignUp;
-      updateForm();
+        isSignUp = !isSignUp;
+        updateForm();
     });
 
     authForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const username = document.getElementById('username').value;
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const username = isSignUp ? document.getElementById('username').value : '';
 
-      try {
-        if (isSignUp) {
-          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-          const user = userCredential.user;
+        try {
+            if (isSignUp) {
+                // Check if username already exists
+                const usernameQuery = query(collection(db, "users"), where("username", "==", username));
+                const usernameSnapshot = await getDocs(usernameQuery);
+                if (!usernameSnapshot.empty) {
+                    throw new Error("Username already exists");
+                }
 
-          await addDoc(collection(db, "users"), {
-            username: username,
-            email: email,
-            uid: user.uid,
-            provider: "email",
-            createdAt: new Date()
-          });
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
 
-          alert('User registered successfully!');
-        } else {
-          await signInWithEmailAndPassword(auth, email, password);
-          alert('Logged in successfully!');
+                await addDoc(collection(db, "users"), {
+                    username: username,
+                    email: email,
+                    uid: user.uid,
+                    provider: "email",
+                    createdAt: new Date()
+                });
+
+                alert('User registered successfully!');
+            } else {
+                await signInWithEmailAndPassword(auth, email, password);
+                alert('Logged in successfully!');
+            }
+            window.location.href = "dashboard.html";
+        } catch (error) {
+            console.error('Error:', error.message);
+            alert(`${isSignUp ? 'Sign Up' : 'Log In'} failed: ${error.message}`);
         }
-        window.location.href = "dashboard.html";
-      } catch (error) {
-        console.error('Error:', error.message);
-        alert(`${isSignUp ? 'Sign Up' : 'Log In'} failed: ${error.message}`);
-      }
     });
 
     const googleProvider = new GoogleAuthProvider();
     document.getElementById("googleSignIn").addEventListener("click", async () => {
-      try {
-        await signInWithRedirect(auth, googleProvider);
-      } catch (error) {
-        console.error("Google Sign-In Error:", error);
-        alert("Google sign-in failed: " + error.message);
-      }
+        try {
+            const result = await signInWithPopup(auth, googleProvider);
+            const user = result.user;
+
+            // Check if user already exists in Firestore
+            const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
+            const userSnapshot = await getDocs(userQuery);
+
+            if (userSnapshot.empty) {
+                await addDoc(collection(db, "users"), {
+                    username: user.displayName || "Google User",
+                    email: user.email,
+                    uid: user.uid,
+                    provider: "google",
+                    createdAt: new Date()
+                });
+            }
+
+            alert('Signed in with Google!');
+            window.location.href = "dashboard.html";
+        } catch (error) {
+            console.error("Google Sign-In Error:", error);
+            alert("Google sign-in failed: " + error.message);
+        }
     });
 
     const appleProvider = new OAuthProvider('apple.com');
     appleProvider.addScope("email");
     appleProvider.addScope("name");
     document.getElementById("appleSignIn").addEventListener("click", async () => {
-      try {
-        await signInWithRedirect(auth, appleProvider);
-      } catch (error) {
-        console.error("Apple Sign-In Error:", error);
-        alert("Apple sign-in failed: " + error.message);
-      }
+        try {
+            const result = await signInWithPopup(auth, appleProvider);
+            const user = result.user;
+
+            // Check if user already exists in Firestore
+            const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
+            const userSnapshot = await getDocs(userQuery);
+
+            if (userSnapshot.empty) {
+                await addDoc(collection(db, "users"), {
+                    username: user.displayName || "Apple User",
+                    email: user.email || "No email provided",
+                    uid: user.uid,
+                    provider: "apple",
+                    createdAt: new Date()
+                });
+            }
+
+            alert('Signed in with Apple!');
+            window.location.href = "dashboard.html";
+        } catch (error) {
+            console.error("Apple Sign-In Error:", error);
+            alert("Apple sign-in failed: " + error.message);
+        }
     });
 
-    getRedirectResult(auth).then(async (result) => {
-      if (result) {
-        const user = result.user;
-        const providerId = result.providerId;
-
-        await addDoc(collection(db, "users"), {
-          username: user.displayName || (providerId === 'google.com' ? "Google User" : "Apple User"),
-          email: user.email || "No email provided",
-          uid: user.uid,
-          provider: providerId === 'google.com' ? "google" : "apple",
-          createdAt: new Date()
-        });
-
-        alert(`Signed in with ${providerId === 'google.com' ? 'Google' : 'Apple'}!`);
-        window.location.href = "dashboard.html";
-      }
-    }).catch((error) => {
-      console.error("Redirect Sign-In Error:", error);
-      alert("Sign-in failed: " + error.message);
+    // Monitor auth state
+    onAuthStateChanged(auth, (user) => {
+        if (user && window.location.pathname.includes('index.html')) {
+            window.location.href = 'dashboard.html';
+        }
     });
-  </script>
+</script>
 </body>
 </html> 
