@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://unpkg.com; style-src 'self'; connect-src 'self' https://*.firebaseio.com https://accounts.google.com; object-src 'none';">
   <script src="https://unpkg.com/@lottiefiles/lottie-player@2.0.4/dist/lottie-player.js"></script>
   <title>Auth System</title>
 
@@ -259,7 +260,8 @@
       signInWithEmailAndPassword,
       GoogleAuthProvider,
       OAuthProvider,
-      signInWithPopup
+      signInWithRedirect,
+      getRedirectResult
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
     import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
@@ -353,24 +355,16 @@
     document.getElementById("googleSignIn").addEventListener("click", async () => {
       console.log("Google Sign-In button clicked");
       try {
-        const result = await signInWithPopup(auth, googleProvider);
-        console.log("Google Sign-In result:", result);
-        const user = result.user;
-
-        await addDoc(collection(db, "users"), {
-          username: user.displayName || "Google User",
-          email: user.email || "No email provided",
-          uid: user.uid,
-          provider: "google",
-          createdAt: new Date()
-        });
-
-        console.log("User data written to Firestore");
-        alert("Signed in with Google!");
-        window.location.href = "dashboard.html";
+        await signInWithRedirect(auth, googleProvider);
+        console.log("Google redirect initiated");
       } catch (error) {
         console.error("Google Sign-In Error:", error);
-        alert("Google sign-in failed: " + (error.message || "Unknown error"));
+        const errorMessages = {
+          'auth/unauthorized-domain': 'This domain is not authorized for OAuth operations.',
+          'auth/network-request-failed': 'Network error. Please check your connection.',
+          default: 'An error occurred during Google sign-in.'
+        };
+        alert(errorMessages[error.code] || errorMessages.default);
       }
     });
 
@@ -380,25 +374,57 @@
     document.getElementById("appleSignIn").addEventListener("click", async () => {
       console.log("Apple Sign-In button clicked");
       try {
-        const result = await signInWithPopup(auth, appleProvider);
-        console.log("Apple Sign-In result:", result);
-        const user = result.user;
-
-        await addDoc(collection(db, "users"), {
-          username: user.displayName || "Apple User",
-          email: user.email || "No email provided",
-          uid: user.uid,
-          provider: "apple",
-          createdAt: new Date()
-        });
-
-        console.log("User data written to Firestore");
-        alert("Signed in with Apple!");
-        window.location.href = "dashboard.html";
+        await signInWithRedirect(auth, appleProvider);
+        console.log("Apple redirect initiated");
       } catch (error) {
         console.error("Apple Sign-In Error:", error);
-        alert("Apple sign-in failed: " + (error.message || "Unknown error"));
+        const errorMessages = {
+          'auth/unauthorized-domain': 'This domain is not authorized for OAuth operations.',
+          'auth/network-request-failed': 'Network error. Please check your connection.',
+          default: 'An error occurred during Apple sign-in.'
+        };
+        alert(errorMessages[error.code] || errorMessages.default);
       }
+    });
+
+    // Handle redirect result on page load
+    console.log("Checking for redirect result...");
+    getRedirectResult(auth).then(async (result) => {
+      console.log("Redirect result:", result);
+      if (result && result.user) {
+        const user = result.user;
+        const providerId = result.providerId;
+        try {
+          await addDoc(collection(db, "users"), {
+            username: user.displayName || (providerId === 'google.com' ? "Google User" : "Apple User"),
+            email: user.email || "No email provided",
+            uid: user.uid,
+            provider: providerId === 'google.com' ? "google" : "apple",
+            createdAt: new Date()
+          });
+          console.log("User data successfully written to Firestore");
+          alert(`Signed in with ${providerId === 'google.com' ? 'Google' : 'Apple'}!`);
+          window.location.href = "dashboard.html";
+        } catch (firestoreError) {
+          console.error("Firestore Write Error:", firestoreError);
+          if (firestoreError.code === 'permission-denied') {
+            alert("Failed to save user data: Insufficient permissions in Firestore.");
+          } else {
+            alert("Failed to save user data: " + (firestoreError.message || "Unknown error"));
+          }
+        }
+      } else {
+        console.log("No redirect result available");
+      }
+    }).catch((error) => {
+      console.error("Redirect Sign-In Error:", error);
+      const errorMessages = {
+        'auth/unauthorized-domain': 'This domain is not authorized for OAuth operations.',
+        'auth/network-request-failed': 'Network error. Please check your connection.',
+        'permission-denied': 'Insufficient permissions to complete the operation.',
+        default: 'An error occurred during sign-in.'
+      };
+      alert(errorMessages[error.code] || errorMessages.default);
     });
   </script>
 </body>
