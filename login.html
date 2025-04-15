@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
-  <title>Login</title>
+  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+  <title>Auth System</title>
 
   <style>
     * {
@@ -39,7 +40,7 @@
       opacity: 1;
     }
 
-    .login-box {
+    .signup-box {
       background: #111;
       padding: 2rem;
       border-radius: 12px;
@@ -50,13 +51,13 @@
       position: relative;
     }
 
-    .login-box h2 {
+    .signup-box h2 {
       text-align: center;
       color: #f00;
       margin-bottom: 1rem;
     }
 
-    .login-box input {
+    .signup-box input {
       width: 100%;
       padding: 0.7rem;
       margin: 0.5rem 0;
@@ -66,13 +67,13 @@
       border-radius: 6px;
     }
 
-    .login-box input:focus {
+    .signup-box input:focus {
       outline: none;
       border-color: #ff4444;
       box-shadow: 0 0 5px #ff4444;
     }
 
-    .login-box button {
+    .signup-box button {
       width: 100%;
       padding: 0.7rem;
       background: #f00;
@@ -85,7 +86,7 @@
       transition: background 0.3s ease;
     }
 
-    .login-box button:hover {
+    .signup-box button:hover {
       background: #cc0000;
     }
 
@@ -218,19 +219,19 @@
         height: 300px;
       }
 
-      .login-box {
+      .signup-box {
         width: 100%;
         max-width: 90%;
         padding: 1.5rem;
         margin-top: 1rem;
       }
 
-      .login-box h2 {
+      .signup-box h2 {
         font-size: 1.5rem;
       }
 
-      .login-box input,
-      .login-box button {
+      .signup-box input,
+      .signup-box button {
         font-size: 1rem;
         padding: 0.6rem;
       }
@@ -247,16 +248,16 @@
         height: 300px;
       }
 
-      .login-box {
+      .signup-box {
         padding: 1rem;
       }
 
-      .login-box h2 {
+      .signup-box h2 {
         font-size: 1.3rem;
       }
 
-      .login-box input,
-      .login-box button {
+      .signup-box input,
+      .signup-box button {
         font-size: 0.9rem;
         padding: 0.5rem;
       }
@@ -288,7 +289,7 @@
       autoplay>
     </lottie-player>
 
-    <div class="login-box">
+    <div class="signup-box">
       <div id="formLoading">
         <lottie-player
           src="Animation - 1744696593398.json"
@@ -298,8 +299,9 @@
           autoplay>
         </lottie-player>
       </div>
-      <h2>Log In</h2>
+      <h2 id="authTitle">Sign Up</h2>
       <form id="authForm">
+        <input type="text" name="username" id="username" placeholder="Username" required />
         <input type="email" name="email" id="email" placeholder="Email" required />
         <div style="position: relative; margin: 0.5rem 0;">
           <input type="password" name="password" id="password" placeholder="Password" required style="padding-right: 3rem;" />
@@ -308,11 +310,11 @@
             <path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>
           </svg>
         </div>
-        <button type="submit" id="authButton">Log In</button>
+        <button type="submit" id="authButton">Sign Up</button>
       </form>
 
       <div class="social-signin">
-        <p>Or log in with:</p>
+        <p>Or sign up with:</p>
         <button id="googleSignIn">
           <svg viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg" width="20" height="20">
             <path fill="#4285f4" d="M533.5 278.4c0-17.3-1.6-34.3-4.7-50.7H272v95.9h146.9c-6.4 34.8-25.9 64.2-55.2 83.8v69.3h89.1c52.1-48 80.7-118.8 80.7-198.3z"/>
@@ -331,8 +333,8 @@
       </div>
 
       <p class="signup-link">
-        Don't have an account?
-        <a href="./index.html" style="color: #ff0000;" onclick="showLoading()">Sign up here</a>
+        Already have an account?
+        <a href="./login.html" style="color: #ff0000;" onclick="showLoading()">Log in here</a>
       </p>
     </div>
   </div>
@@ -341,14 +343,15 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import {
         getAuth,
-        signInWithEmailAndPassword,
+        createUserWithEmailAndPassword,
+        sendEmailVerification,
         GoogleAuthProvider,
         OAuthProvider,
         signInWithRedirect,
         getRedirectResult,
         onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBOAnbROT6CrHIYpPR29Tl0dZAy1ab41F8",
@@ -364,6 +367,8 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    emailjs.init("YOUR_EMAILJS_USER_ID"); // Replace with your EmailJS User ID
+
     const authForm = document.getElementById('authForm');
     const passwordInput = document.getElementById('password');
     const togglePassword = document.getElementById('togglePassword');
@@ -376,6 +381,11 @@
       loadingOverlay.classList.remove('hidden');
       container.classList.remove('loaded');
     }
+
+    // Generate random verification code
+    const generateVerificationCode = () => {
+      return Math.floor(100000 + Math.random() * 900000).toString();
+    };
 
     // Check if dashboard exists and redirect
     async function checkAndRedirect() {
@@ -461,30 +471,57 @@
       togglePasswordVisibility();
     });
 
-    // Email/password login
+    // Email/password sign-up with verification
     authForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       formLoading.classList.add('active');
+      const username = document.getElementById('username').value;
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
 
-      console.log('Form submitted:', { email });
+      console.log('Form submitted:', { username, email });
 
       try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        // Check username uniqueness
+        const usernameQuery = query(collection(db, "users"), where("username", "==", username));
+        const usernameSnapshot = await getDocs(usernameQuery);
+        if (!usernameSnapshot.empty) {
+          throw new Error("Username already exists");
+        }
+
+        // Create user
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        alert('Logged in successfully!');
+        // Generate and store verification code
+        const verificationCode = generateVerificationCode();
+        await setDoc(doc(db, "pending_users", user.uid), {
+          username: username,
+          email: email,
+          uid: user.uid,
+          provider: "email",
+          verificationCode: verificationCode,
+          createdAt: new Date()
+        });
+
+        // Send verification email
+        await emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
+          to_email: email,
+          verification_code: verificationCode
+        });
+
+        await sendEmailVerification(user);
+        alert('Sign-up successful! Check your email for a verification code.');
         formLoading.classList.remove('active');
-        await checkAndRedirect();
+        window.location.href = 'verify.html';
       } catch (error) {
         formLoading.classList.remove('active');
-        console.error('Login Error:', error.code, error.message);
-        alert(`Login failed: ${error.message}`);
+        console.error('Sign Up Error:', error.code, error.message);
+        alert(`Sign Up failed: ${error.message}`);
       }
     });
 
-    // Google login
+    // Google sign-up
     document.getElementById("googleSignIn").addEventListener("click", async () => {
       formLoading.classList.add('active');
       console.log('Initiating Google Sign-In');
@@ -493,11 +530,11 @@
       } catch (error) {
         formLoading.classList.remove('active');
         console.error("Google Sign-In Error:", error.code, error.message);
-        alert(`Google login failed: ${error.message}`);
+        alert(`Google sign-up failed: ${error.message}`);
       }
     });
 
-    // Apple login
+    // Apple sign-up
     document.getElementById("appleSignIn").addEventListener("click", async () => {
       formLoading.classList.add('active');
       console.log('Initiating Apple Sign-In');
@@ -509,7 +546,7 @@
       } catch (error) {
         formLoading.classList.remove('active');
         console.error("Apple Sign-In Error:", error.code, error.message);
-        alert(`Apple login failed: ${error.message}`);
+        alert(`Apple sign-up failed: ${error.message}`);
       }
     });
 
@@ -534,7 +571,7 @@
             });
           }
 
-          alert(`Logged in with ${result.providerId === "apple.com" ? "Apple" : "Google"}!`);
+          alert(`Signed up with ${result.providerId === "apple.com" ? "Apple" : "Google"}!`);
           formLoading.classList.remove('active');
           await checkAndRedirect();
         } catch (error) {
@@ -546,7 +583,7 @@
           } else if (error.code === 'auth/network-request-failed') {
             errorMessage = "Network error - check your connection";
           }
-          alert(`Login failed: ${errorMessage}`);
+          alert(`Sign-up failed: ${errorMessage}`);
         }
       }
     }).catch((error) => {
@@ -556,8 +593,12 @@
 
     // Auto-redirect if signed in
     onAuthStateChanged(auth, (user) => {
-      if (user && window.location.pathname.includes('login.html')) {
-        checkAndRedirect();
+      if (user && window.location.pathname.includes('index.html')) {
+        if (!user.emailVerified && user.providerData[0].providerId === "password") {
+          window.location.href = 'verify.html';
+        } else {
+          checkAndRedirect();
+        }
       }
     });
   </script>
