@@ -522,16 +522,22 @@
       }
     }
 
-    // Redirect to dashboard
+    // Redirect to dashboard or 404
     async function redirectToDashboard() {
       console.log('Checking for /dashboard.html');
       if (await checkFileExists('/dashboard.html')) {
         console.log('dashboard.html found, redirecting');
         window.location.assign('/dashboard.html');
       } else {
-        console.log('dashboard.html not found');
-        showCustomAlert('Signed up successfully! Dashboard not available.', 'Stay Here', hideCustomAlert);
+        console.log('dashboard.html not found, redirecting to 404');
+        window.location.assign('/404.html');
       }
+    }
+
+    // Redirect to 404 on error
+    async function redirectTo404(errorMessage) {
+      console.error('Error occurred:', errorMessage);
+      window.location.assign('/404.html');
     }
 
     // Email/password sign-up
@@ -578,18 +584,7 @@
         await redirectToDashboard();
       } catch (error) {
         formLoading.classList.remove('active');
-        console.error('Sign Up Error:', error.code, error.message);
-        let errorMessage = error.message;
-        if (error.code === 'auth/email-already-in-use') {
-          showCustomAlert('This email is already registered. Please log in.', 'Go to Login', () => {
-            window.location.href = '/login.html';
-          });
-        } else if (error.code === 'permission-denied') {
-          errorMessage = "Database access denied. Please check Firestore rules.";
-          showCustomAlert(errorMessage, 'OK', hideCustomAlert);
-        } else {
-          showCustomAlert(`Sign Up failed: ${errorMessage}`, 'OK', hideCustomAlert);
-        }
+        await redirectTo404(`Sign Up Error: ${error.code} - ${error.message}`);
       }
     });
 
@@ -633,14 +628,7 @@
         }
       } catch (error) {
         formLoading.classList.remove('active');
-        console.error("Google Sign-In Error:", error.code, error.message);
-        let errorMessage = error.message;
-        if (error.code === 'auth/popup-closed-by-user') {
-          errorMessage = "Google sign-in cancelled.";
-        } else if (error.code === 'auth/popup-blocked') {
-          errorMessage = "Popup blocked. Please allow popups.";
-        }
-        showCustomAlert(`Google sign-in failed: ${errorMessage}`, 'OK', hideCustomAlert);
+        await redirectTo404(`Google Sign-In Error: ${error.code} - ${error.message}`);
       }
     });
 
@@ -674,14 +662,7 @@
         }
       } catch (error) {
         formLoading.classList.remove('active');
-        console.error("Apple Sign-In Error:", error.code, error.message);
-        let errorMessage = error.message;
-        if (error.code === 'auth/popup-closed-by-user') {
-          errorMessage = "Apple sign-in cancelled.";
-        } else if (error.code === 'auth/popup-blocked') {
-          errorMessage = "Popup blocked. Please allow popups.";
-        }
-        showCustomAlert(`Apple sign-in failed: ${errorMessage}`, 'OK', hideCustomAlert);
+        await redirectTo404(`Apple Sign-In Error: ${error.code} - ${error.message}`);
       }
     });
 
@@ -689,31 +670,35 @@
     getRedirectResult(auth).then(async (result) => {
       if (result) {
         formLoading.classList.add('active');
-        const user = result.user;
-        const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
-        const userSnapshot = await getDocs(userQuery);
+        try {
+          const user = result.user;
+          const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
+          const userSnapshot = await getDocs(userQuery);
 
-        if (userSnapshot.empty) {
-          await addDoc(collection(db, "users"), {
-            username: user.displayName || (result.providerId === "apple.com" ? "Apple User" : "Google User"),
-            email: user.email || "No email provided",
-            uid: user.uid,
-            provider: result.providerId === "apple.com" ? "apple" : "google",
-            createdAt: new Date()
-          });
+          if (userSnapshot.empty) {
+            await addDoc(collection(db, "users"), {
+              username: user.displayName || (result.providerId === "apple.com" ? "Apple User" : "Google User"),
+              email: user.email || "No email provided",
+              uid: user.uid,
+              provider: result.providerId === "apple.com" ? "apple" : "google",
+              createdAt: new Date()
+            });
+            formLoading.classList.remove('active');
+            await redirectToDashboard();
+          } else {
+            formLoading.classList.remove('active');
+            showCustomAlert('This account is already registered. Please log in.', 'Go to Login', () => {
+              window.location.href = '/login.html';
+            });
+          }
+        } catch (error) {
           formLoading.classList.remove('active');
-          await redirectToDashboard();
-        } else {
-          formLoading.classList.remove('active');
-          showCustomAlert('This account is already registered. Please log in.', 'Go to Login', () => {
-            window.location.href = '/login.html';
-          });
+          await redirectTo404(`Redirect Error: ${error.code} - ${error.message}`);
         }
       }
     }).catch((error) => {
       formLoading.classList.remove('active');
-      console.error("Redirect Error:", error.code, error.message);
-      showCustomAlert(`Sign-in failed: ${error.message}`, 'OK', hideCustomAlert);
+      redirectTo404(`Redirect Error: ${error.code} - ${error.message}`);
     });
 
     // Toggle to login page
@@ -723,8 +708,8 @@
         console.log('login.html found, redirecting');
         window.location.href = '/login.html';
       } else {
-        console.log('login.html not found');
-        showCustomAlert('Login page not found. Please contact support.', 'OK', hideCustomAlert);
+        console.log('login.html not found, redirecting to 404');
+        window.location.assign('/404.html');
       }
     });
   </script>
