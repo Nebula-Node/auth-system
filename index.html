@@ -217,21 +217,21 @@
         margin-top: 1rem;
       }
       .signup-link {
-      text-align: center;
-      margin-top: 1rem;
-      font-size: 0.9rem;
-      color: #fff;
-    }
-       .signup-link a {
-      color: red;
-      text-decoration: none;
-    }
+        text-align: center;
+        margin-top: 1rem;
+        font-size: 0.9rem;
+        color: #fff;
+      }
+      .signup-link a {
+        color: #ff0000;
+        text-decoration: none;
+      }
 
-    . a:hover {
-      text-decoration: underline;
-    }
+      .signup-link a:hover {
+        text-decoration: underline;
+      }
 
-      . h2 {
+      .h2 {
         font-size: 1.5rem;
       }
 
@@ -324,7 +324,7 @@
       </form>
 
       <div class="social-signin">
-        <p>Or sign in with:</p>
+        <p>Or sign up with:</p>
         <button id="googleSignIn">
           <svg viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg" width="20" height="20">
             <path fill="#4285f4" d="M533.5 278.4c0-17.3-1.6-34.3-4.7-50.7H272v95.9h146.9c-6.4 34.8-25.9 64.2-55.2 83.8v69.3h89.1c52.1-48 80.7-118.8 80.7-198.3z"/>
@@ -342,8 +342,8 @@
         </button>
       </div>
 
-     <p class="signup-link">
-        Don't have an account?
+      <p class="signup-link">
+        Already have an account?
         <a href="login.html" style="color: #ff0000;">Log in here</a>
       </p>
     </div>
@@ -354,7 +354,6 @@
     import {
         getAuth,
         createUserWithEmailAndPassword,
-        signInWithEmailAndPassword,
         GoogleAuthProvider,
         OAuthProvider,
         signInWithPopup,
@@ -376,12 +375,7 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    let isSignUp = true;
-
-    const authTitle = document.getElementById('authTitle');
     const authForm = document.getElementById('authForm');
-    const authButton = document.getElementById('authButton');
-    const toggleAuth = document.getElementById('toggleAuth');
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
     const togglePassword = document.getElementById('togglePassword');
@@ -389,34 +383,27 @@
     const container = document.querySelector('.container');
     const formLoading = document.getElementById('formLoading');
 
+    // Function to check if dashboard exists and redirect accordingly
+    async function checkAndRedirect() {
+      try {
+        const response = await fetch('dashboard.html', { method: 'HEAD' });
+        if (response.ok) {
+          window.location.href = 'dashboard.html';
+        } else {
+          window.location.href = '404.html';
+        }
+      } catch (error) {
+        console.error('Error checking dashboard:', error);
+        window.location.href = '404.html';
+      }
+    }
+
     // Page load animation
     window.addEventListener('load', () => {
       setTimeout(() => {
         loadingOverlay.classList.add('hidden');
         container.classList.add('loaded');
       }, 2000);
-    });
-
-    const updateForm = () => {
-        authTitle.textContent = isSignUp ? 'Sign Up' : 'Log In';
-        authButton.textContent = isSignUp ? 'Sign Up' : 'Log In';
-        toggleAuth.textContent = isSignUp ? 'Already have an account? Log in here' : 'Don’t have an account? Sign up here';
-        usernameInput.style.display = isSignUp ? 'block' : 'none';
-        usernameInput.required = isSignUp;
-    };
-
-    toggleAuth.addEventListener('click', () => {
-        isSignUp = !isSignUp;
-        if (!isSignUp) {
-            // Show loading overlay before redirecting
-            loadingOverlay.classList.remove('hidden');
-            container.classList.remove('loaded');
-            setTimeout(() => {
-                window.location.href = 'login.html';
-            }, 2000);
-        } else {
-            updateForm();
-        }
     });
 
     // Password toggle functionality with animation and 2-second auto-revert
@@ -485,38 +472,35 @@
         formLoading.classList.add('active');
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
-        const username = isSignUp ? document.getElementById('username').value : '';
+        const username = document.getElementById('username').value;
+
+        console.log('Form submitted:', { username, email });
 
         try {
-            if (isSignUp) {
-                const usernameQuery = query(collection(db, "users"), where("username", "==", username));
-                const usernameSnapshot = await getDocs(usernameQuery);
-                if (!usernameSnapshot.empty) {
-                    throw new Error("Username already exists");
-                }
-
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-
-                await addDoc(collection(db, "users"), {
-                    username: username,
-                    email: email,
-                    uid: user.uid,
-                    provider: "email",
-                    createdAt: new Date()
-                });
-
-                alert('User registered successfully!');
-            } else {
-                await signInWithEmailAndPassword(auth, email, password);
-                alert('Logged in successfully!');
+            const usernameQuery = query(collection(db, "users"), where("username", "==", username));
+            const usernameSnapshot = await getDocs(usernameQuery);
+            if (!usernameSnapshot.empty) {
+                throw new Error("Username already exists");
             }
+
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            await addDoc(collection(db, "users"), {
+                username: username,
+                email: email,
+                uid: user.uid,
+                provider: "email",
+                createdAt: new Date()
+            });
+
+            alert('User registered successfully!');
             formLoading.classList.remove('active');
-            window.location.href = "dashboard.html";
+            await checkAndRedirect();
         } catch (error) {
             formLoading.classList.remove('active');
-            console.error('Error:', error.message);
-            alert(`${isSignUp ? 'Sign Up' : 'Log In'} failed: ${error.message}`);
+            console.error('Sign Up Error:', error.code, error.message);
+            alert(`Sign Up failed: ${error.message}`);
         }
     });
 
@@ -526,6 +510,7 @@
     document.getElementById("googleSignIn").addEventListener("click", async () => {
         formLoading.classList.add('active');
         try {
+            console.log('Initiating Google Sign-In');
             const result = await signInWithPopup(auth, googleProvider);
             const user = result.user;
 
@@ -542,24 +527,26 @@
                         createdAt: new Date()
                     });
                 } catch (firestoreError) {
-                    console.error("Firestore write error:", firestoreError);
+                    console.error("Firestore write error:", firestoreError.code, firestoreError.message);
                     throw new Error("Failed to save user data: " + firestoreError.message);
                 }
             }
 
-            alert('Signed in with Google!');
+            alert('Signed up with Google!');
             formLoading.classList.remove('active');
-            window.location.href = "dashboard.html";
+            await checkAndRedirect();
         } catch (error) {
             formLoading.classList.remove('active');
-            console.error("Google Sign-In Error:", error);
+            console.error("Google Sign-In Error:", error.code, error.message);
             let errorMessage = error.message;
             if (error.code === 'auth/popup-closed-by-user') {
                 errorMessage = "Google sign-in was cancelled";
             } else if (error.code === 'auth/network-request-failed') {
                 errorMessage = "Network error - please check your connection";
+            } else if (error.code === 'auth/unauthorized-domain') {
+                errorMessage = "Unauthorized domain - please check Firebase Console settings";
             }
-            alert("Google sign-in failed: " + errorMessage);
+            alert("Google sign-up failed: " + errorMessage);
         }
     });
 
@@ -569,6 +556,7 @@
     document.getElementById("appleSignIn").addEventListener("click", async () => {
         formLoading.classList.add('active');
         try {
+            console.log('Initiating Apple Sign-In');
             const result = await signInWithPopup(auth, appleProvider);
             const user = result.user;
 
@@ -585,19 +573,19 @@
                 });
             }
 
-            alert('Signed in with Apple!');
+            alert('Signed up with Apple!');
             formLoading.classList.remove('active');
-            window.location.href = "dashboard.html";
+            await checkAndRedirect();
         } catch (error) {
             formLoading.classList.remove('active');
-            console.error("Apple Sign-In Error:", error);
-            alert("Apple sign-in failed: " + error.message);
+            console.error("Apple Sign-In Error:", error.code, error.message);
+            alert("Apple sign-up failed: " + error.message);
         }
     });
 
     onAuthStateChanged(auth, (user) => {
         if (user && window.location.pathname.includes('index.html')) {
-            window.location.href = 'dashboard.html';
+            checkAndRedirect();
         }
     });
   </script>
