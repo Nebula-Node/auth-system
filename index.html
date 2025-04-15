@@ -377,7 +377,7 @@
       setTimeout(() => {
         loadingOverlay.classList.add('hidden');
         container.classList.add('loaded');
-      }, 2000); // Adjust timing as needed
+      }, 2000);
     });
 
     const updateForm = () => {
@@ -390,7 +390,16 @@
 
     toggleAuth.addEventListener('click', () => {
         isSignUp = !isSignUp;
-        updateForm();
+        if (!isSignUp) {
+            // Show loading overlay before redirecting
+            loadingOverlay.classList.remove('hidden');
+            container.classList.remove('loaded');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 2000);
+        } else {
+            updateForm();
+        }
     });
 
     // Password toggle functionality with animation and 2-second auto-revert
@@ -400,19 +409,16 @@
     const togglePasswordVisibility = () => {
         isPasswordVisible = !isPasswordVisible;
         
-        // Clear any existing timeout to prevent conflicts
         if (autoHideTimeout) {
             clearTimeout(autoHideTimeout);
             autoHideTimeout = null;
         }
         
-        // Update input type and icon
         passwordInput.type = isPasswordVisible ? 'text' : 'password';
         togglePassword.innerHTML = isPasswordVisible 
             ? `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />`
             : `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>`;
         
-        // Animate input (scale and opacity) and icon (opacity only)
         passwordInput.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
         togglePassword.style.transition = 'opacity 0.3s ease';
         
@@ -426,7 +432,6 @@
             togglePassword.style.opacity = '1';
         }, 300);
         
-        // Set 2-second auto-revert if showing password
         if (isPasswordVisible) {
             autoHideTimeout = setTimeout(() => {
                 if (isPasswordVisible) {
@@ -434,7 +439,6 @@
                     passwordInput.type = 'password';
                     togglePassword.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>`;
                     
-                    // Animate on auto-revert
                     passwordInput.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
                     togglePassword.style.transition = 'opacity 0.3s ease';
                     
