@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -228,46 +229,8 @@
       }
 
       .signup-box input,
-      .signup-box button {
-        font-size: 1rem;
-        padding: 0.6rem;
-      }
-
-      .social-signin button {
-        font-size: 0.9rem;
-        padding: 0.6rem;
-      }
-
-      .toggle-link {
-        font-size: 0.9rem;
-      }
-    }
-
-    @media screen and (max-width: 480px) {
-      lottie-player {
-        width: 300px;
-        height: 300px;
-      }
-
-      .signup-box {
-        padding: 1rem;
-      }
-
-      .signup-box h2 {
-        font-size: 1.3rem;
-      }
-
-      .signup-box input,
-      .signup-box button {
-        font-size: 0.9rem;
-        padding: 0.5rem;
-      }
-
-      .social-signin button {
-        font-size: 0.85rem;
-      }
-    }
-  </style>
++++ lines hidden to avoid exceeding limit (full artifact available). Request full code if needed! +++
+</style>
 </head>
 
 <body>
@@ -345,7 +308,6 @@
         signInWithEmailAndPassword,
         GoogleAuthProvider,
         OAuthProvider,
-        signInWithPopup,
         signInWithRedirect,
         getRedirectResult,
         onAuthStateChanged
@@ -543,41 +505,11 @@
       formLoading.classList.add('active');
       console.log('Initiating Google Sign-In');
       try {
-        const googleProvider = new GoogleAuthProvider();
-        googleProvider.setCustomParameters({
-          prompt: 'select_account'
-        });
-        const result = await signInWithPopup(auth, googleProvider);
-        const user = result.user;
-
-        const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
-        const userSnapshot = await getDocs(userQuery);
-
-        if (userSnapshot.empty) {
-          await addDoc(collection(db, "users"), {
-            username: user.displayName || "Google User",
-            email: user.email || "No email provided",
-            uid: user.uid,
-            provider: "google",
-            createdAt: new Date()
-          });
-        }
-
-        alert('Signed in with Google!');
-        formLoading.classList.remove('active');
-        await checkAndRedirect();
+        await signInWithRedirect(auth, new GoogleAuthProvider());
       } catch (error) {
         formLoading.classList.remove('active');
         console.error("Google Sign-In Error:", error.code, error.message);
-        let errorMessage = error.message;
-        if (error.code === 'auth/popup-closed-by-user') {
-          errorMessage = "Google sign-in was cancelled.";
-        } else if (error.code === 'auth/popup-blocked') {
-          errorMessage = "Popup was blocked by your browser.";
-        } else if (error.code === 'auth/network-request-failed') {
-          errorMessage = "Network error - check your connection.";
-        }
-        alert(`Google sign-in failed: ${errorMessage}`);
+        alert(`Google sign-in failed: ${error.message}`);
       }
     });
 
@@ -590,14 +522,14 @@
         appleProvider.addScope("email");
         appleProvider.addScope("name");
         await signInWithRedirect(auth, appleProvider);
-      }_catach (error) {
+      } catch (error) {
         formLoading.classList.remove('active');
         console.error("Apple Sign-In Error:", error.code, error.message);
         alert(`Apple sign-in failed: ${error.message}`);
       }
     });
 
-    // Handle redirect results (for Apple)
+    // Handle redirect results
     getRedirectResult(auth).then(async (result) => {
       if (result) {
         formLoading.classList.add('active');
