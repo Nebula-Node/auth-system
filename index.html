@@ -493,22 +493,25 @@
               },
             }),
           });
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`EmailJS failed: ${response.status} - ${errorText}`);
+          }
           const responseText = await response.text();
           console.log(`EmailJS Response (attempt ${attempt + 1}):`, responseText);
-          if (!response.ok) throw new Error(`EmailJS attempt ${attempt + 1} failed: ${response.status} - ${responseText}`);
           console.log(`Verification email sent to ${email} from info@evaclin.life`);
           return true;
         } catch (error) {
-          console.error(`EmailJS Error (attempt ${attempt + 1}):`, error);
+          console.error(`EmailJS Error (attempt ${attempt + 1}):`, error.message);
           attempt++;
           if (attempt > maxRetries) {
             console.error('Max retries reached for EmailJS');
-            return false;
+            return { success: false, error: error.message };
           }
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
       }
-      return false;
+      return { success: false, error: 'Unknown error after retries' };
     }
     async function cleanupPendingUser(email) {
       try {
@@ -542,13 +545,13 @@
         const user = userCredential.user;
         const verificationCode = generateVerificationCode();
         console.log('Sending verification email');
-        const emailSent = await sendVerificationEmail(email, verificationCode);
-        if (!emailSent) {
+        const emailResult = await sendVerificationEmail(email, verificationCode);
+        if (!emailResult.success) {
           console.error('Email sending failed, deleting user');
           await user.delete();
           await cleanupPendingUser(email);
           formLoading.classList.remove('active');
-          showCustomAlert('Failed to send verification email. Please try again.', 'Try Again', hideCustomAlert);
+          showCustomAlert(`Failed to send verification email: ${emailResult.error}. Please try again.`, 'Try Again', hideCustomAlert);
           return;
         }
         console.log('Storing pending user data');
@@ -584,7 +587,7 @@
         } else if (error.code === 'auth/invalid-email') {
           showCustomAlert('Invalid email format.', 'Try Again', hideCustomAlert);
         } else {
-          showCustomAlert('Sign-up failed. Please try again.', 'Try Again', hideCustomAlert);
+          showCustomAlert(`Sign-up failed: ${error.message}. Please try again.`, 'Try Again', hideCustomAlert);
         }
       }
     });
