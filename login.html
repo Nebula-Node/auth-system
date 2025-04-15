@@ -379,8 +379,7 @@
       OAuthProvider,
       signInWithRedirect,
       getRedirectResult,
-      sendPasswordResetEmail,
-      onAuthStateChanged
+      sendPasswordResetEmail
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
     import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
@@ -442,23 +441,25 @@
       return username.replace(/[^a-zA-Z0-9]/g, '');
     };
 
-    // Check if a page exists before redirecting
+    // Check if a page exists
     const checkPageExists = async (url) => {
       try {
-        const response = await fetch(url, { method: 'HEAD', cache: 'no-store' });
-        return response.ok; // Returns true if status is 200-299
-      } catch (error) {
-        console.error(`Error checking page ${url}:`, error);
+        const response = await fetch(url, { method: 'HEAD' });
+        return response.ok;
+      } catch {
         return false;
       }
     };
 
-    // Handle redirect with 404 fallback
+    // Redirect to dashboard or 404
     const redirectWithFallback = async () => {
       const dashboardUrl = 'loginpages/dashboard.html';
       const fallbackUrl = '404.html';
-      const pageExists = await checkPageExists(dashboardUrl);
-      window.location.href = pageExists ? dashboardUrl : fallbackUrl;
+      if (await checkPageExists(dashboardUrl)) {
+        window.location.href = dashboardUrl;
+      } else {
+        window.location.href = fallbackUrl;
+      }
     };
 
     // Password toggle functionality
@@ -663,14 +664,6 @@
       formLoading.classList.remove('active');
       console.error("Redirect sign-in error:", error);
       showError("Sign-in failed: " + error.message);
-    });
-
-    // Check auth state on page load
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        // User is signed in, attempt redirect
-        redirectWithFallback();
-      }
     });
   </script>
 </body>
