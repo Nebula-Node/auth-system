@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,6 +21,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      overflow: hidden;
     }
 
     .container {
@@ -31,6 +31,12 @@
       max-width: 1200px;
       width: 100%;
       gap: 2rem;
+      opacity: 0;
+      transition: opacity 0.5s ease-in;
+    }
+
+    .container.loaded {
+      opacity: 1;
     }
 
     .signup-box {
@@ -41,6 +47,7 @@
       width: 100%;
       max-width: 350px;
       border: 1px solid #f00;
+      position: relative;
     }
 
     .signup-box h2 {
@@ -139,8 +146,62 @@
       text-align: center;
       margin-top: 1rem;
       cursor: pointer;
-      color: red;
+      color: #ff0000;
       text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.3s ease;
+    }
+
+    .toggle-link:hover {
+      text-decoration: underline;
+    }
+
+    #loadingOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+
+    #loadingOverlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #loadingOverlay lottie-player {
+      width: 300px;
+      height: 300px;
+    }
+
+    #formLoading {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+      border-radius: 12px;
+    }
+
+    #formLoading.active {
+      display: flex;
+    }
+
+    #formLoading lottie-player {
+      width: 100px;
+      height: 100px;
     }
 
     @media screen and (max-width: 768px) {
@@ -167,51 +228,22 @@
       }
 
       .signup-box input,
-      .signup-box button {
-        font-size: 1rem;
-        padding: 0.6rem;
-      }
-
-      .social-signin button {
-        font-size: 0.9rem;
-        padding: 0.6rem;
-      }
-
-      .toggle-link {
-        font-size: 0.9rem;
-      }
-    }
-
-    @media screen and (max-width: 480px) {
-      lottie-player {
-        width: 300px;
-        height: 300px;
-      }
-
-      .signup-box {
-        padding: 1rem;
-      }
-
-      .signup-box h2 {
-        font-size: 1.3rem;
-      }
-
-      .signup-box input,
-      .signup-box button {
-        font-size: 0.9rem;
-        padding: 0.5rem;
-      }
-
-      .social-signin button {
-        font-size: 0.85rem;
-      }
-    }
-  </style>
++++ lines hidden to avoid exceeding limit (full artifact available). Request full code if needed! +++
+</style>
 </head>
 
 <body>
+  <div id="loadingOverlay">
+    <lottie-player
+      src="Animation - 1744696593398.json"
+      background="transparent"
+      speed="1"
+      loop
+      autoplay>
+    </lottie-player>
+  </div>
+
   <div class="container">
-    <!-- Lottie Animation -->
     <lottie-player
       src="Animation - 1744470672068.json"
       background="transparent"
@@ -221,6 +253,15 @@
     </lottie-player>
 
     <div class="signup-box">
+      <div id="formLoading">
+        <lottie-player
+          src="Animation - 1744696593398.json"
+          background="transparent"
+          speed="1"
+          loop
+          autoplay>
+        </lottie-player>
+      </div>
       <h2 id="authTitle">Sign Up</h2>
       <form id="authForm">
         <input type="text" name="username" id="username" placeholder="Username" required />
@@ -266,7 +307,8 @@
         signInWithEmailAndPassword,
         GoogleAuthProvider,
         OAuthProvider,
-        signInWithPopup,
+        signInWithRedirect,
+        getRedirectResult,
         onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
     import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
@@ -294,196 +336,246 @@
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
     const togglePassword = document.getElementById('togglePassword');
+    const container = document.querySelector('.container');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const formLoading = document.getElementById('formLoading');
 
+    // Update form for sign-up/login toggle
     const updateForm = () => {
-        authTitle.textContent = isSignUp ? 'Sign Up' : 'Log In';
-        authButton.textContent = isSignUp ? 'Sign Up' : 'Log In';
-        toggleAuth.textContent = isSignUp ? 'Already have an account? Log in here' : 'Don’t have an account? Sign up here';
-        usernameInput.style.display = isSignUp ? 'block' : 'none';
-        usernameInput.required = isSignUp;
+      authTitle.textContent = isSignUp ? 'Sign Up' : 'Log In';
+      authButton.textContent = isSignUp ? 'Sign Up' : 'Log In';
+      toggleAuth.textContent = isSignUp ? 'Already have an account? Log in here' : 'Don’t have an account? Sign up here';
+      usernameInput.style.display = isSignUp ? 'block' : 'none';
+      usernameInput.style.transition = 'opacity 0.3s ease';
+      usernameInput.style.opacity = isSignUp ? '1' : '0';
+      usernameInput.required = isSignUp;
     };
 
     toggleAuth.addEventListener('click', () => {
-        isSignUp = !isSignUp;
-        updateForm();
+      isSignUp = !isSignUp;
+      updateForm();
     });
 
-    // Password toggle functionality with animation and 2-second auto-revert
+    // Page load animation
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        loadingOverlay.classList.add('hidden');
+        container.classList.add('loaded');
+      }, 2000);
+    });
+
+    // Password toggle with 2-second auto-revert
     let isPasswordVisible = false;
     let autoHideTimeout = null;
 
     const togglePasswordVisibility = () => {
-        isPasswordVisible = !isPasswordVisible;
-        
-        // Clear any existing timeout to prevent conflicts
-        if (autoHideTimeout) {
-            clearTimeout(autoHideTimeout);
-            autoHideTimeout = null;
-        }
-        
-        // Update input type and icon
-        passwordInput.type = isPasswordVisible ? 'text' : 'password';
-        togglePassword.innerHTML = isPasswordVisible 
-            ? `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />`
-            : `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>`;
-        
-        // Animate input (scale and opacity) and icon (opacity only)
-        passwordInput.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-        togglePassword.style.transition = 'opacity 0.3s ease';
-        
-        passwordInput.style.opacity = '0.7';
-        passwordInput.style.transform = 'scale(0.98)';
-        togglePassword.style.opacity = '0.7';
-        
-        setTimeout(() => {
-            passwordInput.style.opacity = '1';
-            passwordInput.style.transform = 'scale(1)';
-            togglePassword.style.opacity = '1';
-        }, 300);
-        
-        // Set 2-second auto-revert if showing password
-        if (isPasswordVisible) {
-            autoHideTimeout = setTimeout(() => {
-                if (isPasswordVisible) {
-                    isPasswordVisible = false;
-                    passwordInput.type = 'password';
-                    togglePassword.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>`;
-                    
-                    // Animate on auto-revert
-                    passwordInput.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-                    togglePassword.style.transition = 'opacity 0.3s ease';
-                    
-                    passwordInput.style.opacity = '0.7';
-                    passwordInput.style.transform = 'scale(0.98)';
-                    togglePassword.style.opacity = '0.7';
-                    
-                    setTimeout(() => {
-                        passwordInput.style.opacity = '1';
-                        passwordInput.style.transform = 'scale(1)';
-                        togglePassword.style.opacity = '1';
-                    }, 300);
-                }
-                autoHideTimeout = null;
-            }, 2000);
-        }
+      console.log('Toggling password visibility');
+      isPasswordVisible = !isPasswordVisible;
+
+      if (autoHideTimeout) {
+        clearTimeout(autoHideTimeout);
+        autoHideTimeout = null;
+      }
+
+      passwordInput.type = isPasswordVisible ? 'text' : 'password';
+      togglePassword.innerHTML = isPasswordVisible
+        ? `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />`
+        : `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>`;
+
+      passwordInput.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+      togglePassword.style.transition = 'opacity 0.3s ease';
+      passwordInput.style.opacity = '0.7';
+      passwordInput.style.transform = 'scale(0.98)';
+      togglePassword.style.opacity = '0.7';
+
+      setTimeout(() => {
+        passwordInput.style.opacity = '1';
+        passwordInput.style.transform = 'scale(1)';
+        togglePassword.style.opacity = '1';
+      }, 300);
+
+      if (isPasswordVisible) {
+        autoHideTimeout = setTimeout(() => {
+          if (isPasswordVisible) {
+            console.log('Auto-reverting password visibility');
+            isPasswordVisible = false;
+            passwordInput.type = 'password';
+            togglePassword.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>`;
+
+            passwordInput.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            togglePassword.style.transition = 'opacity 0.3s ease';
+            passwordInput.style.opacity = '0.7';
+            passwordInput.style.transform = 'scale(0.98)';
+            togglePassword.style.opacity = '0.7';
+
+            setTimeout(() => {
+              passwordInput.style.opacity = '1';
+              passwordInput.style.transform = 'scale(1)';
+              togglePassword.style.opacity = '1';
+            }, 300);
+          }
+          autoHideTimeout = null;
+        }, 2000);
+      }
     };
 
     togglePassword.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        togglePasswordVisibility();
+      e.preventDefault();
+      e.stopPropagation();
+      togglePasswordVisibility();
     });
 
+    // Check if dashboard exists and redirect
+    async function checkAndRedirect() {
+      try {
+        const response = await fetch('dashboard.html', { method: 'HEAD' });
+        if (response.ok) {
+          window.location.href = 'dashboard.html';
+        } else {
+          window.location.href = '404.html';
+        }
+      } catch (error) {
+        console.error('Error checking dashboard:', error);
+        window.location.href = '404.html';
+      }
+    }
+
+    // Email/password auth
     authForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const username = isSignUp ? document.getElementById('username').value : '';
+      e.preventDefault();
+      formLoading.classList.add('active');
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const username = isSignUp ? document.getElementById('username').value : '';
 
-        try {
-            if (isSignUp) {
-                const usernameQuery = query(collection(db, "users"), where("username", "==", username));
-                const usernameSnapshot = await getDocs(usernameQuery);
-                if (!usernameSnapshot.empty) {
-                    throw new Error("Username already exists");
-                }
+      try {
+        if (isSignUp) {
+          const usernameQuery = query(collection(db, "users"), where("username", "==", username));
+          const usernameSnapshot = await getDocs(usernameQuery);
+          if (!usernameSnapshot.empty) {
+            throw new Error("Username already exists");
+          }
 
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
+          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          const user = userCredential.user;
 
-                await addDoc(collection(db, "users"), {
-                    username: username,
-                    email: email,
-                    uid: user.uid,
-                    provider: "email",
-                    createdAt: new Date()
-                });
+          // Wait for auth state
+          await new Promise((resolve) => {
+            const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+              if (currentUser) {
+                unsubscribe();
+                resolve();
+              }
+            });
+          });
 
-                alert('User registered successfully!');
-            } else {
-                await signInWithEmailAndPassword(auth, email, password);
-                alert('Logged in successfully!');
-            }
-            window.location.href = "dashboard.html";
-        } catch (error) {
-            console.error('Error:', error.message);
-            alert(`${isSignUp ? 'Sign Up' : 'Log In'} failed: ${error.message}`);
+          await addDoc(collection(db, "users"), {
+            username: username,
+            email: email,
+            uid: user.uid,
+            provider: "email",
+            createdAt: new Date()
+          });
+
+          alert('User registered successfully!');
+        } else {
+          await signInWithEmailAndPassword(auth, email, password);
+          alert('Logged in successfully!');
         }
+        formLoading.classList.remove('active');
+        await checkAndRedirect();
+      } catch (error) {
+        formLoading.classList.remove('active');
+        console.error(`${isSignUp ? 'Sign Up' : 'Log In'} Error:`, error.code, error.message);
+        let errorMessage = error.message;
+        if (error.code === 'auth/email-already-in-use') {
+          errorMessage = "This email is already registered.";
+        } else if (error.code === 'auth/invalid-credential') {
+          errorMessage = "Incorrect email or password.";
+        } else if (error.code === 'permission-denied') {
+          errorMessage = "Database access denied. Please check Firestore rules.";
+        }
+        alert(`${isSignUp ? 'Sign Up' : 'Log In'} failed: ${errorMessage}`);
+      }
     });
 
-    const googleProvider = new GoogleAuthProvider();
-    googleProvider.addScope('profile');
-    googleProvider.addScope('email');
+    // Google sign-in
     document.getElementById("googleSignIn").addEventListener("click", async () => {
-        try {
-            const result = await signInWithPopup(auth, googleProvider);
-            const user = result.user;
-
-            const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
-            const userSnapshot = await getDocs(userQuery);
-
-            if (userSnapshot.empty) {
-                try {
-                    await addDoc(collection(db, "users"), {
-                        username: user.displayName || "Google User",
-                        email: user.email || "No email provided",
-                        uid: user.uid,
-                        provider: "google",
-                        createdAt: new Date()
-                    });
-                } catch (firestoreError) {
-                    console.error("Firestore write error:", firestoreError);
-                    throw new Error("Failed to save user data: " + firestoreError.message);
-                }
-            }
-
-            alert('Signed in with Google!');
-            window.location.href = "dashboard.html";
-        } catch (error) {
-            console.error("Google Sign-In Error:", error);
-            let errorMessage = error.message;
-            if (error.code === 'auth/popup-closed-by-user') {
-                errorMessage = "Google sign-in was cancelled";
-            } else if (error.code === 'auth/network-request-failed') {
-                errorMessage = "Network error - please check your connection";
-            }
-            alert("Google sign-in failed: " + errorMessage);
-        }
+      formLoading.classList.add('active');
+      console.log('Initiating Google Sign-In');
+      try {
+        await signInWithRedirect(auth, new GoogleAuthProvider());
+      } catch (error) {
+        formLoading.classList.remove('active');
+        console.error("Google Sign-In Error:", error.code, error.message);
+        alert(`Google sign-in failed: ${error.message}`);
+      }
     });
 
-    const appleProvider = new OAuthProvider('apple.com');
-    appleProvider.addScope("email");
-    appleProvider.addScope("name");
+    // Apple sign-in
     document.getElementById("appleSignIn").addEventListener("click", async () => {
-        try {
-            const result = await signInWithPopup(auth, appleProvider);
-            const user = result.user;
-
-            const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
-            const userSnapshot = await getDocs(userQuery);
-
-            if (userSnapshot.empty) {
-                await addDoc(collection(db, "users"), {
-                    username: user.displayName || "Apple User",
-                    email: user.email || "No email provided",
-                    uid: user.uid,
-                    provider: "apple",
-                    createdAt: new Date()
-                });
-            }
-
-            alert('Signed in with Apple!');
-            window.location.href = "dashboard.html";
-        } catch (error) {
-            console.error("Apple Sign-In Error:", error);
-            alert("Apple sign-in failed: " + error.message);
-        }
+      formLoading.classList.add('active');
+      console.log('Initiating Apple Sign-In');
+      try {
+        const appleProvider = new OAuthProvider('apple.com');
+        appleProvider.addScope("email");
+        appleProvider.addScope("name");
+        await signInWithRedirect(auth, appleProvider);
+      } catch (error) {
+        formLoading.classList.remove('active');
+        console.error("Apple Sign-In Error:", error.code, error.message);
+        alert(`Apple sign-in failed: ${error.message}`);
+      }
     });
 
-    onAuthStateChanged(auth, (user) => {
-        if (user && window.location.pathname.includes('index.html')) {
-            window.location.href = 'dashboard.html';
+    // Handle redirect results
+    getRedirectResult(auth).then(async (result) => {
+      if (result) {
+        formLoading.classList.add('active');
+        const user = result.user;
+        console.log('Processing redirect result for:', user.uid);
+
+        try {
+          const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
+          const userSnapshot = await getDocs(userQuery);
+
+          if (userSnapshot.empty) {
+            await addDoc(collection(db, "users"), {
+              username: user.displayName || (result.providerId === "apple.com" ? "Apple User" : "Google User"),
+              email: user.email || "No email provided",
+              uid: user.uid,
+              provider: result.providerId === "apple.com" ? "apple" : "google",
+              createdAt: new Date()
+            });
+          }
+
+          alert(`Signed in with ${result.providerId === "apple.com" ? "Apple" : "Google"}!`);
+          formLoading.classList.remove('active');
+          await checkAndRedirect();
+        } catch (error) {
+          formLoading.classList.remove('active');
+          console.error("Redirect Result Error:", error.code, error.message);
+          let errorMessage = error.message;
+          if (error.code === 'auth/unauthorized-domain') {
+            errorMessage = "Unauthorized domain - check Firebase Console";
+          } else if (error.code === 'auth/network-request-failed') {
+            errorMessage = "Network error - check your connection";
+          } else if (error.code === 'permission-denied') {
+            errorMessage = "Database access denied. Please check Firestore rules.";
+          }
+          alert(`Sign-in failed: ${errorMessage}`);
         }
+      }
+    }).catch((error) => {
+      formLoading.classList.remove('active');
+      console.error("Redirect Error:", error.code, error.message);
+    });
+
+    // Auto-redirect if signed in
+    onAuthStateChanged(auth, (user) => {
+      if (user && window.location.pathname.includes('index.html')) {
+        checkAndRedirect();
+      }
     });
   </script>
 </body>
