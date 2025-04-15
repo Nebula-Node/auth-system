@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
-  <title>Login - Auth System</title>
+  <title>Auth System</title>
+
   <style>
     * {
       box-sizing: border-box;
@@ -30,20 +31,12 @@
       max-width: 1200px;
       width: 100%;
       gap: 2rem;
-      padding: 2rem;
       opacity: 0;
       transition: opacity 0.5s ease-in;
     }
 
     .container.loaded {
       opacity: 1;
-    }
-
-    .auth-header {
-      font-size: 2rem;
-      color: #f00;
-      margin-bottom: 1.5rem;
-      letter-spacing: 2px;
     }
 
     .signup-box {
@@ -96,40 +89,10 @@
       background: #cc0000;
     }
 
-    .error-message {
-      color: #ff4444;
-      font-size: 0.9rem;
-      margin-top: 0.5rem;
-      display: none;
-    }
-
-    .forgot-password {
-      text-align: center;
-      margin-top: 0.5rem;
-      cursor: pointer;
-      color: #f00;
-      font-size: 0.9rem;
-      text-decoration: none;
-    }
-
-    .signup-link {
-      text-align: center;
-      margin-top: 1rem;
-      font-size: 0.9rem;
-      color: #fff;
-    }
-
-    .signup-link a {
-      color: red;
-      text-decoration: none;
-    }
-
-    .signup-link a:hover {
-      text-decoration: underline;
-    }
-
-    .forgot-password:hover {
-      text-decoration: underline;
+    lottie-player {
+      width: 750px;
+      height: 750px;
+      flex-shrink: 0;
     }
 
     .social-signin {
@@ -179,11 +142,12 @@
       height: 20px;
     }
 
-    lottie-player {
-      max-width: 750px;
-      width: 100%;
-      height: auto;
-      flex-shrink: 0;
+    .toggle-link {
+      text-align: center;
+      margin-top: 1rem;
+      cursor: pointer;
+      color: red;
+      text-decoration: none;
     }
 
     #loadingOverlay {
@@ -234,12 +198,7 @@
       height: 100px;
     }
 
-    @media (max-width: 768px) {
-      body {
-        flex-direction: column;
-        padding: 1rem;
-      }
-
+    @media screen and (max-width: 768px) {
       .container {
         flex-direction: column;
         align-items: center;
@@ -247,36 +206,73 @@
       }
 
       lottie-player {
-        max-width: 300px;
-        height: auto;
+        width: 300px;
+        height: 300px;
       }
 
       .signup-box {
+        width: 100%;
         max-width: 90%;
         padding: 1.5rem;
+        margin-top: 1rem;
       }
+      .signup-link {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: #fff;
+    }
+       .signup-link a {
+      color: #ff0000; /* Explicit red color */
+      text-decoration: none;
+    }
 
-      .signup-box h2 {
+    .signup-link a:hover {
+      text-decoration: underline;
+    }
+
+      .h2 {
         font-size: 1.5rem;
       }
 
       .signup-box input,
       .signup-box button {
         font-size: 1rem;
+        padding: 0.6rem;
       }
 
       .social-signin button {
-        font-size: 14px;
-        padding: 10px;
-      }
-
-      .social-signin svg {
-        width: 16px;
-        height: 16px;
-      }
-
-      .forgot-password {
         font-size: 0.9rem;
+        padding: 0.6rem;
+      }
+
+      .toggle-link {
+        font-size: 0.9rem;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      lottie-player {
+        width: 300px;
+        height: 300px;
+      }
+
+      .signup-box {
+        padding: 1rem;
+      }
+
+      .signup-box h2 {
+        font-size: 1.3rem;
+      }
+
+      .signup-box input,
+      .signup-box button {
+        font-size: 0.9rem;
+        padding: 0.5rem;
+      }
+
+      .social-signin button {
+        font-size: 0.85rem;
       }
     }
   </style>
@@ -294,14 +290,14 @@
   </div>
 
   <div class="container">
+    <!-- Lottie Animation -->
     <lottie-player
       src="Animation - 1744470672068.json"
       background="transparent"
       speed="1"
       loop
-      autoplay
-      onerror="this.style.display='none'; console.error('Lottie animation failed to load');"
-    ></lottie-player>
+      autoplay>
+    </lottie-player>
 
     <div class="signup-box">
       <div id="formLoading">
@@ -313,59 +309,42 @@
           autoplay>
         </lottie-player>
       </div>
-      <h2>Log In</h2>
-      <form id="loginForm" aria-label="Login form">
-        <div>
-          <input
-            type="email"
-            id="email"
-            placeholder="Email"
-            required
-            aria-label="Email address"
-          />
-        </div>
+      <h2 id="authTitle">Sign Up</h2>
+      <form id="authForm">
+        <input type="text" name="username" id="username" placeholder="Username" required />
+        <input type="email" name="email" id="email" placeholder="Email" required />
         <div style="position: relative; margin: 0.5rem 0;">
-          <input
-            type="password"
-            id="password"
-            placeholder="Password"
-            required
-            aria-label="Password"
-            minlength="6"
-            style="padding-right: 3rem;"
-          />
+          <input type="password" name="password" id="password" placeholder="Password" required style="padding-right: 3rem;" />
           <svg id="togglePassword" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#f00" stroke-width="2" style="position: absolute; right: 0.7rem; top: 50%; transform: translateY(-50%); cursor: pointer; z-index: 10; pointer-events: auto;">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
             <path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>
           </svg>
         </div>
-        <p class="forgot-password" id="forgotPassword">Forgot Password?</p>
-        <p id="error-message" class="error-message" role="alert"></p>
-        <button type="submit">Log In</button>
+        <button type="submit" id="authButton">Sign Up</button>
       </form>
 
       <div class="social-signin">
         <p>Or sign in with:</p>
-        <button id="googleSignIn" aria-label="Sign in with Google">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-            <path fill="#EA4335" d="M24 9.5c3.7 0 7 1.3 9.6 3.9l7.2-7.2C36.2 2.4 30.6 0 24 0 14.6 0 6.4 5.6 2.4 13.6l8.4 6.5C13.4 13 18.3 9.5 24 9.5z"/>
-            <path fill="#4285F4" d="M46.1 24.5c0-1.5-.1-3-.4-4.5H24v9h12.4c-1.1 3-3.3 5.5-6.4 7.2l9.9 7.7c5.7-5.3 9-13.1 9-21.4z"/>
-            <path fill="#FBBC05" d="M10.8 28.1C9.5 24.8 9.5 21.2 10.8 17.9L2.4 11.4c-3.4 6.8-3.4 14.9 0 21.7l8.4-6.5z"/>
-            <path fill="#34A853" d="M24 48c6.5 0 12.2-2.1 16.2-5.6l-9.9-7.7c-2.7 1.8-6.2 2.8-10.3 2.8-5.7 0-10.6-3.5-12.7-8.4l-8.4 6.5C6.4 42.4 14.6 48 24 48z"/>
+        <button id="googleSignIn">
+          <svg viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg" width="20" height="20">
+            <path fill="#4285f4" d="M533.5 278.4c0-17.3-1.6-34.3-4.7-50.7H272v95.9h146.9c-6.4 34.8-25.9 64.2-55.2 83.8v69.3h89.1c52.1-48 80.7-118.8 80.7-198.3z"/>
+            <path fill="#34a853" d="M272 544.3c73.5 0 135.1-24.3 180.1-66.1l-89.1-69.3c-24.7 16.6-56.4 26.4-91 26.4-69.9 0-129.2-47.2-150.4-110.6H30v69.7c45.3 89.2 137.2 149.9 242 149.9z"/>
+            <path fill="#fbbc04" d="M121.6 324.7c-10.2-30-10.2-62.4 0-92.4V162.6H30c-41.9 83.4-41.9 180.7 0 264.1l91.6-70z"/>
+            <path fill="#ea4335" d="M272 107.1c39.9-.6 78.1 14.1 107.3 40.6l80.4-80.4C408.5 25.9 342.6 0 272 0 167.2 0 75.3 60.7 30 149.9l91.6 70c21.2-63.4 80.5-110.6 150.4-110.6z"/>
           </svg>
           Continue with Google
         </button>
-        <button id="appleSignIn" aria-label="Sign in with Apple">
-          <svg viewBox="0 0 24 24" fill="currentColor" height="20" width="20">
-            <path d="M16.365 1.43c0 1.14-.472 2.136-1.222 2.902-.777.79-1.95 1.4-3.112 1.317a3.243 3.243 0 0 1-.016-.482c0-1.06.472-2.124 1.25-2.905.33-.342.76-.632 1.245-.842.477-.21.99-.318 1.55-.35.005.12.005.24.005.36zM12.082 6.457c1.23 0 2.135.42 2.776 1.254.655.844.96 2.03.888 3.546-.06 1.283-.417 2.826-1.09 4.634-.682 1.83-1.293 3.15-1.84 3.962-.562.826-1.176 1.24-1.843 1.24-.574 0-1.127-.215-1.662-.645-.544-.43-1.045-.646-1.512-.646-.482 0-.998.216-1.55.645-.544.43-1.035.645-1.47.645-.71 0-1.347-.495-1.91-1.483-.575-1.006-1.14-2.35-1.69-4.04-.58-1.777-.87-3.243-.87-4.393 0-1.695.472-3.05 1.416-4.065C4.907 7.1 6.08 6.57 7.39 6.57c.695 0 1.318.223 1.868.67.544.44.98.66 1.308.66.296 0 .718-.208 1.262-.625.54-.41 1.13-.617 1.752-.617z" />
+        <button id="appleSignIn">
+          <svg viewBox="0 0 848 1000" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor">
+            <path d="M789 748c-8 19-17 38-27 55-14 24-26 42-36 53-14 17-29 35-48 53-19 18-39 32-61 43-24 11-48 17-74 17-19 0-42-6-70-17s-53-17-77-17c-26 0-53 6-81 17-29 11-52 17-70 17-27 0-53-6-77-17-24-11-46-27-66-46-23-21-42-45-58-72-18-29-32-63-44-101-12-38-17-75-17-110 0-61 13-113 39-155 20-34 46-61 79-81 33-19 68-29 105-29 22 0 50 6 83 17 34 11 55 17 63 17 5 0 23-6 55-17 30-9 59-14 86-14 57 0 105 24 143 71-57 35-86 84-86 147 0 44 12 81 37 112 22 27 51 45 87 56zm-163-700c0 34-13 67-39 100-31 37-67 59-106 56 0-3 1-8 2-15 3-32 16-64 39-94 21-26 47-46 78-59 10-4 19-7 27-7 1 6 1 13 1 19z"/>
           </svg>
           Continue with Apple
         </button>
       </div>
 
-      <p class="signup-link">
-        Don't have an account?
-        <a href="index.html">Sign up here</a>
+     <p class="signup-link">
+        Already have an account?
+        <a href="login.html" style="color: #ff0000;">Log in here</a>
       </p>
     </div>
   </div>
@@ -373,38 +352,57 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import {
-      getAuth,
-      signInWithEmailAndPassword,
-      GoogleAuthProvider,
-      OAuthProvider,
-      signInWithRedirect,
-      getRedirectResult,
-      sendPasswordResetEmail
+        getAuth,
+        createUserWithEmailAndPassword,
+        signInWithEmailAndPassword,
+        GoogleAuthProvider,
+        OAuthProvider,
+        signInWithPopup,
+        onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyDJJXIRHOm__HnLSKI0vdnPKnVLVb7fMr4",
-      authDomain: "login-auth-4be0b.firebaseapp.com",
-      projectId: "login-auth-4be0b",
-      storageBucket: "login-auth-4be0b.appspot.com",
-      messagingSenderId: "55538485758",
-      appId: "1:55538485758:web:c5b500a54f5a6333ef18af",
-      measurementId: "G-SM4HMTPW82"
+        apiKey: "AIzaSyBOAnbROT6CrHIYpPR29Tl0dZAy1ab41F8",
+        authDomain: "signup-auth-ad445.firebaseapp.com",
+        projectId: "signup-auth-ad445",
+        storageBucket: "signup-auth-ad445.firebasestorage.app",
+        messagingSenderId: "486601898869",
+        appId: "1:486601898869:web:54ab61f00020e26645713c",
+        measurementId: "G-1CSG0CSSZR"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const errorMessage = document.getElementById("error-message");
-    const forgotPasswordLink = document.getElementById("forgotPassword");
-    const emailInput = document.getElementById("email");
-    const passwordInput = document.getElementById("password");
-    const togglePassword = document.getElementById("togglePassword");
+    let isSignUp = true;
+
+    const authTitle = document.getElementById('authTitle');
+    const authForm = document.getElementById('authForm');
+    const authButton = document.getElementById('authButton');
+    const toggleAuth = document.getElementById('toggleAuth');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const togglePassword = document.getElementById('togglePassword');
     const loadingOverlay = document.getElementById('loadingOverlay');
     const container = document.querySelector('.container');
     const formLoading = document.getElementById('formLoading');
+
+    // Function to check if dashboard exists and redirect accordingly
+    async function checkAndRedirect() {
+      try {
+        const response = await fetch('dashboard.html', { method: 'HEAD' });
+        if (response.ok) {
+          window.location.href = 'dashboard.html';
+        } else {
+          window.location.href = '404.html';
+        }
+      } catch (error) {
+        console.error('Error checking dashboard:', error);
+        window.location.href = '404.html';
+      }
+    }
 
     // Page load animation
     window.addEventListener('load', () => {
@@ -414,256 +412,208 @@
       }, 2000);
     });
 
-    // Show error message in DOM
-    const showError = (message) => {
-      errorMessage.textContent = message;
-      errorMessage.style.display = "block";
+    const updateForm = () => {
+        authTitle.textContent = isSignUp ? 'Sign Up' : 'Log In';
+        authButton.textContent = isSignUp ? 'Sign Up' : 'Log In';
+        toggleAuth.textContent = isSignUp ? 'Already have an account? Log in here' : 'Don’t have an account? Sign up here';
+        usernameInput.style.display = isSignUp ? 'block' : 'none';
+        usernameInput.required = isSignUp;
     };
 
-    // Show success message
-    const showSuccess = (message) => {
-      errorMessage.textContent = message;
-      errorMessage.style.color = "#00ff00";
-      errorMessage.style.display = "block";
-      setTimeout(() => {
-        errorMessage.style.color = "#ff4444";
-      }, 3000);
-    };
+    toggleAuth.addEventListener('click', () => {
+        isSignUp = !isSignUp;
+        if (!isSignUp) {
+            // Show loading overlay before redirecting
+            loadingOverlay.classList.remove('hidden');
+            container.classList.remove('loaded');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 2000);
+        } else {
+            updateForm();
+        }
+    });
 
-    // Clear error message
-    const clearError = () => {
-      errorMessage.textContent = "";
-      errorMessage.style.display = "none";
-    };
-
-    // Sanitize username to prevent injection
-    const sanitizeUsername = (username) => {
-      return username.replace(/[^a-zA-Z0-9]/g, '');
-    };
-
-    // Check if a page exists
-    const checkPageExists = async (url) => {
-      try {
-        const response = await fetch(url, { method: 'HEAD' });
-        return response.ok;
-      } catch {
-        return false;
-      }
-    };
-
-    // Redirect to dashboard or 404
-    const redirectWithFallback = async () => {
-      const dashboardUrl = 'loginpages/dashboard.html';
-      const fallbackUrl = '404.html';
-      if (await checkPageExists(dashboardUrl)) {
-        window.location.href = dashboardUrl;
-      } else {
-        window.location.href = fallbackUrl;
-      }
-    };
-
-    // Password toggle functionality
+    // Password toggle functionality with animation and 2-second auto-revert
     let isPasswordVisible = false;
     let autoHideTimeout = null;
 
     const togglePasswordVisibility = () => {
-      isPasswordVisible = !isPasswordVisible;
-      
-      if (autoHideTimeout) {
-        clearTimeout(autoHideTimeout);
-        autoHideTimeout = null;
-      }
-      
-      passwordInput.type = isPasswordVisible ? 'text' : 'password';
-      togglePassword.innerHTML = isPasswordVisible 
-        ? `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />`
-        : `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>`;
-      
-      passwordInput.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-      togglePassword.style.transition = 'opacity 0.3s ease';
-      
-      passwordInput.style.opacity = '0.7';
-      passwordInput.style.transform = 'scale(0.98)';
-      togglePassword.style.opacity = '0.7';
-      
-      setTimeout(() => {
-        passwordInput.style.opacity = '1';
-        passwordInput.style.transform = 'scale(1)';
-        togglePassword.style.opacity = '1';
-      }, 300);
-      
-      if (isPasswordVisible) {
-        autoHideTimeout = setTimeout(() => {
-          if (isPasswordVisible) {
-            isPasswordVisible = false;
-            passwordInput.type = 'password';
-            togglePassword.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>`;
-            
-            passwordInput.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-            togglePassword.style.transition = 'opacity 0.3s ease';
-            
-            passwordInput.style.opacity = '0.7';
-            passwordInput.style.transform = 'scale(0.98)';
-            togglePassword.style.opacity = '0.7';
-            
-            setTimeout(() => {
-              passwordInput.style.opacity = '1';
-              passwordInput.style.transform = 'scale(1)';
-              togglePassword.style.opacity = '1';
-            }, 300);
-          }
-          autoHideTimeout = null;
-        }, 2000);
-      }
+        isPasswordVisible = !isPasswordVisible;
+        
+        if (autoHideTimeout) {
+            clearTimeout(autoHideTimeout);
+            autoHideTimeout = null;
+        }
+        
+        passwordInput.type = isPasswordVisible ? 'text' : 'password';
+        togglePassword.innerHTML = isPasswordVisible 
+            ? `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />`
+            : `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>`;
+        
+        passwordInput.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        togglePassword.style.transition = 'opacity 0.3s ease';
+        
+        passwordInput.style.opacity = '0.7';
+        passwordInput.style.transform = 'scale(0.98)';
+        togglePassword.style.opacity = '0.7';
+        
+        setTimeout(() => {
+            passwordInput.style.opacity = '1';
+            passwordInput.style.transform = 'scale(1)';
+            togglePassword.style.opacity = '1';
+        }, 300);
+        
+        if (isPasswordVisible) {
+            autoHideTimeout = setTimeout(() => {
+                if (isPasswordVisible) {
+                    isPasswordVisible = false;
+                    passwordInput.type = 'password';
+                    togglePassword.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>`;
+                    
+                    passwordInput.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    togglePassword.style.transition = 'opacity 0.3s ease';
+                    
+                    passwordInput.style.opacity = '0.7';
+                    passwordInput.style.transform = 'scale(0.98)';
+                    togglePassword.style.opacity = '0.7';
+                    
+                    setTimeout(() => {
+                        passwordInput.style.opacity = '1';
+                        passwordInput.style.transform = 'scale(1)';
+                        togglePassword.style.opacity = '1';
+                    }, 300);
+                }
+                autoHideTimeout = null;
+            }, 2000);
+        }
     };
 
     togglePassword.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      togglePasswordVisibility();
+        e.preventDefault();
+        e.stopPropagation();
+        togglePasswordVisibility();
     });
 
-    // Forgot Password functionality
-    forgotPasswordLink.addEventListener("click", async (e) => {
-      e.preventDefault();
-      clearError();
-      const email = emailInput.value.trim();
+    authForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        formLoading.classList.add('active');
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const username = isSignUp ? document.getElementById('username').value : '';
 
-      if (!email) {
-        showError("Please enter your email address first.");
-        return;
-      }
+        try {
+            if (isSignUp) {
+                const usernameQuery = query(collection(db, "users"), where("username", "==", username));
+                const usernameSnapshot = await getDocs(usernameQuery);
+                if (!usernameSnapshot.empty) {
+                    throw new Error("Username already exists");
+                }
 
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        showError("Please enter a valid email address.");
-        return;
-      }
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
 
-      try {
-        await sendPasswordResetEmail(auth, email);
-        showSuccess("Password reset email sent! Check your inbox.");
-        emailInput.value = "";
-        passwordInput.value = "";
-      } catch (error) {
-        console.error("Password reset error:", error);
-        switch (error.code) {
-          case "auth/invalid-email":
-            showError("Invalid email address.");
-            break;
-          case "auth/user-not-found":
-            showError("No account found with this email.");
-            break;
-          case "auth/too-many-requests":
-            showError("Too many attempts. Please try again later.");
-            break;
-          default:
-            showError("Failed to send reset email: " + error.message);
+                await addDoc(collection(db, "users"), {
+                    username: username,
+                    email: email,
+                    uid: user.uid,
+                    provider: "email",
+                    createdAt: new Date()
+                });
+
+                alert('User registered successfully!');
+            } else {
+                await signInWithEmailAndPassword(auth, email, password);
+                alert('Logged in successfully!');
+            }
+            formLoading.classList.remove('active');
+            await checkAndRedirect();
+        } catch (error) {
+            formLoading.classList.remove('active');
+            console.error('Error:', error.message);
+            alert(`${isSignUp ? 'Sign Up' : 'Log In'} failed: ${error.message}`);
         }
-      }
     });
 
-    // Email/Password login
-    document.getElementById("loginForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      clearError();
-      formLoading.classList.add('active');
-
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
-
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        showError("Please enter a valid email address.");
-        formLoading.classList.remove('active');
-        return;
-      }
-      if (password.length < 6) {
-        showError("Password must be at least 6 characters.");
-        formLoading.classList.remove('active');
-        return;
-      }
-
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-        formLoading.classList.remove('active');
-        await redirectWithFallback();
-      } catch (error) {
-        formLoading.classList.remove('active');
-        console.error("Login error:", error);
-        switch (error.code) {
-          case "auth/user-not-found":
-            showError("No account found with this email.");
-            break;
-          case "auth/wrong-password":
-            showError("Incorrect password. Please try again.");
-            break;
-          case "auth/invalid-credential":
-            showError("Invalid email or password.");
-            break;
-          default:
-            showError("Login failed: " + error.message);
-        }
-      }
-    });
-
-    // Google login
+    const googleProvider = new GoogleAuthProvider();
+    googleProvider.addScope('profile');
+    googleProvider.addScope('email');
     document.getElementById("googleSignIn").addEventListener("click", async () => {
-      formLoading.classList.add('active');
-      try {
-        const googleProvider = new GoogleAuthProvider();
-        await signInWithRedirect(auth, googleProvider);
-      } catch (error) {
-        formLoading.classList.remove('active');
-        console.error("Google sign-in error:", error);
-        showError(`Google sign-in failed: ${error.message}`);
-      }
-    });
-
-    // Apple login
-    document.getElementById("appleSignIn").addEventListener("click", async () => {
-      formLoading.classList.add('active');
-      try {
-        const appleProvider = new OAuthProvider("apple.com");
-        appleProvider.addScope("email name");
-        await signInWithRedirect(auth, appleProvider);
-      } catch (error) {
-        formLoading.classList.remove('active');
-        console.error("Apple sign-in error:", error);
-        showError("Apple sign-in failed: " + error.message);
-      }
-    });
-
-    // Handle social login and Firestore user entry
-    getRedirectResult(auth).then(async (result) => {
-      if (result) {
         formLoading.classList.add('active');
         try {
-          const user = result.user;
-          const usersRef = collection(db, "users");
-          const q = query(usersRef, where("uid", "==", user.uid));
-          const querySnapshot = await getDocs(q);
+            const result = await signInWithPopup(auth, googleProvider);
+            const user = result.user;
 
-          if (querySnapshot.empty) {
-            await addDoc(usersRef, {
-              username: sanitizeUsername(user.displayName || "User"),
-              email: user.email || "unknown",
-              uid: user.uid,
-              provider: result.providerId,
-              createdAt: new Date()
-            });
-          }
+            const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
+            const userSnapshot = await getDocs(userQuery);
 
-          formLoading.classList.remove('active');
-          await redirectWithFallback();
+            if (userSnapshot.empty) {
+                try {
+                    await addDoc(collection(db, "users"), {
+                        username: user.displayName || "Google User",
+                        email: user.email || "No email provided",
+                        uid: user.uid,
+                        provider: "google",
+                        createdAt: new Date()
+                    });
+                } catch (firestoreError) {
+                    console.error("Firestore write error:", firestoreError);
+                    throw new Error("Failed to save user data: " + firestoreError.message);
+                }
+            }
+
+            alert('Signed in with Google!');
+            formLoading.classList.remove('active');
+            await checkAndRedirect();
         } catch (error) {
-          formLoading.classList.remove('active');
-          console.error("Error saving user data:", error);
-          showError("Failed to process sign-in: " + error.message);
+            formLoading.classList.remove('active');
+            console.error("Google Sign-In Error:", error);
+            let errorMessage = error.message;
+            if (error.code === 'auth/popup-closed-by-user') {
+                errorMessage = "Google sign-in was cancelled";
+            } else if (error.code === 'auth/network-request-failed') {
+                errorMessage = "Network error - please check your connection";
+            }
+            alert("Google sign-in failed: " + errorMessage);
         }
-      }
-    }).catch((error) => {
-      formLoading.classList.remove('active');
-      console.error("Redirect sign-in error:", error);
-      showError("Sign-in failed: " + error.message);
+    });
+
+    const appleProvider = new OAuthProvider('apple.com');
+    appleProvider.addScope("email");
+    appleProvider.addScope("name");
+    document.getElementById("appleSignIn").addEventListener("click", async () => {
+        formLoading.classList.add('active');
+        try {
+            const result = await signInWithPopup(auth, appleProvider);
+            const user = result.user;
+
+            const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
+            const userSnapshot = await getDocs(userQuery);
+
+            if (userSnapshot.empty) {
+                await addDoc(collection(db, "users"), {
+                    username: user.displayName || "Apple User",
+                    email: user.email || "No email provided",
+                    uid: user.uid,
+                    provider: "apple",
+                    createdAt: new Date()
+                });
+            }
+
+            alert('Signed in with Apple!');
+            formLoading.classList.remove('active');
+            await checkAndRedirect();
+        } catch (error) {
+            formLoading.classList.remove('active');
+            console.error("Apple Sign-In Error:", error);
+            alert("Apple sign-in failed: " + error.message);
+        }
+    });
+
+    onAuthStateChanged(auth, (user) => {
+        if (user && window.location.pathname.includes('index.html')) {
+            checkAndRedirect();
+        }
     });
   </script>
 </body>
