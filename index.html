@@ -352,8 +352,7 @@
         signInWithPopup,
         signInWithRedirect,
         getRedirectResult,
-        deleteUser,
-        fetchSignInMethodsForEmail
+        deleteUser
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
     import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
     const firebaseConfig = {
@@ -530,26 +529,7 @@
       const password = document.getElementById('password').value;
       const username = document.getElementById('username').value;
       try {
-        console.log('Checking email in Firestore and Auth');
-        const emailQuery = query(collection(db, "users"), where("email", "==", email));
-        const emailSnapshot = await getDocs(emailQuery);
-        if (!emailSnapshot.empty) {
-          formLoading.classList.remove('active');
-          showCustomAlert('This email is already registered. Please log in.', 'Go to Login', () => {
-            window.location.href = '/login.html';
-          });
-          return;
-        }
-        const signInMethods = await fetchSignInMethodsForEmail(auth, email);
-        if (signInMethods.length > 0) {
-          console.log('Email exists in Firebase Auth but not in Firestore users, cleaning up');
-          const user = auth.currentUser;
-          if (user && user.email === email) {
-            await deleteUser(user);
-            console.log('Deleted stale Auth user');
-          }
-          await cleanupPendingUser(email);
-        }
+        console.log('Checking username in Firestore');
         const usernameQuery = query(collection(db, "users"), where("username", "==", username));
         const usernameSnapshot = await getDocs(usernameQuery);
         if (!usernameSnapshot.empty) {
@@ -598,21 +578,9 @@
         console.error('Sign-up error:', error);
         formLoading.classList.remove('active');
         if (error.code === 'auth/email-already-in-use') {
-          console.log('Email exists in Auth, attempting cleanup');
-          const signInMethods = await fetchSignInMethodsForEmail(auth, email);
-          if (signInMethods.length > 0) {
-            const user = auth.currentUser;
-            if (user && user.email === email) {
-              await deleteUser(user);
-              console.log('Deleted stale Auth user after error');
-            }
-            await cleanupPendingUser(email);
-            showCustomAlert('Previous sign-up attempt failed. Please try again.', 'Try Again', hideCustomAlert);
-          } else {
-            showCustomAlert('This email is already registered. Please log in.', 'Go to Login', () => {
-              window.location.href = '/login.html';
-            });
-          }
+          showCustomAlert('This email is already registered. Please log in.', 'Go to Login', () => {
+            window.location.href = '/login.html';
+          });
         } else if (error.code === 'auth/invalid-email') {
           showCustomAlert('Invalid email format.', 'Try Again', hideCustomAlert);
         } else {
