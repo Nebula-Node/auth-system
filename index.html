@@ -365,8 +365,6 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    let isSignUp = true;
-
     const authTitle = document.getElementById('authTitle');
     const authForm = document.getElementById('authForm');
     const authButton = document.getElementById('authButton');
@@ -377,26 +375,6 @@
     const container = document.querySelector('.container');
     const loadingOverlay = document.getElementById('loadingOverlay');
     const formLoading = document.getElementById('formLoading');
-
-    // Update form for sign-up/login toggle
-    const updateForm = () => {
-      authTitle.textContent = isSignUp ? 'Sign Up' : 'Log In';
-      authButton.textContent = isSignUp ? 'Sign Up' : 'Log In';
-      toggleAuth.textContent = isSignUp ? 'Already have an account? Log in here' : 'Don’t have an account? Sign up here';
-      usernameInput.style.display = isSignUp ? 'block' : 'none';
-      usernameInput.style.transition = 'opacity 0.3s ease';
-      usernameInput.style.opacity = isSignUp ? '1' : '0';
-      usernameInput.required = isSignUp;
-    };
-
-    toggleAuth.addEventListener('click', () => {
-      isSignUp = !isSignUp;
-      if (!isSignUp) {
-        window.location.href = 'login.html';
-      } else {
-        updateForm();
-      }
-    });
 
     // Page load animation
     window.addEventListener('load', () => {
@@ -469,39 +447,19 @@
 
     // Check if dashboard exists and redirect
     async function checkAndRedirect() {
-      console.log('Attempting redirect to dashboard.html');
+      console.log('Checking for dashboard.html');
       try {
-        const fetchPromise = fetch('dashboard.html', { method: 'HEAD', cache: 'no-store' });
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Fetch timeout')), 5000);
-        });
-        const response = await Promise.race([fetchPromise, timeoutPromise]);
+        const response = await fetch('./dashboard.html', { method: 'HEAD', cache: 'no-store' });
         if (response.ok) {
           console.log('dashboard.html found, redirecting');
-          window.location.assign('dashboard.html');
+          window.location.assign('./dashboard.html');
         } else {
-          console.log('dashboard.html not found, redirecting to 404.html');
-          const response404 = await fetch('404.html', { method: 'HEAD', cache: 'no-store' });
-          if (response404.ok) {
-            window.location.assign('404.html');
-          } else {
-            throw new Error('404.html not found');
-          }
+          console.log('dashboard.html not found, staying on current page');
+          // Stay on index.html, no redirect to 404.html
         }
       } catch (error) {
-        console.error('Redirect error:', error.message);
-        try {
-          const response404 = await fetch('404.html', { method: 'HEAD', cache: 'no-store' });
-          if (response404.ok) {
-            console.log('404.html found, redirecting');
-            window.location.assign('404.html');
-          } else {
-            alert('Error: Unable to redirect. Please ensure dashboard.html or 404.html exist.');
-          }
-        } catch (fallbackError) {
-          console.error('Fallback to 404.html failed:', fallbackError.message);
-          alert('Error: Unable to redirect. Please ensure dashboard.html or 404.html exist.');
-        }
+        console.error('Error checking dashboard.html:', error.message);
+        // Stay on index.html, no redirect to 404.html
       }
     }
 
@@ -511,49 +469,47 @@
       formLoading.classList.add('active');
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
-      const username = isSignUp ? document.getElementById('username').value : '';
+      const username = document.getElementById('username').value;
 
       try {
-        if (isSignUp) {
-          // Check if email already exists
-          const emailQuery = query(collection(db, "users"), where("email", "==", email));
-          const emailSnapshot = await getDocs(emailQuery);
-          if (!emailSnapshot.empty) {
-            formLoading.classList.remove('active');
-            alert('User already registered, please log in.');
-            window.location.href = 'login.html';
-            return;
-          }
-
-          // Check if username is taken
-          const usernameQuery = query(collection(db, "users"), where("username", "==", username));
-          const usernameSnapshot = await getDocs(usernameQuery);
-          if (!usernameSnapshot.empty) {
-            throw new Error("Username already exists");
-          }
-
-          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-          const user = userCredential.user;
-
-          await addDoc(collection(db, "users"), {
-            username: username,
-            email: email,
-            uid: user.uid,
-            provider: "email",
-            createdAt: new Date()
-          });
-
-          alert('User registered successfully!');
+        // Check if email already exists
+        const emailQuery = query(collection(db, "users"), where("email", "==", email));
+        const emailSnapshot = await getDocs(emailQuery);
+        if (!emailSnapshot.empty) {
           formLoading.classList.remove('active');
-          await checkAndRedirect();
+          alert('User already registered, please log in.');
+          window.location.href = './login.html';
+          return;
         }
+
+        // Check if username is taken
+        const usernameQuery = query(collection(db, "users"), where("username", "==", username));
+        const usernameSnapshot = await getDocs(usernameQuery);
+        if (!usernameSnapshot.empty) {
+          throw new Error("Username already exists");
+        }
+
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        await addDoc(collection(db, "users"), {
+          username: username,
+          email: email,
+          uid: user.uid,
+          provider: "email",
+          createdAt: new Date()
+        });
+
+        alert('User registered successfully!');
+        formLoading.classList.remove('active');
+        await checkAndRedirect();
       } catch (error) {
         formLoading.classList.remove('active');
         console.error('Sign Up Error:', error.code, error.message);
         let errorMessage = error.message;
         if (error.code === 'auth/email-already-in-use') {
           alert('User already registered, please log in.');
-          window.location.href = 'login.html';
+          window.location.href = './login.html';
           return;
         } else if (error.code === 'permission-denied') {
           errorMessage = "Database access denied. Please check Firestore rules.";
@@ -624,7 +580,7 @@
         } else {
           formLoading.classList.remove('active');
           alert('User already registered, please log in.');
-          window.location.href = 'login.html';
+          window.location.href = './login.html';
         }
       } catch (error) {
         formLoading.classList.remove('active');
@@ -675,7 +631,7 @@
         } else {
           formLoading.classList.remove('active');
           alert('User already registered, please log in.');
-          window.location.href = 'login.html';
+          window.location.href = './login.html';
         }
       } catch (error) {
         formLoading.classList.remove('active');
@@ -719,7 +675,7 @@
           } else {
             formLoading.classList.remove('active');
             alert(`User already registered, please log in.`);
-            window.location.href = 'login.html';
+            window.location.href = './login.html';
           }
         } catch (error) {
           formLoading.classList.remove('active');
@@ -733,13 +689,25 @@
       alert(`Sign-in failed: ${error.message}`);
     });
 
-    // Auto-redirect if signed in
+    // Toggle to login page
+    toggleAuth.addEventListener('click', () => {
+      console.log('Navigating to login.html');
+      window.location.href = './login.html';
+    });
+
+    // Auto-redirect only after auth action
+    let justAuthenticated = false;
+    authForm.addEventListener('submit', () => { justAuthenticated = true; });
+    document.getElementById('googleSignIn').addEventListener('click', () => { justAuthenticated = true; });
+    document.getElementById('appleSignIn').addEventListener('click', () => { justAuthenticated = true; });
+
     onAuthStateChanged(auth, async (user) => {
-      if (user && window.location.pathname.includes('index.html')) {
+      if (user && justAuthenticated && window.location.pathname.includes('index.html')) {
         console.log('User signed in, triggering auto-redirect:', user.uid);
         try {
           await waitForAuthInit();
           await checkAndRedirect();
+          justAuthenticated = false; // Reset after redirect
         } catch (error) {
           console.error('Auto-redirect error:', error.message);
         }
