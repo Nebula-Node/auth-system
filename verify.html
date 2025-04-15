@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+  <title>Verify Email</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #000;
+      color: #fff;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+    .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      width: 100%;
+      gap: 2rem;
+      opacity: 0;
+      transition: opacity 0.5s ease-in;
+    }
+    .container.loaded {
+      opacity: 1;
+    }
+    .verify-box {
+      background: #111;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+      width: 100%;
+      max-width: 350px;
+      border: 1px solid #f00;
+      position: relative;
+    }
+    .verify-box h2 {
+      text-align: center;
+      color: #f00;
+      margin-bottom: 1rem;
+    }
+    .verify-box input {
+      width: 100%;
+      padding: 0.7rem;
+      margin: 0.5rem 0;
+      background: #222;
+      color: #fff;
+      border: 1px solid #f00;
+      border-radius: 6px;
+    }
+    .verify-box input:focus {
+      outline: none;
+      border-color: #ff4444;
+      box-shadow: 0 0 5px #ff4444;
+    }
+    .verify-box button {
+      width: 100%;
+      padding: 0.7rem;
+      background: #f00;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 1rem;
+      transition: background 0.3s ease;
+    }
+    .verify-box button:hover {
+      background: #cc0000;
+    }
+    lottie-player {
+      width: 750px;
+      height: 750px;
+      flex-shrink: 0;
+    }
+    #loadingOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+    #loadingOverlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    #loadingOverlay lottie-player {
+      width: 300px;
+      height: 300px;
+    }
+    #formLoading {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+      border-radius: 12px;
+    }
+    #formLoading.active {
+      display: flex;
+    }
+    #formLoading lottie-player {
+      width: 100px;
+      height: 100px;
+    }
+    #customAlert {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    #customAlert.active {
+      display: flex;
+    }
+    .alert-box {
+      background: #111;
+      padding: 1.5rem;
+      border-radius: 12px;
+      border: 1px solid #f00;
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+    }
+    .alert-box p {
+      color: #fff;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+    .alert-box button {
+      background: #f00;
+      color: white;
+      padding: 0.7rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s ease;
+    }
+    .alert-box button:hover {
+      background: #cc0000;
+    }
+    @media screen and (max-width: 768px) {
+      .container {
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem;
+      }
+      lottie-player {
+        width: 300px;
+        height: 300px;
+      }
+      .verify-box {
+        width: 100%;
+        max-width: 90%;
+        padding: 1.5rem;
+        margin-top: 1rem;
+      }
+      .verify-box h2 {
+        font-size: 1.5rem;
+      }
+      .verify-box input,
+      .verify-box button {
+        font-size: 1rem;
+        padding: 0.6rem;
+      }
+    }
+    @media screen and (max-width: 480px) {
+      lottie-player {
+        width: 300px;
+        height: 300px;
+      }
+      .verify-box {
+        padding: 1rem;
+      }
+      .verify-box h2 {
+        font-size: 1.3rem;
+      }
+      .verify-box input,
+      .verify-box button {
+        font-size: 0.9rem;
+        padding: 0.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="loadingOverlay">
+    <lottie-player
+      src="Animation - 1744696593398.json"
+      background="transparent"
+      speed="1"
+      loop
+      autoplay>
+    </lottie-player>
+  </div>
+  <div id="customAlert">
+    <div class="alert-box">
+      <p id="alertMessage"></p>
+      <button id="alertButton">OK</button>
+    </div>
+  </div>
+  <div class="container">
+    <lottie-player
+      src="Animation - 1744470672068.json"
+      background="transparent"
+      speed="1"
+      loop
+      autoplay>
+    </lottie-player>
+    <div class="verify-box">
+      <div id="formLoading">
+        <lottie-player
+          src="Animation - 1744696593398.json"
+          background="transparent"
+          speed="1"
+          loop
+          autoplay>
+        </lottie-player>
+      </div>
+      <h2>Verify Email</h2>
+      <form id="verifyForm">
+        <input type="text" name="code" id="code" placeholder="Enter 6-digit code" required maxlength="6" />
+        <button type="submit">Verify</button>
+      </form>
+    </div>
+  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getFirestore, collection, getDocs, query, where, addDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    const firebaseConfig = {
+        apiKey: "AIzaSyBOAnbROT6CrHIYpPR29Tl0dZAy1ab41F8",
+        authDomain: "signup-auth-ad445.firebaseapp.com",
+        projectId: "signup-auth-ad445",
+        storageBucket: "signup-auth-ad445.firebasestorage.app",
+        messagingSenderId: "486601898869",
+        appId: "1:486601898869:web:54ab61f00020e26645713c",
+        measurementId: "G-1CSG0CSSZR"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const verifyForm = document.getElementById('verifyForm');
+    const container = document.querySelector('.container');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const formLoading = document.getElementById('formLoading');
+    const customAlert = document.getElementById('customAlert');
+    const alertMessage = document.getElementById('alertMessage');
+    const alertButton = document.getElementById('alertButton');
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        loadingOverlay.classList.add('hidden');
+        container.classList.add('loaded');
+      }, 2000);
+    });
+    function showCustomAlert(message, buttonText, buttonAction) {
+      alertMessage.textContent = message;
+      alertButton.textContent = buttonText;
+      alertButton.onclick = buttonAction;
+      customAlert.classList.add('active');
+    }
+    function hideCustomAlert() {
+      customAlert.classList.remove('active');
+    }
+    async function checkFileExists(path) {
+      try {
+        const response = await fetch(path, { method: 'HEAD', cache: 'no-store' });
+        return response.ok;
+      } catch {
+        return false;
+      }
+    }
+    async function redirectToDashboard() {
+      console.log('Checking for /dashboard.html');
+      if (await checkFileExists('/dashboard.html')) {
+        console.log('dashboard.html found, redirecting');
+        window.location.assign('/dashboard.html');
+      } else {
+        console.log('dashboard.html not found, redirecting to 404');
+        window.location.assign('/404.html');
+      }
+    }
+    async function redirectTo404(errorMessage) {
+      console.error('Error occurred:', errorMessage);
+      window.location.assign('/404.html');
+    }
+    verifyForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      formLoading.classList.add('active');
+      const code = document.getElementById('code').value;
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          formLoading.classList.remove('active');
+          await redirectTo404('No authenticated user found');
+          return;
+        }
+        const pendingQuery = query(collection(db, "pending_users"), where("uid", "==", user.uid), where("verificationCode", "==", code));
+        const pendingSnapshot = await getDocs(pendingQuery);
+        if (pendingSnapshot.empty) {
+          formLoading.classList.remove('active');
+          showCustomAlert('Invalid verification code.', 'Try Again', hideCustomAlert);
+          return;
+        }
+        const pendingDoc = pendingSnapshot.docs[0];
+        const userData = pendingDoc.data();
+        await addDoc(collection(db, "users"), {
+          username: userData.username,
+          email: userData.email,
+          uid: userData.uid,
+          provider: userData.provider,
+          createdAt: userData.createdAt
+        });
+        await deleteDoc(doc(db, "pending_users", pendingDoc.id));
+        formLoading.classList.remove('active');
+        await redirectToDashboard();
+      } catch (error) {
+        formLoading.classList.remove('active');
+        await redirectTo404(`Verification Error: ${error.code} - ${error.message}`);
+      }
+    });
+  </script>
+</body>
+</html>
