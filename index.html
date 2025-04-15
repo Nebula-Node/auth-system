@@ -204,6 +204,55 @@
       height: 100px;
     }
 
+    #customAlert {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    #customAlert.active {
+      display: flex;
+    }
+
+    .alert-box {
+      background: #111;
+      padding: 1.5rem;
+      border-radius: 12px;
+      border: 1px solid #f00;
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .alert-box p {
+      color: #fff;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .alert-box button {
+      background: #f00;
+      color: white;
+      padding: 0.7rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s ease;
+    }
+
+    .alert-box button:hover {
+      background: #cc0000;
+    }
+
     @media screen and (max-width: 768px) {
       .container {
         flex-direction: column;
@@ -281,6 +330,13 @@
     </lottie-player>
   </div>
 
+  <div id="customAlert">
+    <div class="alert-box">
+      <p id="alertMessage"></p>
+      <button id="alertButton">Go to Login</button>
+    </div>
+  </div>
+
   <div class="container">
     <lottie-player
       src="Animation - 1744470672068.json"
@@ -300,7 +356,7 @@
           autoplay>
         </lottie-player>
       </div>
-      <h2 id="authTitle">Sign Up</h2>
+      <h2>Sign Up</h2>
       <form id="authForm">
         <input type="text" name="username" id="username" placeholder="Username" required />
         <input type="email" name="email" id="email" placeholder="Email" required />
@@ -311,7 +367,7 @@
             <path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>
           </svg>
         </div>
-        <button type="submit" id="authButton">Sign Up</button>
+        <button type="submit">Sign Up</button>
       </form>
 
       <div class="social-signin">
@@ -346,8 +402,7 @@
         OAuthProvider,
         signInWithPopup,
         signInWithRedirect,
-        getRedirectResult,
-        onAuthStateChanged
+        getRedirectResult
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
     import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
@@ -365,16 +420,16 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const authTitle = document.getElementById('authTitle');
     const authForm = document.getElementById('authForm');
-    const authButton = document.getElementById('authButton');
-    const toggleAuth = document.getElementById('toggleAuth');
-    const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
     const togglePassword = document.getElementById('togglePassword');
+    const toggleAuth = document.getElementById('toggleAuth');
     const container = document.querySelector('.container');
     const loadingOverlay = document.getElementById('loadingOverlay');
     const formLoading = document.getElementById('formLoading');
+    const customAlert = document.getElementById('customAlert');
+    const alertMessage = document.getElementById('alertMessage');
+    const alertButton = document.getElementById('alertButton');
 
     // Page load animation
     window.addEventListener('load', () => {
@@ -383,6 +438,18 @@
         container.classList.add('loaded');
       }, 2000);
     });
+
+    // Custom alert function
+    function showCustomAlert(message, buttonText, buttonAction) {
+      alertMessage.textContent = message;
+      alertButton.textContent = buttonText;
+      alertButton.onclick = buttonAction;
+      customAlert.classList.add('active');
+    }
+
+    function hideCustomAlert() {
+      customAlert.classList.remove('active');
+    }
 
     // Password toggle with 2-second auto-revert
     let isPasswordVisible = false;
@@ -445,21 +512,25 @@
       togglePasswordVisibility();
     });
 
-    // Check if dashboard exists and redirect
-    async function checkAndRedirect() {
-      console.log('Checking for dashboard.html');
+    // Check file existence
+    async function checkFileExists(path) {
       try {
-        const response = await fetch('./dashboard.html', { method: 'HEAD', cache: 'no-store' });
-        if (response.ok) {
-          console.log('dashboard.html found, redirecting');
-          window.location.assign('./dashboard.html');
-        } else {
-          console.log('dashboard.html not found, staying on current page');
-          // Stay on index.html, no redirect to 404.html
-        }
-      } catch (error) {
-        console.error('Error checking dashboard.html:', error.message);
-        // Stay on index.html, no redirect to 404.html
+        const response = await fetch(path, { method: 'HEAD', cache: 'no-store' });
+        return response.ok;
+      } catch {
+        return false;
+      }
+    }
+
+    // Redirect to dashboard
+    async function redirectToDashboard() {
+      console.log('Checking for /dashboard.html');
+      if (await checkFileExists('/dashboard.html')) {
+        console.log('dashboard.html found, redirecting');
+        window.location.assign('/dashboard.html');
+      } else {
+        console.log('dashboard.html not found');
+        showCustomAlert('Signed up successfully! Dashboard not available.', 'Stay Here', hideCustomAlert);
       }
     }
 
@@ -472,13 +543,14 @@
       const username = document.getElementById('username').value;
 
       try {
-        // Check if email already exists
+        // Check if email exists
         const emailQuery = query(collection(db, "users"), where("email", "==", email));
         const emailSnapshot = await getDocs(emailQuery);
         if (!emailSnapshot.empty) {
           formLoading.classList.remove('active');
-          alert('User already registered, please log in.');
-          window.location.href = './login.html';
+          showCustomAlert('This email is already registered. Please log in.', 'Go to Login', () => {
+            window.location.href = '/login.html';
+          });
           return;
         }
 
@@ -486,7 +558,9 @@
         const usernameQuery = query(collection(db, "users"), where("username", "==", username));
         const usernameSnapshot = await getDocs(usernameQuery);
         if (!usernameSnapshot.empty) {
-          throw new Error("Username already exists");
+          formLoading.classList.remove('active');
+          showCustomAlert('This username is already taken.', 'Try Again', hideCustomAlert);
+          return;
         }
 
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -500,73 +574,48 @@
           createdAt: new Date()
         });
 
-        alert('User registered successfully!');
         formLoading.classList.remove('active');
-        await checkAndRedirect();
+        await redirectToDashboard();
       } catch (error) {
         formLoading.classList.remove('active');
         console.error('Sign Up Error:', error.code, error.message);
         let errorMessage = error.message;
         if (error.code === 'auth/email-already-in-use') {
-          alert('User already registered, please log in.');
-          window.location.href = './login.html';
-          return;
+          showCustomAlert('This email is already registered. Please log in.', 'Go to Login', () => {
+            window.location.href = '/login.html';
+          });
         } else if (error.code === 'permission-denied') {
           errorMessage = "Database access denied. Please check Firestore rules.";
+          showCustomAlert(errorMessage, 'OK', hideCustomAlert);
+        } else {
+          showCustomAlert(`Sign Up failed: ${errorMessage}`, 'OK', hideCustomAlert);
         }
-        alert(`Sign Up failed: ${errorMessage}`);
       }
     });
-
-    // Ensure Firebase Auth is initialized
-    async function waitForAuthInit() {
-      return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error('Firebase Auth initialization timed out'));
-        }, 5000);
-        onAuthStateChanged(auth, (user) => {
-          clearTimeout(timeout);
-          resolve(user);
-        }, (error) => {
-          clearTimeout(timeout);
-          reject(error);
-        });
-      });
-    }
 
     // Google sign-up
     document.getElementById("googleSignIn").addEventListener("click", async () => {
       formLoading.classList.add('active');
-      console.log('Initiating Google Sign-In');
       try {
-        await waitForAuthInit();
         const googleProvider = new GoogleAuthProvider();
         googleProvider.setCustomParameters({ prompt: 'select_account' });
 
         let result;
         try {
-          console.log('Attempting signInWithPopup');
           result = await signInWithPopup(auth, googleProvider);
         } catch (popupError) {
-          console.error('Popup error:', popupError.code, popupError.message);
           if (popupError.code === 'auth/popup-blocked') {
-            alert('Popup blocked by browser. Trying redirect instead.');
-            console.log('Falling back to signInWithRedirect');
             await signInWithRedirect(auth, googleProvider);
             return;
-          } else {
-            throw popupError;
           }
+          throw popupError;
         }
 
         const user = result.user;
-        console.log('Google sign-in success:', user.uid, user.email);
-
         const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
         const userSnapshot = await getDocs(userQuery);
 
         if (userSnapshot.empty) {
-          console.log('Saving new Google user');
           await addDoc(collection(db, "users"), {
             username: user.displayName || "Google User",
             email: user.email || "No email provided",
@@ -574,13 +623,13 @@
             provider: "google",
             createdAt: new Date()
           });
-          alert('Signed up with Google!');
           formLoading.classList.remove('active');
-          await checkAndRedirect();
+          await redirectToDashboard();
         } else {
           formLoading.classList.remove('active');
-          alert('User already registered, please log in.');
-          window.location.href = './login.html';
+          showCustomAlert('This account is already registered. Please log in.', 'Go to Login', () => {
+            window.location.href = '/login.html';
+          });
         }
       } catch (error) {
         formLoading.classList.remove('active');
@@ -589,35 +638,25 @@
         if (error.code === 'auth/popup-closed-by-user') {
           errorMessage = "Google sign-in cancelled.";
         } else if (error.code === 'auth/popup-blocked') {
-          errorMessage = "Popup blocked by browser. Please allow popups.";
-        } else if (error.code === 'auth/unauthorized-domain') {
-          errorMessage = "Unauthorized domain. Check Firebase Console.";
-        } else if (error.code === 'auth/network-request-failed') {
-          errorMessage = "Network error. Check your connection.";
+          errorMessage = "Popup blocked. Please allow popups.";
         }
-        alert(`Google sign-in failed: ${errorMessage}`);
+        showCustomAlert(`Google sign-in failed: ${errorMessage}`, 'OK', hideCustomAlert);
       }
     });
 
     // Apple sign-up
     document.getElementById("appleSignIn").addEventListener("click", async () => {
       formLoading.classList.add('active');
-      console.log('Initiating Apple Sign-In');
       try {
-        await waitForAuthInit();
         const appleProvider = new OAuthProvider('apple.com');
-        appleProvider.addScope("email");
-        appleProvider.addScope("name");
+        appleProvider.addScope("email name");
 
         const result = await signInWithPopup(auth, appleProvider);
         const user = result.user;
-        console.log('Apple sign-in success:', user.uid, user.email);
-
         const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
         const userSnapshot = await getDocs(userQuery);
 
         if (userSnapshot.empty) {
-          console.log('Saving new Apple user');
           await addDoc(collection(db, "users"), {
             username: user.displayName || "Apple User",
             email: user.email || "No email provided",
@@ -625,13 +664,13 @@
             provider: "apple",
             createdAt: new Date()
           });
-          alert('Signed up with Apple!');
           formLoading.classList.remove('active');
-          await checkAndRedirect();
+          await redirectToDashboard();
         } else {
           formLoading.classList.remove('active');
-          alert('User already registered, please log in.');
-          window.location.href = './login.html';
+          showCustomAlert('This account is already registered. Please log in.', 'Go to Login', () => {
+            window.location.href = '/login.html';
+          });
         }
       } catch (error) {
         formLoading.classList.remove('active');
@@ -640,13 +679,9 @@
         if (error.code === 'auth/popup-closed-by-user') {
           errorMessage = "Apple sign-in cancelled.";
         } else if (error.code === 'auth/popup-blocked') {
-          errorMessage = "Popup blocked by browser. Please allow popups.";
-        } else if (error.code === 'auth/unauthorized-domain') {
-          errorMessage = "Unauthorized domain. Check Firebase Console.";
-        } else if (error.code === 'auth/network-request-failed') {
-          errorMessage = "Network error. Check your connection.";
+          errorMessage = "Popup blocked. Please allow popups.";
         }
-        alert(`Apple sign-in failed: ${errorMessage}`);
+        showCustomAlert(`Apple sign-in failed: ${errorMessage}`, 'OK', hideCustomAlert);
       }
     });
 
@@ -655,62 +690,41 @@
       if (result) {
         formLoading.classList.add('active');
         const user = result.user;
-        console.log('Processing redirect result:', user.uid);
+        const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
+        const userSnapshot = await getDocs(userQuery);
 
-        try {
-          const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
-          const userSnapshot = await getDocs(userQuery);
-
-          if (userSnapshot.empty) {
-            await addDoc(collection(db, "users"), {
-              username: user.displayName || (result.providerId === "apple.com" ? "Apple User" : "Google User"),
-              email: user.email || "No email provided",
-              uid: user.uid,
-              provider: result.providerId === "apple.com" ? "apple" : "google",
-              createdAt: new Date()
-            });
-            alert(`Signed up with ${result.providerId === "apple.com" ? "Apple" : "Google"}!`);
-            formLoading.classList.remove('active');
-            await checkAndRedirect();
-          } else {
-            formLoading.classList.remove('active');
-            alert(`User already registered, please log in.`);
-            window.location.href = './login.html';
-          }
-        } catch (error) {
+        if (userSnapshot.empty) {
+          await addDoc(collection(db, "users"), {
+            username: user.displayName || (result.providerId === "apple.com" ? "Apple User" : "Google User"),
+            email: user.email || "No email provided",
+            uid: user.uid,
+            provider: result.providerId === "apple.com" ? "apple" : "google",
+            createdAt: new Date()
+          });
           formLoading.classList.remove('active');
-          console.error("Redirect Result Error:", error.code, error.message);
-          alert(`Sign-in failed: ${error.message}`);
+          await redirectToDashboard();
+        } else {
+          formLoading.classList.remove('active');
+          showCustomAlert('This account is already registered. Please log in.', 'Go to Login', () => {
+            window.location.href = '/login.html';
+          });
         }
       }
     }).catch((error) => {
       formLoading.classList.remove('active');
       console.error("Redirect Error:", error.code, error.message);
-      alert(`Sign-in failed: ${error.message}`);
+      showCustomAlert(`Sign-in failed: ${error.message}`, 'OK', hideCustomAlert);
     });
 
     // Toggle to login page
-    toggleAuth.addEventListener('click', () => {
-      console.log('Navigating to login.html');
-      window.location.href = './login.html';
-    });
-
-    // Auto-redirect only after auth action
-    let justAuthenticated = false;
-    authForm.addEventListener('submit', () => { justAuthenticated = true; });
-    document.getElementById('googleSignIn').addEventListener('click', () => { justAuthenticated = true; });
-    document.getElementById('appleSignIn').addEventListener('click', () => { justAuthenticated = true; });
-
-    onAuthStateChanged(auth, async (user) => {
-      if (user && justAuthenticated && window.location.pathname.includes('index.html')) {
-        console.log('User signed in, triggering auto-redirect:', user.uid);
-        try {
-          await waitForAuthInit();
-          await checkAndRedirect();
-          justAuthenticated = false; // Reset after redirect
-        } catch (error) {
-          console.error('Auto-redirect error:', error.message);
-        }
+    toggleAuth.addEventListener('click', async () => {
+      console.log('Checking for /login.html');
+      if (await checkFileExists('/login.html')) {
+        console.log('login.html found, redirecting');
+        window.location.href = '/login.html';
+      } else {
+        console.log('login.html not found');
+        showCustomAlert('Login page not found. Please contact support.', 'OK', hideCustomAlert);
       }
     });
   </script>
