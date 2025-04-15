@@ -461,35 +461,48 @@
     }
     async function redirectTo404(errorMessage) {
       console.error('Error occurred:', errorMessage);
-      window.location.assign('/404.html');
+      showCustomAlert('Something went wrong. Please try again.', 'Go to Login', () => {
+        window.location.href = '/login.html';
+      });
     }
     function generateVerificationCode() {
       return Math.floor(100000 + Math.random() * 900000).toString();
     }
     async function sendVerificationEmail(email, code) {
-      try {
-        const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            service_id: 'YOUR_EMAILJS_SERVICE_ID',
-            template_id: 'YOUR_EMAILJS_TEMPLATE_ID',
-            user_id: 'YOUR_EMAILJS_USER_ID',
-            template_params: {
-              to_email: email,
-              from_email: 'info@evaclin.life',
-              verification_code: code,
+      const maxRetries = 2;
+      let attempt = 0;
+      while (attempt <= maxRetries) {
+        try {
+          const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
             },
-          }),
-        });
-        if (!response.ok) throw new Error('Failed to send email');
-        return true;
-      } catch (error) {
-        console.error('EmailJS Error:', error);
-        return false;
+            body: JSON.stringify({
+              service_id: 'YOUR_EMAILJS_SERVICE_ID',
+              template_id: 'YOUR_EMAILJS_TEMPLATE_ID',
+              user_id: 'YOUR_EMAILJS_USER_ID',
+              template_params: {
+                to_email: email,
+                from_email: 'info@evaclin.life',
+                verification_code: code,
+              },
+            }),
+          });
+          if (!response.ok) throw new Error(`EmailJS attempt ${attempt + 1} failed: ${response.status}`);
+          console.log(`Verification email sent to ${email}`);
+          return true;
+        } catch (error) {
+          console.error(`EmailJS Error (attempt ${attempt + 1}):`, error);
+          attempt++;
+          if (attempt > maxRetries) {
+            console.error('Max retries reached for EmailJS');
+            return false;
+          }
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
       }
+      return false;
     }
     authForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -498,6 +511,7 @@
       const password = document.getElementById('password').value;
       const username = document.getElementById('username').value;
       try {
+        console.log('Checking email and username');
         const emailQuery = query(collection(db, "users"), where("email", "==", email));
         const emailSnapshot = await getDocs(emailQuery);
         if (!emailSnapshot.empty) {
@@ -514,16 +528,20 @@
           showCustomAlert('This username is already taken.', 'Try Again', hideCustomAlert);
           return;
         }
+        console.log('Creating Firebase user');
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         const verificationCode = generateVerificationCode();
+        console.log('Sending verification email');
         const emailSent = await sendVerificationEmail(email, verificationCode);
         if (!emailSent) {
-          await auth.currentUser.delete();
+          console.error('Email sending failed, deleting user');
+          await user.delete();
           formLoading.classList.remove('active');
-          await redirectTo404('Failed to send verification email');
+          showCustomAlert('Failed to send verification email. Please try again.', 'Try Again', hideCustomAlert);
           return;
         }
+        console.log('Storing pending user data');
         await addDoc(collection(db, "pending_users"), {
           username: username,
           email: email,
@@ -533,15 +551,30 @@
           createdAt: new Date(),
         });
         formLoading.classList.remove('active');
+        console.log('Checking for verify.html');
         if (await checkFileExists('/verify.html')) {
+          console.log('Redirecting to verify.html');
           window.location.href = '/verify.html';
         } else {
-          await auth.currentUser.delete();
-          await redirectTo404('Verification page not found');
+          console.error('verify.html not found, deleting user');
+          await user.delete();
+          formLoading.classList.remove('active');
+          showCustomAlert('Verification page not found. Please try again.', 'Go to Login', () => {
+            window.location.href = '/login.html';
+          });
         }
       } catch (error) {
+        console.error('Sign-up error:', error);
         formLoading.classList.remove('active');
-        await redirectTo404(`Sign Up Error: ${error.code} - ${error.message}`);
+        if (error.code === 'auth/email-already-in-use') {
+          showCustomAlert('This email is already registered. Please log in.', 'Go to Login', () => {
+            window.location.href = '/login.html';
+          });
+        } else if (error.code === 'auth/invalid-email') {
+          showCustomAlert('Invalid email format.', 'Try Again', hideCustomAlert);
+        } else {
+          showCustomAlert('Sign-up failed. Please try again.', 'Try Again', hideCustomAlert);
+        }
       }
     });
     document.getElementById("googleSignIn").addEventListener("click", async () => {
@@ -580,7 +613,7 @@
         }
       } catch (error) {
         formLoading.classList.remove('active');
-        await redirectTo404(`Google Sign-In Error: ${error.code} - ${error.message}`);
+        showCustomAlert(`Google Sign-In Error: ${error.message}`, 'Try Again', hideCustomAlert);
       }
     });
     document.getElementById("appleSignIn").addEventListener("click", async () => {
@@ -610,7 +643,7 @@
         }
       } catch (error) {
         formLoading.classList.remove('active');
-        await redirectTo404(`Apple Sign-In Error: ${error.code} - ${error.message}`);
+        showCustomAlert(`Apple Sign-In Error: ${error.message}`, 'Try Again', hideCustomAlert);
       }
     });
     getRedirectResult(auth).then(async (result) => {
@@ -638,12 +671,12 @@
           }
         } catch (error) {
           formLoading.classList.remove('active');
-          await redirectTo404(`Redirect Error: ${error.code} - ${error.message}`);
+          showCustomAlert(`Redirect Error: ${error.message}`, 'Try Again', hideCustomAlert);
         }
       }
     }).catch((error) => {
       formLoading.classList.remove('active');
-      redirectTo404(`Redirect Error: ${error.code} - ${error.message}`);
+      showCustomAlert(`Redirect Error: ${error.message}`, 'Try Again', hideCustomAlert);
     });
     toggleAuth.addEventListener('click', async () => {
       console.log('Checking for /login.html');
@@ -652,7 +685,7 @@
         window.location.href = '/login.html';
       } else {
         console.log('login.html not found, redirecting to 404');
-        window.location.assign('/404.html');
+        showCustomAlert('Login page not found.', 'Try Again', hideCustomAlert);
       }
     });
   </script>
