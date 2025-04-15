@@ -391,7 +391,11 @@
 
     toggleAuth.addEventListener('click', () => {
       isSignUp = !isSignUp;
-      updateForm();
+      if (!isSignUp) {
+        window.location.href = 'login.html';
+      } else {
+        updateForm();
+      }
     });
 
     // Page load animation
@@ -517,6 +521,7 @@
           if (!emailSnapshot.empty) {
             formLoading.classList.remove('active');
             alert('User already registered, please log in.');
+            window.location.href = 'login.html';
             return;
           }
 
@@ -539,23 +544,21 @@
           });
 
           alert('User registered successfully!');
-        } else {
-          await checkAndRedirect(); // Login redirects directly
+          formLoading.classList.remove('active');
+          await checkAndRedirect();
         }
-        formLoading.classList.remove('active');
-        await checkAndRedirect();
       } catch (error) {
         formLoading.classList.remove('active');
-        console.error(`${isSignUp ? 'Sign Up' : 'Log In'} Error:`, error.code, error.message);
+        console.error('Sign Up Error:', error.code, error.message);
         let errorMessage = error.message;
         if (error.code === 'auth/email-already-in-use') {
-          errorMessage = "User already registered, please log in.";
-        } else if (error.code === 'auth/invalid-credential') {
-          errorMessage = "Incorrect email or password.";
+          alert('User already registered, please log in.');
+          window.location.href = 'login.html';
+          return;
         } else if (error.code === 'permission-denied') {
           errorMessage = "Database access denied. Please check Firestore rules.";
         }
-        alert(`${isSignUp ? 'Sign Up' : 'Log In'} failed: ${errorMessage}`);
+        alert(`Sign Up failed: ${errorMessage}`);
       }
     });
 
@@ -616,12 +619,13 @@
             createdAt: new Date()
           });
           alert('Signed up with Google!');
+          formLoading.classList.remove('active');
+          await checkAndRedirect();
         } else {
-          alert('User already registered, proceeding to login.');
+          formLoading.classList.remove('active');
+          alert('User already registered, please log in.');
+          window.location.href = 'login.html';
         }
-
-        formLoading.classList.remove('active');
-        await checkAndRedirect();
       } catch (error) {
         formLoading.classList.remove('active');
         console.error("Google Sign-In Error:", error.code, error.message);
@@ -666,12 +670,13 @@
             createdAt: new Date()
           });
           alert('Signed up with Apple!');
+          formLoading.classList.remove('active');
+          await checkAndRedirect();
         } else {
-          alert('User already registered, proceeding to login.');
+          formLoading.classList.remove('active');
+          alert('User already registered, please log in.');
+          window.location.href = 'login.html';
         }
-
-        formLoading.classList.remove('active');
-        await checkAndRedirect();
       } catch (error) {
         formLoading.classList.remove('active');
         console.error("Apple Sign-In Error:", error.code, error.message);
@@ -709,12 +714,13 @@
               createdAt: new Date()
             });
             alert(`Signed up with ${result.providerId === "apple.com" ? "Apple" : "Google"}!`);
+            formLoading.classList.remove('active');
+            await checkAndRedirect();
           } else {
-            alert(`User already registered, signed in with ${result.providerId === "apple.com" ? "Apple" : "Google"}!`);
+            formLoading.classList.remove('active');
+            alert(`User already registered, please log in.`);
+            window.location.href = 'login.html';
           }
-
-          formLoading.classList.remove('active');
-          await checkAndRedirect();
         } catch (error) {
           formLoading.classList.remove('active');
           console.error("Redirect Result Error:", error.code, error.message);
