@@ -521,16 +521,22 @@
       }
     }
 
-    // Redirect to dashboard
+    // Redirect to dashboard or 404
     async function redirectToDashboard() {
       console.log('Checking for /dashboard.html');
       if (await checkFileExists('/dashboard.html')) {
         console.log('dashboard.html found, redirecting');
         window.location.assign('/dashboard.html');
       } else {
-        console.log('dashboard.html not found');
-        showCustomAlert('Logged in successfully! Dashboard not available.', 'Stay Here', hideCustomAlert);
+        console.log('dashboard.html not found, redirecting to 404');
+        window.location.assign('/404.html');
       }
+    }
+
+    // Redirect to 404 on error
+    async function redirectTo404(errorMessage) {
+      console.error('Error occurred:', errorMessage);
+      window.location.assign('/404.html');
     }
 
     // Email/password login
@@ -557,20 +563,10 @@
         await redirectToDashboard();
       } catch (error) {
         formLoading.classList.remove('active');
-        console.error('Login Error:', error.code, error.message);
-        let errorMessage = error.message;
-        if (error.code === 'auth/user-not-found') {
-          showCustomAlert('This email is not registered. Please sign up.', 'Go to Sign Up', () => {
-            window.location.href = '/index.html';
-          });
-        } else if (error.code === 'auth/wrong-password') {
-          errorMessage = "Incorrect password.";
-          showCustomAlert(errorMessage, 'Try Again', hideCustomAlert);
-        } else if (error.code === 'permission-denied') {
-          errorMessage = "Database access denied. Please check Firestore rules.";
-          showCustomAlert(errorMessage, 'OK', hideCustomAlert);
+        if (error.code === 'auth/wrong-password') {
+          showCustomAlert('Incorrect password.', 'Try Again', hideCustomAlert);
         } else {
-          showCustomAlert(`Login failed: ${errorMessage}`, 'OK', hideCustomAlert);
+          await redirectTo404(`Login Error: ${error.code} - ${error.message}`);
         }
       }
     });
@@ -609,14 +605,7 @@
         await redirectToDashboard();
       } catch (error) {
         formLoading.classList.remove('active');
-        console.error("Google Login Error:", error.code, error.message);
-        let errorMessage = error.message;
-        if (error.code === 'auth/popup-closed-by-user') {
-          errorMessage = "Google login cancelled.";
-        } else if (error.code === 'auth/popup-blocked') {
-          errorMessage = "Popup blocked. Please allow popups.";
-        }
-        showCustomAlert(`Google login failed: ${errorMessage}`, 'OK', hideCustomAlert);
+        await redirectTo404(`Google Login Error: ${error.code} - ${error.message}`);
       }
     });
 
@@ -644,14 +633,7 @@
         await redirectToDashboard();
       } catch (error) {
         formLoading.classList.remove('active');
-        console.error("Apple Login Error:", error.code, error.message);
-        let errorMessage = error.message;
-        if (error.code === 'auth/popup-closed-by-user') {
-          errorMessage = "Apple login cancelled.";
-        } else if (error.code === 'auth/popup-blocked') {
-          errorMessage = "Popup blocked. Please allow popups.";
-        }
-        showCustomAlert(`Apple login failed: ${errorMessage}`, 'OK', hideCustomAlert);
+        await redirectTo404(`Apple Login Error: ${error.code} - ${error.message}`);
       }
     });
 
@@ -659,25 +641,29 @@
     getRedirectResult(auth).then(async (result) => {
       if (result) {
         formLoading.classList.add('active');
-        const user = result.user;
-        const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
-        const userSnapshot = await getDocs(userQuery);
+        try {
+          const user = result.user;
+          const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
+          const userSnapshot = await getDocs(userQuery);
 
-        if (userSnapshot.empty) {
+          if (userSnapshot.empty) {
+            formLoading.classList.remove('active');
+            showCustomAlert('This account is not registered. Please sign up.', 'Go to Sign Up', () => {
+              window.location.href = '/index.html';
+            });
+            return;
+          }
+
           formLoading.classList.remove('active');
-          showCustomAlert('This account is not registered. Please sign up.', 'Go to Sign Up', () => {
-            window.location.href = '/index.html';
-          });
-          return;
+          await redirectToDashboard();
+        } catch (error) {
+          formLoading.classList.remove('active');
+          await redirectTo404(`Redirect Error: ${error.code} - ${error.message}`);
         }
-
-        formLoading.classList.remove('active');
-        await redirectToDashboard();
       }
     }).catch((error) => {
       formLoading.classList.remove('active');
-      console.error("Redirect Error:", error.code, error.message);
-      showCustomAlert(`Login failed: ${error.message}`, 'OK', hideCustomAlert);
+      redirectTo404(`Redirect Error: ${error.code} - ${error.message}`);
     });
 
     // Toggle to sign-up page
@@ -687,8 +673,8 @@
         console.log('index.html found, redirecting');
         window.location.href = '/index.html';
       } else {
-        console.log('index.html not found');
-        showCustomAlert('Sign-up page not found. Please contact support.', 'OK', hideCustomAlert);
+        console.log('index.html not found, redirecting to 404');
+        window.location.assign('/404.html');
       }
     });
   </script>
