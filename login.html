@@ -20,6 +20,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      overflow: hidden;
     }
 
     .container {
@@ -30,6 +31,12 @@
       width: 100%;
       gap: 2rem;
       padding: 2rem;
+      opacity: 0;
+      transition: opacity 0.5s ease-in;
+    }
+
+    .container.loaded {
+      opacity: 1;
     }
 
     .auth-header {
@@ -47,6 +54,7 @@
       width: 100%;
       max-width: 350px;
       border: 1px solid #f00;
+      position: relative;
     }
 
     .signup-box h2 {
@@ -102,6 +110,22 @@
       color: #f00;
       font-size: 0.9rem;
       text-decoration: none;
+    }
+
+    .signup-link {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: #fff;
+    }
+
+    .signup-link a {
+      color: red;
+      text-decoration: none;
+    }
+
+    .signup-link a:hover {
+      text-decoration: underline;
     }
 
     .forgot-password:hover {
@@ -162,6 +186,54 @@
       flex-shrink: 0;
     }
 
+    #loadingOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+
+    #loadingOverlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #loadingOverlay lottie-player {
+      width: 300px;
+      height: 300px;
+    }
+
+    #formLoading {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+      border-radius: 12px;
+    }
+
+    #formLoading.active {
+      display: flex;
+    }
+
+    #formLoading lottie-player {
+      width: 100px;
+      height: 100px;
+    }
+
     @media (max-width: 768px) {
       body {
         flex-direction: column;
@@ -211,6 +283,16 @@
 </head>
 
 <body>
+  <div id="loadingOverlay">
+    <lottie-player
+      src="Animation - 1744696593398.json"
+      background="transparent"
+      speed="1"
+      loop
+      autoplay>
+    </lottie-player>
+  </div>
+
   <div class="container">
     <lottie-player
       src="Animation - 1744470672068.json"
@@ -222,6 +304,15 @@
     ></lottie-player>
 
     <div class="signup-box">
+      <div id="formLoading">
+        <lottie-player
+          src="Animation - 1744696593398.json"
+          background="transparent"
+          speed="1"
+          loop
+          autoplay>
+        </lottie-player>
+      </div>
       <h2>Log In</h2>
       <form id="loginForm" aria-label="Login form">
         <div>
@@ -241,6 +332,7 @@
             required
             aria-label="Password"
             minlength="6"
+            style="padding-right: 3rem;"
           />
           <svg id="togglePassword" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#f00" stroke-width="2" style="position: absolute; right: 0.7rem; top: 50%; transform: translateY(-50%); cursor: pointer; z-index: 10; pointer-events: auto;">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
@@ -273,7 +365,7 @@
 
       <p class="signup-link">
         Don't have an account?
-        <a href="index.html" style="color: red; text-decoration: none;">Sign up here</a>
+        <a href="index.html">Sign up here</a>
       </p>
     </div>
   </div>
@@ -291,7 +383,6 @@
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
     import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
-    // Firebase config (move to backend in production)
     const firebaseConfig = {
       apiKey: "AIzaSyDJJXIRHOm__HnLSKI0vdnPKnVLVb7fMr4",
       authDomain: "login-auth-4be0b.firebaseapp.com",
@@ -311,6 +402,17 @@
     const emailInput = document.getElementById("email");
     const passwordInput = document.getElementById("password");
     const togglePassword = document.getElementById("togglePassword");
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const container = document.querySelector('.container');
+    const formLoading = document.getElementById('formLoading');
+
+    // Page load animation
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        loadingOverlay.classList.add('hidden');
+        container.classList.add('loaded');
+      }, 2000);
+    });
 
     // Show error message in DOM
     const showError = (message) => {
@@ -341,13 +443,63 @@
 
     // Password toggle functionality
     let isPasswordVisible = false;
+    let autoHideTimeout = null;
+
+    const togglePasswordVisibility = () => {
+        isPasswordVisible = !isPasswordVisible;
+        
+        if (autoHideTimeout) {
+            clearTimeout(autoHideTimeout);
+            autoHideTimeout = null;
+        }
+        
+        passwordInput.type = isPasswordVisible ? 'text' : 'password';
+        togglePassword.innerHTML = isPasswordVisible 
+            ? `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />`
+            : `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>`;
+        
+        passwordInput.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        togglePassword.style.transition = 'opacity 0.3s ease';
+        
+        passwordInput.style.opacity = '0.7';
+        passwordInput.style.transform = 'scale(0.98)';
+        togglePassword.style.opacity = '0.7';
+        
+        setTimeout(() => {
+            passwordInput.style.opacity = '1';
+            passwordInput.style.transform = 'scale(1)';
+            togglePassword.style.opacity = '1';
+        }, 300);
+        
+        if (isPasswordVisible) {
+            autoHideTimeout = setTimeout(() => {
+                if (isPasswordVisible) {
+                    isPasswordVisible = false;
+                    passwordInput.type = 'password';
+                    togglePassword.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>`;
+                    
+                    passwordInput.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    togglePassword.style.transition = 'opacity 0.3s ease';
+                    
+                    passwordInput.style.opacity = '0.7';
+                    passwordInput.style.transform = 'scale(0.98)';
+                    togglePassword.style.opacity = '0.7';
+                    
+                    setTimeout(() => {
+                        passwordInput.style.opacity = '1';
+                        passwordInput.style.transform = 'scale(1)';
+                        togglePassword.style.opacity = '1';
+                    }, 300);
+                }
+                autoHideTimeout = null;
+            }, 2000);
+        }
+    };
+
     togglePassword.addEventListener('click', (e) => {
-      e.preventDefault();
-      isPasswordVisible = !isPasswordVisible;
-      passwordInput.type = isPasswordVisible ? 'text' : 'password';
-      togglePassword.innerHTML = isPasswordVisible 
-        ? `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />`
-        : `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>`;
+        e.preventDefault();
+        e.stopPropagation();
+        togglePasswordVisibility();
     });
 
     // Forgot Password functionality
@@ -393,24 +545,28 @@
     document.getElementById("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       clearError();
+      formLoading.classList.add('active');
 
       const email = emailInput.value.trim();
       const password = passwordInput.value;
 
-      // Basic validation
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         showError("Please enter a valid email address.");
+        formLoading.classList.remove('active');
         return;
       }
       if (password.length < 6) {
         showError("Password must be at least 6 characters.");
+        formLoading.classList.remove('active');
         return;
       }
 
       try {
         await signInWithEmailAndPassword(auth, email, password);
+        formLoading.classList.remove('active');
         window.location.href = "loginpages/dashboard.html";
       } catch (error) {
+        formLoading.classList.remove('active');
         console.error("Login error:", error);
         switch (error.code) {
           case "auth/user-not-found":
@@ -431,9 +587,11 @@
     // Google login
     const googleProvider = new GoogleAuthProvider();
     document.getElementById("googleSignIn").addEventListener("click", async () => {
+      formLoading.classList.add('active');
       try {
         await signInWithRedirect(auth, googleProvider);
       } catch (error) {
+        formLoading.classList.remove('active');
         console.error("Google sign-in error:", error);
         showError("Google sign-in failed: " + error.message);
       }
@@ -443,9 +601,11 @@
     const appleProvider = new OAuthProvider("apple.com");
     appleProvider.addScope("email name");
     document.getElementById("appleSignIn").addEventListener("click", async () => {
+      formLoading.classList.add('active');
       try {
         await signInWithRedirect(auth, appleProvider);
       } catch (error) {
+        formLoading.classList.remove('active');
         console.error("Apple sign-in error:", error);
         showError("Apple sign-in failed: " + error.message);
       }
@@ -454,6 +614,7 @@
     // Handle social login and Firestore user entry
     getRedirectResult(auth).then(async (result) => {
       if (result) {
+        formLoading.classList.add('active');
         const user = result.user;
         const usersRef = collection(db, "users");
         const q = query(usersRef, where("uid", "==", user.uid));
@@ -469,12 +630,14 @@
           });
         }
 
+        formLoading.classList.remove('active');
         window.location.href = "loginpages/dashboard.html";
       }
     }).catch((error) => {
+      formLoading.classList.remove('active');
       console.error("Redirect sign-in error:", error);
       showError("Sign-in failed: " + error.message);
     });
   </script>
 </body>
-</html> 
+</html>
