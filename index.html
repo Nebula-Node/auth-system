@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
-  <title>Auth System</title>
+  <title>Sign Up</title>
 
   <style>
     * {
@@ -315,7 +315,7 @@
       </form>
 
       <div class="social-signin">
-        <p>Or sign in with:</p>
+        <p>Or sign up with:</p>
         <button id="googleSignIn">
           <svg viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg" width="20" height="20">
             <path fill="#4285f4" d="M533.5 278.4c0-17.3-1.6-34.3-4.7-50.7H272v95.9h146.9c-6.4 34.8-25.9 64.2-55.2 83.8v69.3h89.1c52.1-48 80.7-118.8 80.7-198.3z"/>
@@ -342,7 +342,6 @@
     import {
         getAuth,
         createUserWithEmailAndPassword,
-        signInWithEmailAndPassword,
         GoogleAuthProvider,
         OAuthProvider,
         signInWithPopup,
@@ -502,7 +501,7 @@
       }
     }
 
-    // Email/password auth
+    // Email/password sign-up
     authForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       formLoading.classList.add('active');
@@ -512,6 +511,16 @@
 
       try {
         if (isSignUp) {
+          // Check if email already exists
+          const emailQuery = query(collection(db, "users"), where("email", "==", email));
+          const emailSnapshot = await getDocs(emailQuery);
+          if (!emailSnapshot.empty) {
+            formLoading.classList.remove('active');
+            alert('User already registered, please log in.');
+            return;
+          }
+
+          // Check if username is taken
           const usernameQuery = query(collection(db, "users"), where("username", "==", username));
           const usernameSnapshot = await getDocs(usernameQuery);
           if (!usernameSnapshot.empty) {
@@ -531,8 +540,7 @@
 
           alert('User registered successfully!');
         } else {
-          await signInWithEmailAndPassword(auth, email, password);
-          alert('Logged in successfully!');
+          await checkAndRedirect(); // Login redirects directly
         }
         formLoading.classList.remove('active');
         await checkAndRedirect();
@@ -541,7 +549,7 @@
         console.error(`${isSignUp ? 'Sign Up' : 'Log In'} Error:`, error.code, error.message);
         let errorMessage = error.message;
         if (error.code === 'auth/email-already-in-use') {
-          errorMessage = "This email is already registered.";
+          errorMessage = "User already registered, please log in.";
         } else if (error.code === 'auth/invalid-credential') {
           errorMessage = "Incorrect email or password.";
         } else if (error.code === 'permission-denied') {
@@ -567,7 +575,7 @@
       });
     }
 
-    // Google sign-in
+    // Google sign-up
     document.getElementById("googleSignIn").addEventListener("click", async () => {
       formLoading.classList.add('active');
       console.log('Initiating Google Sign-In');
@@ -586,7 +594,7 @@
             alert('Popup blocked by browser. Trying redirect instead.');
             console.log('Falling back to signInWithRedirect');
             await signInWithRedirect(auth, googleProvider);
-            return; // Redirect will handle result on reload
+            return;
           } else {
             throw popupError;
           }
@@ -607,9 +615,11 @@
             provider: "google",
             createdAt: new Date()
           });
+          alert('Signed up with Google!');
+        } else {
+          alert('User already registered, proceeding to login.');
         }
 
-        alert('Signed in with Google!');
         formLoading.classList.remove('active');
         await checkAndRedirect();
       } catch (error) {
@@ -629,7 +639,7 @@
       }
     });
 
-    // Apple sign-in
+    // Apple sign-up
     document.getElementById("appleSignIn").addEventListener("click", async () => {
       formLoading.classList.add('active');
       console.log('Initiating Apple Sign-In');
@@ -655,9 +665,11 @@
             provider: "apple",
             createdAt: new Date()
           });
+          alert('Signed up with Apple!');
+        } else {
+          alert('User already registered, proceeding to login.');
         }
 
-        alert('Signed in with Apple!');
         formLoading.classList.remove('active');
         await checkAndRedirect();
       } catch (error) {
@@ -696,9 +708,11 @@
               provider: result.providerId === "apple.com" ? "apple" : "google",
               createdAt: new Date()
             });
+            alert(`Signed up with ${result.providerId === "apple.com" ? "Apple" : "Google"}!`);
+          } else {
+            alert(`User already registered, signed in with ${result.providerId === "apple.com" ? "Apple" : "Google"}!`);
           }
 
-          alert(`Signed in with ${result.providerId === "apple.com" ? "Apple" : "Google"}!`);
           formLoading.classList.remove('active');
           await checkAndRedirect();
         } catch (error) {
