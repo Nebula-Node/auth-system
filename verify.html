@@ -269,12 +269,15 @@
               template_params: {
                 to_email: email,
                 from_email: 'info@evaclin.life',
+                from_name: 'Evaclin',
                 verification_code: code,
               },
             }),
           });
-          if (!response.ok) throw new Error(`EmailJS attempt ${attempt + 1} failed: ${response.status}`);
-          console.log(`Verification email sent to ${email}`);
+          const responseText = await response.text();
+          console.log(`EmailJS Response (attempt ${attempt + 1}):`, responseText);
+          if (!response.ok) throw new Error(`EmailJS attempt ${attempt + 1} failed: ${response.status} - ${responseText}`);
+          console.log(`Verification email sent to ${email} from info@evaclin.life`);
           return true;
         } catch (error) {
           console.error(`EmailJS Error (attempt ${attempt + 1}):`, error);
