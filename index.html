@@ -351,9 +351,11 @@
         OAuthProvider,
         signInWithPopup,
         signInWithRedirect,
-        getRedirectResult
+        getRedirectResult,
+        deleteUser,
+        fetchSignInMethodsForEmail
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
     const firebaseConfig = {
         apiKey: "AIzaSyBOAnbROT6CrHIYpPR29Tl0dZAy1ab41F8",
         authDomain: "signup-auth-ad445.firebaseapp.com",
@@ -456,7 +458,9 @@
         window.location.assign('/dashboard.html');
       } else {
         console.log('dashboard.html not found, redirecting to 404');
-        window.location.assign('/404.html');
+        showCustomAlert('Dashboard not found.', 'Go to Login', () => {
+          window.location.href = '/login.html';
+        });
       }
     }
     async function redirectTo404(errorMessage) {
@@ -485,12 +489,15 @@
               template_params: {
                 to_email: email,
                 from_email: 'info@evaclin.life',
+                from_name: 'Evaclin',
                 verification_code: code,
               },
             }),
           });
-          if (!response.ok) throw new Error(`EmailJS attempt ${attempt + 1} failed: ${response.status}`);
-          console.log(`Verification email sent to ${email}`);
+          const responseText = await response.text();
+          console.log(`EmailJS Response (attempt ${attempt + 1}):`, responseText);
+          if (!response.ok) throw new Error(`EmailJS attempt ${attempt + 1} failed: ${response.status} - ${responseText}`);
+          console.log(`Verification email sent to ${email} from info@evaclin.life`);
           return true;
         } catch (error) {
           console.error(`EmailJS Error (attempt ${attempt + 1}):`, error);
@@ -504,6 +511,18 @@
       }
       return false;
     }
+    async function cleanupPendingUser(email) {
+      try {
+        const pendingQuery = query(collection(db, "pending_users"), where("email", "==", email));
+        const pendingSnapshot = await getDocs(pendingQuery);
+        for (const docSnap of pendingSnapshot.docs) {
+          await deleteDoc(doc(db, "pending_users", docSnap.id));
+          console.log(`Deleted pending user entry for ${email}`);
+        }
+      } catch (error) {
+        console.error('Error cleaning up pending user:', error);
+      }
+    }
     authForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       formLoading.classList.add('active');
@@ -511,7 +530,7 @@
       const password = document.getElementById('password').value;
       const username = document.getElementById('username').value;
       try {
-        console.log('Checking email and username');
+        console.log('Checking email in Firestore and Auth');
         const emailQuery = query(collection(db, "users"), where("email", "==", email));
         const emailSnapshot = await getDocs(emailQuery);
         if (!emailSnapshot.empty) {
@@ -520,6 +539,16 @@
             window.location.href = '/login.html';
           });
           return;
+        }
+        const signInMethods = await fetchSignInMethodsForEmail(auth, email);
+        if (signInMethods.length > 0) {
+          console.log('Email exists in Firebase Auth but not in Firestore users, cleaning up');
+          const user = auth.currentUser;
+          if (user && user.email === email) {
+            await deleteUser(user);
+            console.log('Deleted stale Auth user');
+          }
+          await cleanupPendingUser(email);
         }
         const usernameQuery = query(collection(db, "users"), where("username", "==", username));
         const usernameSnapshot = await getDocs(usernameQuery);
@@ -537,6 +566,7 @@
         if (!emailSent) {
           console.error('Email sending failed, deleting user');
           await user.delete();
+          await cleanupPendingUser(email);
           formLoading.classList.remove('active');
           showCustomAlert('Failed to send verification email. Please try again.', 'Try Again', hideCustomAlert);
           return;
@@ -558,6 +588,7 @@
         } else {
           console.error('verify.html not found, deleting user');
           await user.delete();
+          await cleanupPendingUser(email);
           formLoading.classList.remove('active');
           showCustomAlert('Verification page not found. Please try again.', 'Go to Login', () => {
             window.location.href = '/login.html';
@@ -567,9 +598,21 @@
         console.error('Sign-up error:', error);
         formLoading.classList.remove('active');
         if (error.code === 'auth/email-already-in-use') {
-          showCustomAlert('This email is already registered. Please log in.', 'Go to Login', () => {
-            window.location.href = '/login.html';
-          });
+          console.log('Email exists in Auth, attempting cleanup');
+          const signInMethods = await fetchSignInMethodsForEmail(auth, email);
+          if (signInMethods.length > 0) {
+            const user = auth.currentUser;
+            if (user && user.email === email) {
+              await deleteUser(user);
+              console.log('Deleted stale Auth user after error');
+            }
+            await cleanupPendingUser(email);
+            showCustomAlert('Previous sign-up attempt failed. Please try again.', 'Try Again', hideCustomAlert);
+          } else {
+            showCustomAlert('This email is already registered. Please log in.', 'Go to Login', () => {
+              window.location.href = '/login.html';
+            });
+          }
         } else if (error.code === 'auth/invalid-email') {
           showCustomAlert('Invalid email format.', 'Try Again', hideCustomAlert);
         } else {
