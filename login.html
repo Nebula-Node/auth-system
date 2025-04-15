@@ -379,7 +379,8 @@
       OAuthProvider,
       signInWithRedirect,
       getRedirectResult,
-      sendPasswordResetEmail
+      sendPasswordResetEmail,
+      onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
     import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
@@ -441,65 +442,84 @@
       return username.replace(/[^a-zA-Z0-9]/g, '');
     };
 
+    // Check if a page exists before redirecting
+    const checkPageExists = async (url) => {
+      try {
+        const response = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+        return response.ok; // Returns true if status is 200-299
+      } catch (error) {
+        console.error(`Error checking page ${url}:`, error);
+        return false;
+      }
+    };
+
+    // Handle redirect with 404 fallback
+    const redirectWithFallback = async () => {
+      const dashboardUrl = 'loginpages/dashboard.html';
+      const fallbackUrl = '404.html';
+      const pageExists = await checkPageExists(dashboardUrl);
+      window.location.href = pageExists ? dashboardUrl : fallbackUrl;
+    };
+
     // Password toggle functionality
     let isPasswordVisible = false;
     let autoHideTimeout = null;
 
     const togglePasswordVisibility = () => {
-        isPasswordVisible = !isPasswordVisible;
-        
-        if (autoHideTimeout) {
-            clearTimeout(autoHideTimeout);
-            autoHideTimeout = null;
-        }
-        
-        passwordInput.type = isPasswordVisible ? 'text' : 'password';
-        togglePassword.innerHTML = isPasswordVisible 
-            ? `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />`
-            : `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>`;
-        
-        passwordInput.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-        togglePassword.style.transition = 'opacity 0.3s ease';
-        
-        passwordInput.style.opacity = '0.7';
-        passwordInput.style.transform = 'scale(0.98)';
-        togglePassword.style.opacity = '0.7';
-        
-        setTimeout(() => {
-            passwordInput.style.opacity = '1';
-            passwordInput.style.transform = 'scale(1)';
-            togglePassword.style.opacity = '1';
-        }, 300);
-        
-        if (isPasswordVisible) {
-            autoHideTimeout = setTimeout(() => {
-                if (isPasswordVisible) {
-                    isPasswordVisible = false;
-                    passwordInput.type = 'password';
-                    togglePassword.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>`;
-                    
-                    passwordInput.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-                    togglePassword.style.transition = 'opacity 0.3s ease';
-                    
-                    passwordInput.style.opacity = '0.7';
-                    passwordInput.style.transform = 'scale(0.98)';
-                    togglePassword.style.opacity = '0.7';
-                    
-                    setTimeout(() => {
-                        passwordInput.style.opacity = '1';
-                        passwordInput.style.transform = 'scale(1)';
-                        togglePassword.style.opacity = '1';
-                    }, 300);
-                }
-                autoHideTimeout = null;
-            }, 2000);
-        }
+      isPasswordVisible = !isPasswordVisible;
+      
+      if (autoHideTimeout) {
+        clearTimeout(autoHideTimeout);
+        autoHideTimeout = null;
+      }
+      
+      passwordInput.type = isPasswordVisible ? 'text' : 'password';
+      togglePassword.innerHTML = isPasswordVisible 
+        ? `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />`
+        : `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>`;
+      
+      passwordInput.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+      togglePassword.style.transition = 'opacity 0.3s ease';
+      
+      passwordInput.style.opacity = '0.7';
+      passwordInput.style.transform = 'scale(0.98)';
+      togglePassword.style.opacity = '0.7';
+      
+      setTimeout(() => {
+        passwordInput.style.opacity = '1';
+        passwordInput.style.transform = 'scale(1)';
+        togglePassword.style.opacity = '1';
+      }, 300);
+      
+      if (isPasswordVisible) {
+        autoHideTimeout = setTimeout(() => {
+          if (isPasswordVisible) {
+            isPasswordVisible = false;
+            passwordInput.type = 'password';
+            togglePassword.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>`;
+            
+            passwordInput.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            togglePassword.style.transition = 'opacity 0.3s ease';
+            
+            passwordInput.style.opacity = '0.7';
+            passwordInput.style.transform = 'scale(0.98)';
+            togglePassword.style.opacity = '0.7';
+            
+            setTimeout(() => {
+              passwordInput.style.opacity = '1';
+              passwordInput.style.transform = 'scale(1)';
+              togglePassword.style.opacity = '1';
+            }, 300);
+          }
+          autoHideTimeout = null;
+        }, 2000);
+      }
     };
 
     togglePassword.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        togglePasswordVisibility();
+      e.preventDefault();
+      e.stopPropagation();
+      togglePasswordVisibility();
     });
 
     // Forgot Password functionality
@@ -564,7 +584,7 @@
       try {
         await signInWithEmailAndPassword(auth, email, password);
         formLoading.classList.remove('active');
-        window.location.href = "loginpages/dashboard.html";
+        await redirectWithFallback();
       } catch (error) {
         formLoading.classList.remove('active');
         console.error("Login error:", error);
@@ -585,24 +605,24 @@
     });
 
     // Google login
-    const googleProvider = new GoogleAuthProvider();
     document.getElementById("googleSignIn").addEventListener("click", async () => {
       formLoading.classList.add('active');
       try {
+        const googleProvider = new GoogleAuthProvider();
         await signInWithRedirect(auth, googleProvider);
       } catch (error) {
         formLoading.classList.remove('active');
         console.error("Google sign-in error:", error);
-        showError("Google sign-in failed: " + error.message);
+        showError(`Google sign-in failed: ${error.message}`);
       }
     });
 
     // Apple login
-    const appleProvider = new OAuthProvider("apple.com");
-    appleProvider.addScope("email name");
     document.getElementById("appleSignIn").addEventListener("click", async () => {
       formLoading.classList.add('active');
       try {
+        const appleProvider = new OAuthProvider("apple.com");
+        appleProvider.addScope("email name");
         await signInWithRedirect(auth, appleProvider);
       } catch (error) {
         formLoading.classList.remove('active');
@@ -615,28 +635,42 @@
     getRedirectResult(auth).then(async (result) => {
       if (result) {
         formLoading.classList.add('active');
-        const user = result.user;
-        const usersRef = collection(db, "users");
-        const q = query(usersRef, where("uid", "==", user.uid));
-        const querySnapshot = await getDocs(q);
+        try {
+          const user = result.user;
+          const usersRef = collection(db, "users");
+          const q = query(usersRef, where("uid", "==", user.uid));
+          const querySnapshot = await getDocs(q);
 
-        if (querySnapshot.empty) {
-          await addDoc(usersRef, {
-            username: sanitizeUsername(user.displayName || "User"),
-            email: user.email || "unknown",
-            uid: user.uid,
-            provider: result.providerId,
-            createdAt: new Date()
-          });
+          if (querySnapshot.empty) {
+            await addDoc(usersRef, {
+              username: sanitizeUsername(user.displayName || "User"),
+              email: user.email || "unknown",
+              uid: user.uid,
+              provider: result.providerId,
+              createdAt: new Date()
+            });
+          }
+
+          formLoading.classList.remove('active');
+          await redirectWithFallback();
+        } catch (error) {
+          formLoading.classList.remove('active');
+          console.error("Error saving user data:", error);
+          showError("Failed to process sign-in: " + error.message);
         }
-
-        formLoading.classList.remove('active');
-        window.location.href = "loginpages/dashboard.html";
       }
     }).catch((error) => {
       formLoading.classList.remove('active');
       console.error("Redirect sign-in error:", error);
       showError("Sign-in failed: " + error.message);
+    });
+
+    // Check auth state on page load
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // User is signed in, attempt redirect
+        redirectWithFallback();
+      }
     });
   </script>
 </body>
