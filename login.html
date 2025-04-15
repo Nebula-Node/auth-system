@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,12 +6,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
   <title>Log In</title>
+
   <style>
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
+
     body {
       font-family: 'Segoe UI', sans-serif;
       background: #000;
@@ -21,6 +24,7 @@
       align-items: center;
       overflow: hidden;
     }
+
     .container {
       display: flex;
       justify-content: space-between;
@@ -31,9 +35,11 @@
       opacity: 0;
       transition: opacity 0.5s ease-in;
     }
+
     .container.loaded {
       opacity: 1;
     }
+
     .login-box {
       background: #111;
       padding: 2rem;
@@ -44,11 +50,13 @@
       border: 1px solid #f00;
       position: relative;
     }
+
     .login-box h2 {
       text-align: center;
       color: #f00;
       margin-bottom: 1rem;
     }
+
     .login-box input {
       width: 100%;
       padding: 0.7rem;
@@ -58,11 +66,13 @@
       border: 1px solid #f00;
       border-radius: 6px;
     }
+
     .login-box input:focus {
       outline: none;
       border-color: #ff4444;
       box-shadow: 0 0 5px #ff4444;
     }
+
     .login-box button {
       width: 100%;
       padding: 0.7rem;
@@ -75,18 +85,22 @@
       margin-top: 1rem;
       transition: background 0.3s ease;
     }
+
     .login-box button:hover {
       background: #cc0000;
     }
+
     lottie-player {
       width: 750px;
       height: 750px;
       flex-shrink: 0;
     }
+
     .social-signin {
       text-align: center;
       margin-top: 20px;
     }
+
     .social-signin button {
       width: 100%;
       margin: 8px 0;
@@ -101,28 +115,34 @@
       transition: all 0.3s ease;
       border: 2px solid transparent;
     }
+
     #googleSignIn {
       background-color: white;
       color: #db4437;
       border-color: #db4437;
     }
+
     #googleSignIn:hover {
       background-color: #db4437;
       color: white;
     }
+
     #appleSignIn {
       background-color: white;
       color: #000;
       border-color: #000;
     }
+
     #appleSignIn:hover {
       background-color: #000;
       color: white;
     }
+
     .social-signin svg {
       width: 20px;
       height: 20px;
     }
+
     .toggle-link {
       text-align: center;
       margin-top: 1rem;
@@ -132,19 +152,11 @@
       font-size: 0.9rem;
       transition: color 0.3s ease;
     }
+
     .toggle-link:hover {
       text-decoration: underline;
     }
-    .forgot-password {
-      text-align: center;
-      margin-top: 0.5rem;
-      color: #ff0000;
-      font-size: 0.9rem;
-      text-decoration: none;
-    }
-    .forgot-password:hover {
-      text-decoration: underline;
-    }
+
     #loadingOverlay {
       position: fixed;
       top: 0;
@@ -159,14 +171,17 @@
       opacity: 1;
       transition: opacity 0.5s ease;
     }
+
     #loadingOverlay.hidden {
       opacity: 0;
       pointer-events: none;
     }
+
     #loadingOverlay lottie-player {
       width: 300px;
       height: 300px;
     }
+
     #formLoading {
       position: absolute;
       top: 0;
@@ -180,13 +195,16 @@
       z-index: 10;
       border-radius: 12px;
     }
+
     #formLoading.active {
       display: flex;
     }
+
     #formLoading lottie-player {
       width: 100px;
       height: 100px;
     }
+
     #customAlert {
       position: fixed;
       top: 0;
@@ -199,9 +217,11 @@
       align-items: center;
       z-index: 1000;
     }
+
     #customAlert.active {
       display: flex;
     }
+
     .alert-box {
       background: #111;
       padding: 1.5rem;
@@ -212,11 +232,13 @@
       width: 90%;
       text-align: center;
     }
+
     .alert-box p {
       color: #fff;
       font-size: 1rem;
       margin-bottom: 1rem;
     }
+
     .alert-box button {
       background: #f00;
       color: white;
@@ -227,63 +249,77 @@
       font-weight: bold;
       transition: background 0.3s ease;
     }
+
     .alert-box button:hover {
       background: #cc0000;
     }
+
     @media screen and (max-width: 768px) {
       .container {
         flex-direction: column;
         align-items: center;
         padding: 1rem;
       }
+
       lottie-player {
         width: 300px;
         height: 300px;
       }
+
       .login-box {
         width: 100%;
         max-width: 90%;
         padding: 1.5rem;
         margin-top: 1rem;
       }
+
       .login-box h2 {
         font-size: 1.5rem;
       }
+
       .login-box input,
       .login-box button {
         font-size: 1rem;
         padding: 0.6rem;
       }
+
       .social-signin button {
         font-size: 0.9rem;
         padding: 0.6rem;
       }
-      .toggle-link, .forgot-password {
+
+      .toggle-link {
         font-size: 0.9rem;
       }
     }
+
     @media screen and (max-width: 480px) {
       lottie-player {
         width: 300px;
         height: 300px;
       }
+
       .login-box {
         padding: 1rem;
       }
+
       .login-box h2 {
         font-size: 1.3rem;
       }
+
       .login-box input,
       .login-box button {
         font-size: 0.9rem;
         padding: 0.5rem;
       }
+
       .social-signin button {
         font-size: 0.85rem;
       }
     }
   </style>
 </head>
+
 <body>
   <div id="loadingOverlay">
     <lottie-player
@@ -294,12 +330,14 @@
       autoplay>
     </lottie-player>
   </div>
+
   <div id="customAlert">
     <div class="alert-box">
       <p id="alertMessage"></p>
       <button id="alertButton">Go to Sign Up</button>
     </div>
   </div>
+
   <div class="container">
     <lottie-player
       src="Animation - 1744470672068.json"
@@ -308,6 +346,7 @@
       loop
       autoplay>
     </lottie-player>
+
     <div class="login-box">
       <div id="formLoading">
         <lottie-player
@@ -330,7 +369,7 @@
         </div>
         <button type="submit">Log In</button>
       </form>
-      <a href="/reset-password.html" class="forgot-password">Forgot Password?</a>
+
       <div class="social-signin">
         <p>Or log in with:</p>
         <button id="googleSignIn">
@@ -349,9 +388,11 @@
           Continue with Apple
         </button>
       </div>
+
       <p class="toggle-link" id="toggleAuth">Don't have an account? Sign up here</p>
     </div>
   </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import {
@@ -364,6 +405,7 @@
         getRedirectResult
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
     import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
     const firebaseConfig = {
         apiKey: "AIzaSyBOAnbROT6CrHIYpPR29Tl0dZAy1ab41F8",
         authDomain: "signup-auth-ad445.firebaseapp.com",
@@ -373,9 +415,11 @@
         appId: "1:486601898869:web:54ab61f00020e26645713c",
         measurementId: "G-1CSG0CSSZR"
     };
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+
     const authForm = document.getElementById('authForm');
     const passwordInput = document.getElementById('password');
     const togglePassword = document.getElementById('togglePassword');
@@ -386,44 +430,57 @@
     const customAlert = document.getElementById('customAlert');
     const alertMessage = document.getElementById('alertMessage');
     const alertButton = document.getElementById('alertButton');
+
+    // Page load animation
     window.addEventListener('load', () => {
       setTimeout(() => {
         loadingOverlay.classList.add('hidden');
         container.classList.add('loaded');
       }, 2000);
     });
+
+    // Custom alert function
     function showCustomAlert(message, buttonText, buttonAction) {
       alertMessage.textContent = message;
       alertButton.textContent = buttonText;
       alertButton.onclick = buttonAction;
       customAlert.classList.add('active');
     }
+
     function hideCustomAlert() {
       customAlert.classList.remove('active');
     }
+
+    // Password toggle with 2-second auto-revert
     let isPasswordVisible = false;
     let autoHideTimeout = null;
+
     const togglePasswordVisibility = () => {
       console.log('Toggling password visibility');
       isPasswordVisible = !isPasswordVisible;
+
       if (autoHideTimeout) {
         clearTimeout(autoHideTimeout);
         autoHideTimeout = null;
       }
+
       passwordInput.type = isPasswordVisible ? 'text' : 'password';
       togglePassword.innerHTML = isPasswordVisible
         ? `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />`
         : `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>`;
+
       passwordInput.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
       togglePassword.style.transition = 'opacity 0.3s ease';
       passwordInput.style.opacity = '0.7';
       passwordInput.style.transform = 'scale(0.98)';
       togglePassword.style.opacity = '0.7';
+
       setTimeout(() => {
         passwordInput.style.opacity = '1';
         passwordInput.style.transform = 'scale(1)';
         togglePassword.style.opacity = '1';
       }, 300);
+
       if (isPasswordVisible) {
         autoHideTimeout = setTimeout(() => {
           if (isPasswordVisible) {
@@ -431,11 +488,13 @@
             isPasswordVisible = false;
             passwordInput.type = 'password';
             togglePassword.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>`;
+
             passwordInput.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
             togglePassword.style.transition = 'opacity 0.3s ease';
             passwordInput.style.opacity = '0.7';
             passwordInput.style.transform = 'scale(0.98)';
             togglePassword.style.opacity = '0.7';
+
             setTimeout(() => {
               passwordInput.style.opacity = '1';
               passwordInput.style.transform = 'scale(1)';
@@ -446,11 +505,14 @@
         }, 2000);
       }
     };
+
     togglePassword.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
       togglePasswordVisibility();
     });
+
+    // Check file existence
     async function checkFileExists(path) {
       try {
         const response = await fetch(path, { method: 'HEAD', cache: 'no-store' });
@@ -459,6 +521,8 @@
         return false;
       }
     }
+
+    // Redirect to dashboard or 404
     async function redirectToDashboard() {
       console.log('Checking for /dashboard.html');
       if (await checkFileExists('/dashboard.html')) {
@@ -469,16 +533,22 @@
         window.location.assign('/404.html');
       }
     }
+
+    // Redirect to 404 on error
     async function redirectTo404(errorMessage) {
       console.error('Error occurred:', errorMessage);
       window.location.assign('/404.html');
     }
+
+    // Email/password login
     authForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       formLoading.classList.add('active');
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
+
       try {
+        // Check if email exists
         const emailQuery = query(collection(db, "users"), where("email", "==", email));
         const emailSnapshot = await getDocs(emailQuery);
         if (emailSnapshot.empty) {
@@ -488,6 +558,7 @@
           });
           return;
         }
+
         await signInWithEmailAndPassword(auth, email, password);
         formLoading.classList.remove('active');
         await redirectToDashboard();
@@ -500,11 +571,14 @@
         }
       }
     });
+
+    // Google login
     document.getElementById("googleSignIn").addEventListener("click", async () => {
       formLoading.classList.add('active');
       try {
         const googleProvider = new GoogleAuthProvider();
         googleProvider.setCustomParameters({ prompt: 'select_account' });
+
         let result;
         try {
           result = await signInWithPopup(auth, googleProvider);
@@ -515,9 +589,11 @@
           }
           throw popupError;
         }
+
         const user = result.user;
         const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
         const userSnapshot = await getDocs(userQuery);
+
         if (userSnapshot.empty) {
           formLoading.classList.remove('active');
           showCustomAlert('This account is not registered. Please sign up.', 'Go to Sign Up', () => {
@@ -525,6 +601,7 @@
           });
           return;
         }
+
         formLoading.classList.remove('active');
         await redirectToDashboard();
       } catch (error) {
@@ -532,15 +609,19 @@
         await redirectTo404(`Google Login Error: ${error.code} - ${error.message}`);
       }
     });
+
+    // Apple login
     document.getElementById("appleSignIn").addEventListener("click", async () => {
       formLoading.classList.add('active');
       try {
         const appleProvider = new OAuthProvider('apple.com');
         appleProvider.addScope("email name");
+
         const result = await signInWithPopup(auth, appleProvider);
         const user = result.user;
         const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
         const userSnapshot = await getDocs(userQuery);
+
         if (userSnapshot.empty) {
           formLoading.classList.remove('active');
           showCustomAlert('This account is not registered. Please sign up.', 'Go to Sign Up', () => {
@@ -548,6 +629,7 @@
           });
           return;
         }
+
         formLoading.classList.remove('active');
         await redirectToDashboard();
       } catch (error) {
@@ -555,6 +637,8 @@
         await redirectTo404(`Apple Login Error: ${error.code} - ${error.message}`);
       }
     });
+
+    // Handle redirect results
     getRedirectResult(auth).then(async (result) => {
       if (result) {
         formLoading.classList.add('active');
@@ -562,6 +646,7 @@
           const user = result.user;
           const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
           const userSnapshot = await getDocs(userQuery);
+
           if (userSnapshot.empty) {
             formLoading.classList.remove('active');
             showCustomAlert('This account is not registered. Please sign up.', 'Go to Sign Up', () => {
@@ -569,6 +654,7 @@
             });
             return;
           }
+
           formLoading.classList.remove('active');
           await redirectToDashboard();
         } catch (error) {
@@ -580,6 +666,8 @@
       formLoading.classList.remove('active');
       redirectTo404(`Redirect Error: ${error.code} - ${error.message}`);
     });
+
+    // Toggle to sign-up page
     toggleAuth.addEventListener('click', async () => {
       console.log('Checking for /index.html');
       if (await checkFileExists('/index.html')) {
