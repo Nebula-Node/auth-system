@@ -78,6 +78,17 @@
     .verify-box button:hover {
       background: #cc0000;
     }
+    .resend-link {
+      text-align: center;
+      margin-top: 0.5rem;
+      color: #ff0000;
+      font-size: 0.9rem;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .resend-link:hover {
+      text-decoration: underline;
+    }
     lottie-player {
       width: 750px;
       height: 750px;
@@ -192,6 +203,9 @@
         font-size: 1rem;
         padding: 0.6rem;
       }
+      .resend-link {
+        font-size: 0.9rem;
+      }
     }
     @media screen and (max-width: 480px) {
       lottie-player {
@@ -251,12 +265,13 @@
         <input type="text" name="code" id="code" placeholder="Enter 6-digit code" required maxlength="6" />
         <button type="submit">Verify</button>
       </form>
+      <p class="resend-link" id="resendCode">Resend Code</p>
     </div>
   </div>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getFirestore, collection, getDocs, query, where, addDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, query, where, addDoc, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
     const firebaseConfig = {
         apiKey: "AIzaSyBOAnbROT6CrHIYpPR29Tl0dZAy1ab41F8",
         authDomain: "signup-auth-ad445.firebaseapp.com",
@@ -270,6 +285,7 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
     const verifyForm = document.getElementById('verifyForm');
+    const resendCode = document.getElementById('resendCode');
     const container = document.querySelector('.container');
     const loadingOverlay = document.getElementById('loadingOverlay');
     const formLoading = document.getElementById('formLoading');
@@ -313,6 +329,42 @@
       console.error('Error occurred:', errorMessage);
       window.location.assign('/404.html');
     }
+    function generateVerificationCode() {
+      return Math.floor(100000 + Math.random() * 900000).toString();
+    }
+    async function sendVerificationEmail(email, code) {
+      const maxRetries = 2;
+      let attempt = 0;
+      while (attempt <= maxRetries) {
+        try {
+          const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              service_id: 'YOUR_EMAILJS_SERVICE_ID',
+              template_id: 'YOUR_EMAILJS_TEMPLATE_ID',
+              user_id: 'YOUR_EMAILJS_USER_ID',
+              template_params: {
+                to_email: email,
+                from_email: 'info@evaclin.life',
+                verification_code: code,
+              },
+            }),
+          });
+          if (!response.ok) throw new Error(`EmailJS attempt ${attempt + 1} failed: ${response.status}`);
+          console.log(`Verification email sent to ${email}`);
+          return true;
+        } catch (error) {
+          console.error(`EmailJS Error (attempt ${attempt + 1}):`, error);
+          attempt++;
+          if (attempt > maxRetries) return false;
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+      return false;
+    }
     verifyForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       formLoading.classList.add('active');
@@ -346,6 +398,42 @@
       } catch (error) {
         formLoading.classList.remove('active');
         await redirectTo404(`Verification Error: ${error.code} - ${error.message}`);
+      }
+    });
+    resendCode.addEventListener('click', async () => {
+      formLoading.classList.add('active');
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          formLoading.classList.remove('active');
+          await redirectTo404('No authenticated user found');
+          return;
+        }
+        const pendingQuery = query(collection(db, "pending_users"), where("uid", "==", user.uid));
+        const pendingSnapshot = await getDocs(pendingQuery);
+        if (pendingSnapshot.empty) {
+          formLoading.classList.remove('active');
+          await redirectTo404('No pending verification found');
+          return;
+        }
+        const pendingDoc = pendingSnapshot.docs[0];
+        const userData = pendingDoc.data();
+        const newCode = generateVerificationCode();
+        const emailSent = await sendVerificationEmail(userData.email, newCode);
+        if (!emailSent) {
+          formLoading.classList.remove('active');
+          await redirectTo404('Failed to resend verification email');
+          return;
+        }
+        await updateDoc(doc(db, "pending_users", pendingDoc.id), {
+          verificationCode: newCode,
+          updatedAt: new Date()
+        });
+        formLoading.classList.remove('active');
+        showCustomAlert('New verification code sent! Check your email.', 'OK', hideCustomAlert);
+      } catch (error) {
+        formLoading.classList.remove('active');
+        await redirectTo404(`Resend Error: ${error.code} - ${error.message}`);
       }
     });
   </script>
