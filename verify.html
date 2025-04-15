@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Reset Password</title>
+  <title>Verify Email</title>
   <style>
     * {
       box-sizing: border-box;
@@ -33,7 +33,7 @@
     .container.loaded {
       opacity: 1;
     }
-    .reset-box {
+    .verify-box {
       background: #111;
       padding: 2rem;
       border-radius: 12px;
@@ -43,12 +43,12 @@
       border: 1px solid #f00;
       position: relative;
     }
-    .reset-box h2 {
+    .verify-box h2 {
       text-align: center;
       color: #f00;
       margin-bottom: 1rem;
     }
-    .reset-box input {
+    .verify-box input {
       width: 100%;
       padding: 0.7rem;
       margin: 0.5rem 0;
@@ -57,12 +57,12 @@
       border: 1px solid #f00;
       border-radius: 6px;
     }
-    .reset-box input:focus {
+    .verify-box input:focus {
       outline: none;
       border-color: #ff4444;
       box-shadow: 0 0 5px #ff4444;
     }
-    .reset-box button {
+    .verify-box button {
       width: 100%;
       padding: 0.7rem;
       background: #f00;
@@ -74,7 +74,7 @@
       margin-top: 1rem;
       transition: background 0.3s ease;
     }
-    .reset-box button:hover {
+    .verify-box button:hover {
       background: #cc0000;
     }
     .resend-link {
@@ -137,17 +137,17 @@
         align-items: center;
         padding: 1rem;
       }
-      .reset-box {
+      .verify-box {
         width: 100%;
         max-width: 90%;
         padding: 1.5rem;
         margin-top: 1rem;
       }
-      .reset-box h2 {
+      .verify-box h2 {
         font-size: 1.5rem;
       }
-      .reset-box input,
-      .reset-box button {
+      .verify-box input,
+      .verify-box button {
         font-size: 1rem;
         padding: 0.6rem;
       }
@@ -156,14 +156,14 @@
       }
     }
     @media screen and (max-width: 480px) {
-      .reset-box {
+      .verify-box {
         padding: 1rem;
       }
-      .reset-box h2 {
+      .verify-box h2 {
         font-size: 1.3rem;
       }
-      .reset-box input,
-      .reset-box button {
+      .verify-box input,
+      .verify-box button {
         font-size: 0.9rem;
         padding: 0.5rem;
       }
@@ -178,19 +178,19 @@
     </div>
   </div>
   <div class="container">
-    <div class="reset-box">
-      <h2>Reset Password</h2>
-      <form id="resetForm">
-        <input type="email" name="email" id="email" placeholder="Enter your email" required />
-        <button type="submit">Send Reset Link</button>
+    <div class="verify-box">
+      <h2>Verify Email</h2>
+      <form id="verifyForm">
+        <input type="text" name="code" id="code" placeholder="Enter 6-digit code" required maxlength="6" />
+        <button type="submit">Verify</button>
       </form>
-      <p class="resend-link" id="resendLink">Resend Link</p>
+      <p class="resend-link" id="resendCode">Resend Code</p>
     </div>
   </div>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getAuth, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getFirestore, collection, getDocs, query, where, addDoc, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
     const firebaseConfig = {
         apiKey: "AIzaSyBOAnbROT6CrHIYpPR29Tl0dZAy1ab41F8",
         authDomain: "signup-auth-ad445.firebaseapp.com",
@@ -203,8 +203,8 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const resetForm = document.getElementById('resetForm');
-    const resendLink = document.getElementById('resendLink');
+    const verifyForm = document.getElementById('verifyForm');
+    const resendCode = document.getElementById('resendCode');
     const container = document.querySelector('.container');
     const customAlert = document.getElementById('customAlert');
     const alertMessage = document.getElementById('alertMessage');
@@ -231,57 +231,118 @@
         return false;
       }
     }
+    async function redirectToDashboard() {
+      console.log('Checking for /dashboard.html');
+      if (await checkFileExists('/dashboard.html')) {
+        console.log('dashboard.html found, redirecting');
+        window.location.assign('/dashboard.html');
+      } else {
+        console.log('dashboard.html not found, showing alert');
+        showCustomAlert('Dashboard not found.', 'Go to Login', () => {
+          window.location.href = '/login.html';
+        });
+      }
+    }
     async function redirectTo404(errorMessage) {
       console.error('Error occurred:', errorMessage);
-      window.location.assign('/404.html');
+      showCustomAlert('Something went wrong. Please try again.', 'Go to Login', () => {
+        window.location.href = '/login.html';
+      });
     }
-    async function sendResetEmail(email) {
-      try {
-        console.log('Checking if email exists');
-        const emailQuery = query(collection(db, "users"), where("email", "==", email));
-        const emailSnapshot = await getDocs(emailQuery);
-        if (emailSnapshot.empty) {
-          showCustomAlert('This email is not registered.', 'Try Again', hideCustomAlert);
-          return false;
-        }
-        console.log('Sending password reset email');
-        await sendPasswordResetEmail(auth, email, {
-          url: window.location.origin + '/login.html',
-          handleCodeInApp: true
-        });
-        return true;
-      } catch (error) {
-        console.error('Password reset error:', error);
-        if (error.code === 'auth/invalid-email') {
-          showCustomAlert('Invalid email format.', 'Try Again', hideCustomAlert);
-          return false;
-        } else {
-          await redirectTo404(`Password Reset Error: ${error.code} - ${error.message}`);
-          return false;
+    function generateVerificationCode() {
+      return Math.floor(100000 + Math.random() * 900000).toString();
+    }
+    async function sendVerificationEmail(email, code) {
+      const maxRetries = 2;
+      let attempt = 0;
+      while (attempt <= maxRetries) {
+        try {
+          const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              service_id: 'YOUR_EMAILJS_SERVICE_ID',
+              template_id: 'YOUR_EMAILJS_TEMPLATE_ID',
+              user_id: 'YOUR_EMAILJS_USER_ID',
+              template_params: {
+                to_email: email,
+                from_email: 'info@evaclin.life',
+                verification_code: code,
+              },
+            }),
+          });
+          if (!response.ok) throw new Error(`EmailJS attempt ${attempt + 1} failed: ${response.status}`);
+          console.log(`Verification email sent to ${email}`);
+          return true;
+        } catch (error) {
+          console.error(`EmailJS Error (attempt ${attempt + 1}):`, error);
+          attempt++;
+          if (attempt > maxRetries) return false;
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
       }
+      return false;
     }
-    resetForm.addEventListener('submit', async (e) => {
+    verifyForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = document.getElementById('email').value;
-      const success = await sendResetEmail(email);
-      if (success) {
-        showCustomAlert('Password reset link sent! Check your email.', 'Go to Login', () => {
-          window.location.href = '/login.html';
+      const code = document.getElementById('code').value;
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          await redirectTo404('No authenticated user found');
+          return;
+        }
+        const pendingQuery = query(collection(db, "pending_users"), where("uid", "==", user.uid), where("verificationCode", "==", code));
+        const pendingSnapshot = await getDocs(pendingQuery);
+        if (pendingSnapshot.empty) {
+          showCustomAlert('Invalid verification code.', 'Try Again', hideCustomAlert);
+          return;
+        }
+        const pendingDoc = pendingSnapshot.docs[0];
+        const userData = pendingDoc.data();
+        await addDoc(collection(db, "users"), {
+          username: userData.username,
+          email: userData.email,
+          uid: userData.uid,
+          provider: userData.provider,
+          createdAt: userData.createdAt
         });
+        await deleteDoc(doc(db, "pending_users", pendingDoc.id));
+        await redirectToDashboard();
+      } catch (error) {
+        showCustomAlert(`Verification Error: ${error.message}`, 'Try Again', hideCustomAlert);
       }
     });
-    resendLink.addEventListener('click', async () => {
-      const email = document.getElementById('email').value;
-      if (!email) {
-        showCustomAlert('Please enter your email first.', 'OK', hideCustomAlert);
-        return;
-      }
-      const success = await sendResetEmail(email);
-      if (success) {
-        showCustomAlert('New password reset link sent! Check your email.', 'Go to Login', () => {
-          window.location.href = '/login.html';
+    resendCode.addEventListener('click', async () => {
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          await redirectTo404('No authenticated user found');
+          return;
+        }
+        const pendingQuery = query(collection(db, "pending_users"), where("uid", "==", user.uid));
+        const pendingSnapshot = await getDocs(pendingQuery);
+        if (pendingSnapshot.empty) {
+          await redirectTo404('No pending verification found');
+          return;
+        }
+        const pendingDoc = pendingSnapshot.docs[0];
+        const userData = pendingDoc.data();
+        const newCode = generateVerificationCode();
+        const emailSent = await sendVerificationEmail(userData.email, newCode);
+        if (!emailSent) {
+          showCustomAlert('Failed to resend verification email.', 'Try Again', hideCustomAlert);
+          return;
+        }
+        await updateDoc(doc(db, "pending_users", pendingDoc.id), {
+          verificationCode: newCode,
+          updatedAt: new Date()
         });
+        showCustomAlert('New verification code sent! Check your email.', 'OK', hideCustomAlert);
+      } catch (error) {
+        showCustomAlert(`Resend Error: ${error.message}`, 'Try Again', hideCustomAlert);
       }
     });
   </script>
