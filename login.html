@@ -204,6 +204,55 @@
       height: 100px;
     }
 
+    #customAlert {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    #customAlert.active {
+      display: flex;
+    }
+
+    .alert-box {
+      background: #111;
+      padding: 1.5rem;
+      border-radius: 12px;
+      border: 1px solid #f00;
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .alert-box p {
+      color: #fff;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .alert-box button {
+      background: #f00;
+      color: white;
+      padding: 0.7rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s ease;
+    }
+
+    .alert-box button:hover {
+      background: #cc0000;
+    }
+
     @media screen and (max-width: 768px) {
       .container {
         flex-direction: column;
@@ -281,6 +330,13 @@
     </lottie-player>
   </div>
 
+  <div id="customAlert">
+    <div class="alert-box">
+      <p id="alertMessage"></p>
+      <button id="alertButton">Go to Sign Up</button>
+    </div>
+  </div>
+
   <div class="container">
     <lottie-player
       src="Animation - 1744470672068.json"
@@ -310,7 +366,7 @@
             <path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>
           </svg>
         </div>
-        <button type="submit" id="authButton">Log In</button>
+        <button type="submit">Log In</button>
       </form>
 
       <div class="social-signin">
@@ -332,7 +388,7 @@
         </button>
       </div>
 
-      <p class="toggle-link"><a href="index.html">Don’t have an account? Sign up here</a></p>
+      <p class="toggle-link" id="toggleAuth">Don't have an account? Sign up here</p>
     </div>
   </div>
 
@@ -345,8 +401,7 @@
         OAuthProvider,
         signInWithPopup,
         signInWithRedirect,
-        getRedirectResult,
-        onAuthStateChanged
+        getRedirectResult
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
     import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
@@ -367,9 +422,13 @@
     const authForm = document.getElementById('authForm');
     const passwordInput = document.getElementById('password');
     const togglePassword = document.getElementById('togglePassword');
+    const toggleAuth = document.getElementById('toggleAuth');
     const container = document.querySelector('.container');
     const loadingOverlay = document.getElementById('loadingOverlay');
     const formLoading = document.getElementById('formLoading');
+    const customAlert = document.getElementById('customAlert');
+    const alertMessage = document.getElementById('alertMessage');
+    const alertButton = document.getElementById('alertButton');
 
     // Page load animation
     window.addEventListener('load', () => {
@@ -378,6 +437,18 @@
         container.classList.add('loaded');
       }, 2000);
     });
+
+    // Custom alert function
+    function showCustomAlert(message, buttonText, buttonAction) {
+      alertMessage.textContent = message;
+      alertButton.textContent = buttonText;
+      alertButton.onclick = buttonAction;
+      customAlert.classList.add('active');
+    }
+
+    function hideCustomAlert() {
+      customAlert.classList.remove('active');
+    }
 
     // Password toggle with 2-second auto-revert
     let isPasswordVisible = false;
@@ -440,41 +511,25 @@
       togglePasswordVisibility();
     });
 
-    // Check if dashboard exists and redirect
-    async function checkAndRedirect() {
-      console.log('Attempting redirect to dashboard.html');
+    // Check file existence
+    async function checkFileExists(path) {
       try {
-        const fetchPromise = fetch('dashboard.html', { method: 'HEAD', cache: 'no-store' });
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Fetch timeout')), 5000);
-        });
-        const response = await Promise.race([fetchPromise, timeoutPromise]);
-        if (response.ok) {
-          console.log('dashboard.html found, redirecting');
-          window.location.assign('dashboard.html');
-        } else {
-          console.log('dashboard.html not found, redirecting to 404.html');
-          const response404 = await fetch('404.html', { method: 'HEAD', cache: 'no-store' });
-          if (response404.ok) {
-            window.location.assign('404.html');
-          } else {
-            throw new Error('404.html not found');
-          }
-        }
-      } catch (error) {
-        console.error('Redirect error:', error.message);
-        try {
-          const response404 = await fetch('404.html', { method: 'HEAD', cache: 'no-store' });
-          if (response404.ok) {
-            console.log('404.html found, redirecting');
-            window.location.assign('404.html');
-          } else {
-            alert('Error: Unable to redirect. Please ensure dashboard.html or 404.html exist.');
-          }
-        } catch (fallbackError) {
-          console.error('Fallback to 404.html failed:', fallbackError.message);
-          alert('Error: Unable to redirect. Please ensure dashboard.html or 404.html exist.');
-        }
+        const response = await fetch(path, { method: 'HEAD', cache: 'no-store' });
+        return response.ok;
+      } catch {
+        return false;
+      }
+    }
+
+    // Redirect to dashboard
+    async function redirectToDashboard() {
+      console.log('Checking for /dashboard.html');
+      if (await checkFileExists('/dashboard.html')) {
+        console.log('dashboard.html found, redirecting');
+        window.location.assign('/dashboard.html');
+      } else {
+        console.log('dashboard.html not found');
+        showCustomAlert('Logged in successfully! Dashboard not available.', 'Stay Here', hideCustomAlert);
       }
     }
 
@@ -491,143 +546,112 @@
         const emailSnapshot = await getDocs(emailQuery);
         if (emailSnapshot.empty) {
           formLoading.classList.remove('active');
-          alert('User not registered, please sign up.');
-          window.location.href = 'index.html';
+          showCustomAlert('This email is not registered. Please sign up.', 'Go to Sign Up', () => {
+            window.location.href = '/index.html';
+          });
           return;
         }
 
         await signInWithEmailAndPassword(auth, email, password);
-        alert('Logged in successfully!');
         formLoading.classList.remove('active');
-        await checkAndRedirect();
+        await redirectToDashboard();
       } catch (error) {
         formLoading.classList.remove('active');
-        console.error('Log In Error:', error.code, error.message);
+        console.error('Login Error:', error.code, error.message);
         let errorMessage = error.message;
-        if (error.code === 'auth/invalid-credential') {
-          errorMessage = "Incorrect email or password.";
+        if (error.code === 'auth/user-not-found') {
+          showCustomAlert('This email is not registered. Please sign up.', 'Go to Sign Up', () => {
+            window.location.href = '/index.html';
+          });
+        } else if (error.code === 'auth/wrong-password') {
+          errorMessage = "Incorrect password.";
+          showCustomAlert(errorMessage, 'Try Again', hideCustomAlert);
         } else if (error.code === 'permission-denied') {
           errorMessage = "Database access denied. Please check Firestore rules.";
+          showCustomAlert(errorMessage, 'OK', hideCustomAlert);
+        } else {
+          showCustomAlert(`Login failed: ${errorMessage}`, 'OK', hideCustomAlert);
         }
-        alert(`Log In failed: ${errorMessage}`);
       }
     });
-
-    // Ensure Firebase Auth is initialized
-    async function waitForAuthInit() {
-      return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error('Firebase Auth initialization timed out'));
-        }, 5000);
-        onAuthStateChanged(auth, (user) => {
-          clearTimeout(timeout);
-          resolve(user);
-        }, (error) => {
-          clearTimeout(timeout);
-          reject(error);
-        });
-      });
-    }
 
     // Google login
     document.getElementById("googleSignIn").addEventListener("click", async () => {
       formLoading.classList.add('active');
-      console.log('Initiating Google Sign-In');
       try {
-        await waitForAuthInit();
         const googleProvider = new GoogleAuthProvider();
         googleProvider.setCustomParameters({ prompt: 'select_account' });
 
         let result;
         try {
-          console.log('Attempting signInWithPopup');
           result = await signInWithPopup(auth, googleProvider);
         } catch (popupError) {
-          console.error('Popup error:', popupError.code, popupError.message);
           if (popupError.code === 'auth/popup-blocked') {
-            alert('Popup blocked by browser. Trying redirect instead.');
-            console.log('Falling back to signInWithRedirect');
             await signInWithRedirect(auth, googleProvider);
             return;
-          } else {
-            throw popupError;
           }
+          throw popupError;
         }
 
         const user = result.user;
-        console.log('Google sign-in success:', user.uid, user.email);
-
         const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
         const userSnapshot = await getDocs(userQuery);
 
         if (userSnapshot.empty) {
           formLoading.classList.remove('active');
-          alert('User not registered, please sign up.');
-          window.location.href = 'index.html';
+          showCustomAlert('This account is not registered. Please sign up.', 'Go to Sign Up', () => {
+            window.location.href = '/index.html';
+          });
           return;
         }
 
-        alert('Signed in with Google!');
         formLoading.classList.remove('active');
-        await checkAndRedirect();
+        await redirectToDashboard();
       } catch (error) {
         formLoading.classList.remove('active');
-        console.error("Google Sign-In Error:", error.code, error.message);
+        console.error("Google Login Error:", error.code, error.message);
         let errorMessage = error.message;
         if (error.code === 'auth/popup-closed-by-user') {
-          errorMessage = "Google sign-in cancelled.";
+          errorMessage = "Google login cancelled.";
         } else if (error.code === 'auth/popup-blocked') {
-          errorMessage = "Popup blocked by browser. Please allow popups.";
-        } else if (error.code === 'auth/unauthorized-domain') {
-          errorMessage = "Unauthorized domain. Check Firebase Console.";
-        } else if (error.code === 'auth/network-request-failed') {
-          errorMessage = "Network error. Check your connection.";
+          errorMessage = "Popup blocked. Please allow popups.";
         }
-        alert(`Google sign-in failed: ${errorMessage}`);
+        showCustomAlert(`Google login failed: ${errorMessage}`, 'OK', hideCustomAlert);
       }
     });
 
     // Apple login
     document.getElementById("appleSignIn").addEventListener("click", async () => {
       formLoading.classList.add('active');
-      console.log('Initiating Apple Sign-In');
       try {
-        await waitForAuthInit();
         const appleProvider = new OAuthProvider('apple.com');
-        appleProvider.addScope("email");
-        appleProvider.addScope("name");
+        appleProvider.addScope("email name");
 
         const result = await signInWithPopup(auth, appleProvider);
         const user = result.user;
-        console.log('Apple sign-in success:', user.uid, user.email);
-
         const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
         const userSnapshot = await getDocs(userQuery);
 
         if (userSnapshot.empty) {
           formLoading.classList.remove('active');
-          alert('User not registered, please sign up.');
-          window.location.href = 'index.html';
+          showCustomAlert('This account is not registered. Please sign up.', 'Go to Sign Up', () => {
+            window.location.href = '/index.html';
+          });
           return;
         }
 
-        alert('Signed in with Apple!');
         formLoading.classList.remove('active');
-        await checkAndRedirect();
+        await redirectToDashboard();
       } catch (error) {
         formLoading.classList.remove('active');
-        console.error("Apple Sign-In Error:", error.code, error.message);
+        console.error("Apple Login Error:", error.code, error.message);
         let errorMessage = error.message;
         if (error.code === 'auth/popup-closed-by-user') {
-          errorMessage = "Apple sign-in cancelled.";
+          errorMessage = "Apple login cancelled.";
         } else if (error.code === 'auth/popup-blocked') {
-          errorMessage = "Popup blocked by browser. Please allow popups.";
-        } else if (error.code === 'auth/unauthorized-domain') {
-          errorMessage = "Unauthorized domain. Check Firebase Console.";
-        } else if (error.code === 'auth/network-request-failed') {
-          errorMessage = "Network error. Check your connection.";
+          errorMessage = "Popup blocked. Please allow popups.";
         }
-        alert(`Apple sign-in failed: ${errorMessage}`);
+        showCustomAlert(`Apple login failed: ${errorMessage}`, 'OK', hideCustomAlert);
       }
     });
 
@@ -636,44 +660,35 @@
       if (result) {
         formLoading.classList.add('active');
         const user = result.user;
-        console.log('Processing redirect result:', user.uid);
+        const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
+        const userSnapshot = await getDocs(userQuery);
 
-        try {
-          const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
-          const userSnapshot = await getDocs(userQuery);
-
-          if (userSnapshot.empty) {
-            formLoading.classList.remove('active');
-            alert('User not registered, please sign up.');
-            window.location.href = 'index.html';
-            return;
-          }
-
-          alert(`Signed in with ${result.providerId === "apple.com" ? "Apple" : "Google"}!`);
+        if (userSnapshot.empty) {
           formLoading.classList.remove('active');
-          await checkAndRedirect();
-        } catch (error) {
-          formLoading.classList.remove('active');
-          console.error("Redirect Result Error:", error.code, error.message);
-          alert(`Sign-in failed: ${error.message}`);
+          showCustomAlert('This account is not registered. Please sign up.', 'Go to Sign Up', () => {
+            window.location.href = '/index.html';
+          });
+          return;
         }
+
+        formLoading.classList.remove('active');
+        await redirectToDashboard();
       }
     }).catch((error) => {
       formLoading.classList.remove('active');
       console.error("Redirect Error:", error.code, error.message);
-      alert(`Sign-in failed: ${error.message}`);
+      showCustomAlert(`Login failed: ${error.message}`, 'OK', hideCustomAlert);
     });
 
-    // Auto-redirect if signed in
-    onAuthStateChanged(auth, async (user) => {
-      if (user && window.location.pathname.includes('login.html')) {
-        console.log('User signed in, triggering auto-redirect:', user.uid);
-        try {
-          await waitForAuthInit();
-          await checkAndRedirect();
-        } catch (error) {
-          console.error('Auto-redirect error:', error.message);
-        }
+    // Toggle to sign-up page
+    toggleAuth.addEventListener('click', async () => {
+      console.log('Checking for /index.html');
+      if (await checkFileExists('/index.html')) {
+        console.log('index.html found, redirecting');
+        window.location.href = '/index.html';
+      } else {
+        console.log('index.html not found');
+        showCustomAlert('Sign-up page not found. Please contact support.', 'OK', hideCustomAlert);
       }
     });
   </script>
