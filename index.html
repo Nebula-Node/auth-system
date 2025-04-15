@@ -465,16 +465,53 @@
 
     // Check if dashboard exists and redirect
     async function checkAndRedirect() {
+      console.log('Attempting redirect to dashboard.html');
       try {
-        const response = await fetch('dashboard.html', { method: 'HEAD' });
+        // Try relative path first
+        let response = await fetch('dashboard.html', { method: 'HEAD', cache: 'no-store' });
         if (response.ok) {
-          window.location.href = 'dashboard.html';
-        } else {
-          window.location.href = '404.html';
+          console.log('dashboard.html found, redirecting');
+          window.location.assign('dashboard.html');
+          return;
         }
+
+        // Try absolute path for hosted env
+        const baseUrl = window.location.origin;
+        response = await fetch(`${baseUrl}/dashboard.html`, { method: 'HEAD', cache: 'no-store' });
+        if (response.ok) {
+          console.log('dashboard.html found at base URL, redirecting');
+          window.location.assign(`${baseUrl}/dashboard.html`);
+          return;
+        }
+
+        // Dashboard not found, try 404.html
+        console.log('dashboard.html not found, trying 404.html');
+        response = await fetch('404.html', { method: 'HEAD', cache: 'no-store' });
+        if (response.ok) {
+          console.log('404.html found, redirecting');
+          window.location.assign('404.html');
+          return;
+        }
+
+        // Fallback if both fail
+        console.error('Neither dashboard.html nor 404.html found');
+        alert('Error: Unable to redirect. Please check if dashboard.html or 404.html exist.');
       } catch (error) {
-        console.error('Error checking dashboard:', error);
-        window.location.href = '404.html';
+        console.error('Redirect error:', error.message);
+        // Try 404.html on error
+        try {
+          const response = await fetch('404.html', { method: 'HEAD', cache: 'no-store' });
+          if (response.ok) {
+            console.log('404.html found after error, redirecting');
+            window.location.assign('404.html');
+          } else {
+            console.error('404.html not found either');
+            alert('Error: Unable to redirect. Please check if dashboard.html or 404.html exist.');
+          }
+        } catch (fallbackError) {
+          console.error('Fallback to 404.html failed:', fallbackError.message);
+          alert('Error: Unable to redirect. Please check if dashboard.html or 404.html exist.');
+        }
       }
     }
 
@@ -705,6 +742,7 @@
     // Auto-redirect if signed in
     onAuthStateChanged(auth, (user) => {
       if (user && window.location.pathname.includes('index.html')) {
+        console.log('User signed in, triggering auto-redirect:', user.uid);
         checkAndRedirect();
       }
     });
