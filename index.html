@@ -346,6 +346,7 @@
         GoogleAuthProvider,
         OAuthProvider,
         signInWithPopup,
+        signInWithRedirect,
         getRedirectResult,
         onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
@@ -467,50 +468,36 @@
     async function checkAndRedirect() {
       console.log('Attempting redirect to dashboard.html');
       try {
-        // Try relative path first
-        let response = await fetch('dashboard.html', { method: 'HEAD', cache: 'no-store' });
+        const fetchPromise = fetch('dashboard.html', { method: 'HEAD', cache: 'no-store' });
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Fetch timeout')), 5000);
+        });
+        const response = await Promise.race([fetchPromise, timeoutPromise]);
         if (response.ok) {
           console.log('dashboard.html found, redirecting');
           window.location.assign('dashboard.html');
-          return;
-        }
-
-        // Try absolute path for hosted env
-        const baseUrl = window.location.origin;
-        response = await fetch(`${baseUrl}/dashboard.html`, { method: 'HEAD', cache: 'no-store' });
-        if (response.ok) {
-          console.log('dashboard.html found at base URL, redirecting');
-          window.location.assign(`${baseUrl}/dashboard.html`);
-          return;
-        }
-
-        // Dashboard not found, try 404.html
-        console.log('dashboard.html not found, trying 404.html');
-        response = await fetch('404.html', { method: 'HEAD', cache: 'no-store' });
-        if (response.ok) {
-          console.log('404.html found, redirecting');
-          window.location.assign('404.html');
-          return;
-        }
-
-        // Fallback if both fail
-        console.error('Neither dashboard.html nor 404.html found');
-        alert('Error: Unable to redirect. Please check if dashboard.html or 404.html exist.');
-      } catch (error) {
-        console.error('Redirect error:', error.message);
-        // Try 404.html on error
-        try {
-          const response = await fetch('404.html', { method: 'HEAD', cache: 'no-store' });
-          if (response.ok) {
-            console.log('404.html found after error, redirecting');
+        } else {
+          console.log('dashboard.html not found, redirecting to 404.html');
+          const response404 = await fetch('404.html', { method: 'HEAD', cache: 'no-store' });
+          if (response404.ok) {
             window.location.assign('404.html');
           } else {
-            console.error('404.html not found either');
-            alert('Error: Unable to redirect. Please check if dashboard.html or 404.html exist.');
+            throw new Error('404.html not found');
+          }
+        }
+      } catch (error) {
+        console.error('Redirect error:', error.message);
+        try {
+          const response404 = await fetch('404.html', { method: 'HEAD', cache: 'no-store' });
+          if (response404.ok) {
+            console.log('404.html found, redirecting');
+            window.location.assign('404.html');
+          } else {
+            alert('Error: Unable to redirect. Please ensure dashboard.html or 404.html exist.');
           }
         } catch (fallbackError) {
           console.error('Fallback to 404.html failed:', fallbackError.message);
-          alert('Error: Unable to redirect. Please check if dashboard.html or 404.html exist.');
+          alert('Error: Unable to redirect. Please ensure dashboard.html or 404.html exist.');
         }
       }
     }
@@ -533,16 +520,6 @@
 
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
           const user = userCredential.user;
-
-          // Wait for auth state
-          await new Promise((resolve) => {
-            const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-              if (currentUser) {
-                unsubscribe();
-                resolve();
-              }
-            });
-          });
 
           await addDoc(collection(db, "users"), {
             username: username,
@@ -595,21 +572,26 @@
       formLoading.classList.add('active');
       console.log('Initiating Google Sign-In');
       try {
-        // Ensure Auth is ready
         await waitForAuthInit();
-
         const googleProvider = new GoogleAuthProvider();
-        googleProvider.setCustomParameters({
-          prompt: 'select_account'
-        });
+        googleProvider.setCustomParameters({ prompt: 'select_account' });
 
-        // Timeout for popup
-        const popupPromise = signInWithPopup(auth, googleProvider);
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Google sign-in timed out')), 10000);
-        });
+        let result;
+        try {
+          console.log('Attempting signInWithPopup');
+          result = await signInWithPopup(auth, googleProvider);
+        } catch (popupError) {
+          console.error('Popup error:', popupError.code, popupError.message);
+          if (popupError.code === 'auth/popup-blocked') {
+            alert('Popup blocked by browser. Trying redirect instead.');
+            console.log('Falling back to signInWithRedirect');
+            await signInWithRedirect(auth, googleProvider);
+            return; // Redirect will handle result on reload
+          } else {
+            throw popupError;
+          }
+        }
 
-        const result = await Promise.race([popupPromise, timeoutPromise]);
         const user = result.user;
         console.log('Google sign-in success:', user.uid, user.email);
 
@@ -652,20 +634,12 @@
       formLoading.classList.add('active');
       console.log('Initiating Apple Sign-In');
       try {
-        // Ensure Auth is ready
         await waitForAuthInit();
-
         const appleProvider = new OAuthProvider('apple.com');
         appleProvider.addScope("email");
         appleProvider.addScope("name");
 
-        // Timeout for popup
-        const popupPromise = signInWithPopup(auth, appleProvider);
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Apple sign-in timed out')), 10000);
-        });
-
-        const result = await Promise.race([popupPromise, timeoutPromise]);
+        const result = await signInWithPopup(auth, appleProvider);
         const user = result.user;
         console.log('Apple sign-in success:', user.uid, user.email);
 
@@ -703,7 +677,7 @@
       }
     });
 
-    // Handle redirect results (for any stray redirects)
+    // Handle redirect results
     getRedirectResult(auth).then(async (result) => {
       if (result) {
         formLoading.classList.add('active');
@@ -740,10 +714,15 @@
     });
 
     // Auto-redirect if signed in
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
       if (user && window.location.pathname.includes('index.html')) {
         console.log('User signed in, triggering auto-redirect:', user.uid);
-        checkAndRedirect();
+        try {
+          await waitForAuthInit();
+          await checkAndRedirect();
+        } catch (error) {
+          console.error('Auto-redirect error:', error.message);
+        }
       }
     });
   </script>
