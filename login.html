@@ -4,8 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
-  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
-  <title>Auth System</title>
+  <title>Log In</title>
 
   <style>
     * {
@@ -40,7 +39,7 @@
       opacity: 1;
     }
 
-    .signup-box {
+    .login-box {
       background: #111;
       padding: 2rem;
       border-radius: 12px;
@@ -51,13 +50,13 @@
       position: relative;
     }
 
-    .signup-box h2 {
+    .login-box h2 {
       text-align: center;
       color: #f00;
       margin-bottom: 1rem;
     }
 
-    .signup-box input {
+    .login-box input {
       width: 100%;
       padding: 0.7rem;
       margin: 0.5rem 0;
@@ -67,13 +66,13 @@
       border-radius: 6px;
     }
 
-    .signup-box input:focus {
+    .login-box input:focus {
       outline: none;
       border-color: #ff4444;
       box-shadow: 0 0 5px #ff4444;
     }
 
-    .signup-box button {
+    .login-box button {
       width: 100%;
       padding: 0.7rem;
       background: #f00;
@@ -86,7 +85,7 @@
       transition: background 0.3s ease;
     }
 
-    .signup-box button:hover {
+    .login-box button:hover {
       background: #cc0000;
     }
 
@@ -143,19 +142,17 @@
       height: 20px;
     }
 
-    .signup-link {
+    .toggle-link {
       text-align: center;
       margin-top: 1rem;
-      font-size: 0.9rem;
-      color: #fff;
-    }
-
-    .signup-link a {
+      cursor: pointer;
       color: #ff0000;
       text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.3s ease;
     }
 
-    .signup-link a:hover {
+    .toggle-link:hover {
       text-decoration: underline;
     }
 
@@ -219,19 +216,19 @@
         height: 300px;
       }
 
-      .signup-box {
+      .login-box {
         width: 100%;
         max-width: 90%;
         padding: 1.5rem;
         margin-top: 1rem;
       }
 
-      .signup-box h2 {
+      .login-box h2 {
         font-size: 1.5rem;
       }
 
-      .signup-box input,
-      .signup-box button {
+      .login-box input,
+      .login-box button {
         font-size: 1rem;
         padding: 0.6rem;
       }
@@ -239,6 +236,10 @@
       .social-signin button {
         font-size: 0.9rem;
         padding: 0.6rem;
+      }
+
+      .toggle-link {
+        font-size: 0.9rem;
       }
     }
 
@@ -248,16 +249,16 @@
         height: 300px;
       }
 
-      .signup-box {
+      .login-box {
         padding: 1rem;
       }
 
-      .signup-box h2 {
+      .login-box h2 {
         font-size: 1.3rem;
       }
 
-      .signup-box input,
-      .signup-box button {
+      .login-box input,
+      .login-box button {
         font-size: 0.9rem;
         padding: 0.5rem;
       }
@@ -289,7 +290,7 @@
       autoplay>
     </lottie-player>
 
-    <div class="signup-box">
+    <div class="login-box">
       <div id="formLoading">
         <lottie-player
           src="Animation - 1744696593398.json"
@@ -299,9 +300,8 @@
           autoplay>
         </lottie-player>
       </div>
-      <h2 id="authTitle">Sign Up</h2>
+      <h2>Log In</h2>
       <form id="authForm">
-        <input type="text" name="username" id="username" placeholder="Username" required />
         <input type="email" name="email" id="email" placeholder="Email" required />
         <div style="position: relative; margin: 0.5rem 0;">
           <input type="password" name="password" id="password" placeholder="Password" required style="padding-right: 3rem;" />
@@ -310,11 +310,11 @@
             <path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>
           </svg>
         </div>
-        <button type="submit" id="authButton">Sign Up</button>
+        <button type="submit" id="authButton">Log In</button>
       </form>
 
       <div class="social-signin">
-        <p>Or sign up with:</p>
+        <p>Or log in with:</p>
         <button id="googleSignIn">
           <svg viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg" width="20" height="20">
             <path fill="#4285f4" d="M533.5 278.4c0-17.3-1.6-34.3-4.7-50.7H272v95.9h146.9c-6.4 34.8-25.9 64.2-55.2 83.8v69.3h89.1c52.1-48 80.7-118.8 80.7-198.3z"/>
@@ -332,10 +332,7 @@
         </button>
       </div>
 
-      <p class="signup-link">
-        Already have an account?
-        <a href="./login.html" style="color: #ff0000;" onclick="showLoading()">Log in here</a>
-      </p>
+      <p class="toggle-link"><a href="index.html">Don’t have an account? Sign up here</a></p>
     </div>
   </div>
 
@@ -343,15 +340,15 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import {
         getAuth,
-        createUserWithEmailAndPassword,
-        sendEmailVerification,
+        signInWithEmailAndPassword,
         GoogleAuthProvider,
         OAuthProvider,
+        signInWithPopup,
         signInWithRedirect,
         getRedirectResult,
         onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBOAnbROT6CrHIYpPR29Tl0dZAy1ab41F8",
@@ -367,40 +364,12 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    emailjs.init("YOUR_EMAILJS_USER_ID"); // Replace with your EmailJS User ID
-
     const authForm = document.getElementById('authForm');
     const passwordInput = document.getElementById('password');
     const togglePassword = document.getElementById('togglePassword');
-    const loadingOverlay = document.getElementById('loadingOverlay');
     const container = document.querySelector('.container');
+    const loadingOverlay = document.getElementById('loadingOverlay');
     const formLoading = document.getElementById('formLoading');
-
-    // Show loading animation
-    function showLoading() {
-      loadingOverlay.classList.remove('hidden');
-      container.classList.remove('loaded');
-    }
-
-    // Generate random verification code
-    const generateVerificationCode = () => {
-      return Math.floor(100000 + Math.random() * 900000).toString();
-    };
-
-    // Check if dashboard exists and redirect
-    async function checkAndRedirect() {
-      try {
-        const response = await fetch('dashboard.html', { method: 'HEAD' });
-        if (response.ok) {
-          window.location.href = 'dashboard.html';
-        } else {
-          window.location.href = '404.html';
-        }
-      } catch (error) {
-        console.error('Error checking dashboard:', error);
-        window.location.href = '404.html';
-      }
-    }
 
     // Page load animation
     window.addEventListener('load', () => {
@@ -471,82 +440,191 @@
       togglePasswordVisibility();
     });
 
-    // Email/password sign-up with verification
+    // Check if dashboard exists and redirect
+    async function checkAndRedirect() {
+      console.log('Attempting redirect to dashboard.html');
+      try {
+        const fetchPromise = fetch('dashboard.html', { method: 'HEAD', cache: 'no-store' });
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Fetch timeout')), 5000);
+        });
+        const response = await Promise.race([fetchPromise, timeoutPromise]);
+        if (response.ok) {
+          console.log('dashboard.html found, redirecting');
+          window.location.assign('dashboard.html');
+        } else {
+          console.log('dashboard.html not found, redirecting to 404.html');
+          const response404 = await fetch('404.html', { method: 'HEAD', cache: 'no-store' });
+          if (response404.ok) {
+            window.location.assign('404.html');
+          } else {
+            throw new Error('404.html not found');
+          }
+        }
+      } catch (error) {
+        console.error('Redirect error:', error.message);
+        try {
+          const response404 = await fetch('404.html', { method: 'HEAD', cache: 'no-store' });
+          if (response404.ok) {
+            console.log('404.html found, redirecting');
+            window.location.assign('404.html');
+          } else {
+            alert('Error: Unable to redirect. Please ensure dashboard.html or 404.html exist.');
+          }
+        } catch (fallbackError) {
+          console.error('Fallback to 404.html failed:', fallbackError.message);
+          alert('Error: Unable to redirect. Please ensure dashboard.html or 404.html exist.');
+        }
+      }
+    }
+
+    // Email/password login
     authForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       formLoading.classList.add('active');
-      const username = document.getElementById('username').value;
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
 
-      console.log('Form submitted:', { username, email });
-
       try {
-        // Check username uniqueness
-        const usernameQuery = query(collection(db, "users"), where("username", "==", username));
-        const usernameSnapshot = await getDocs(usernameQuery);
-        if (!usernameSnapshot.empty) {
-          throw new Error("Username already exists");
+        // Check if email exists
+        const emailQuery = query(collection(db, "users"), where("email", "==", email));
+        const emailSnapshot = await getDocs(emailQuery);
+        if (emailSnapshot.empty) {
+          formLoading.classList.remove('active');
+          alert('User not registered, please sign up.');
+          return;
         }
 
-        // Create user
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-
-        // Generate and store verification code
-        const verificationCode = generateVerificationCode();
-        await setDoc(doc(db, "pending_users", user.uid), {
-          username: username,
-          email: email,
-          uid: user.uid,
-          provider: "email",
-          verificationCode: verificationCode,
-          createdAt: new Date()
-        });
-
-        // Send verification email
-        await emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
-          to_email: email,
-          verification_code: verificationCode
-        });
-
-        await sendEmailVerification(user);
-        alert('Sign-up successful! Check your email for a verification code.');
+        await signInWithEmailAndPassword(auth, email, password);
+        alert('Logged in successfully!');
         formLoading.classList.remove('active');
-        window.location.href = 'verify.html';
+        await checkAndRedirect();
       } catch (error) {
         formLoading.classList.remove('active');
-        console.error('Sign Up Error:', error.code, error.message);
-        alert(`Sign Up failed: ${error.message}`);
+        console.error('Log In Error:', error.code, error.message);
+        let errorMessage = error.message;
+        if (error.code === 'auth/invalid-credential') {
+          errorMessage = "Incorrect email or password.";
+        } else if (error.code === 'permission-denied') {
+          errorMessage = "Database access denied. Please check Firestore rules.";
+        }
+        alert(`Log In failed: ${errorMessage}`);
       }
     });
 
-    // Google sign-up
+    // Ensure Firebase Auth is initialized
+    async function waitForAuthInit() {
+      return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Firebase Auth initialization timed out'));
+        }, 5000);
+        onAuthStateChanged(auth, (user) => {
+          clearTimeout(timeout);
+          resolve(user);
+        }, (error) => {
+          clearTimeout(timeout);
+          reject(error);
+        });
+      });
+    }
+
+    // Google login
     document.getElementById("googleSignIn").addEventListener("click", async () => {
       formLoading.classList.add('active');
       console.log('Initiating Google Sign-In');
       try {
-        await signInWithRedirect(auth, new GoogleAuthProvider());
+        await waitForAuthInit();
+        const googleProvider = new GoogleAuthProvider();
+        googleProvider.setCustomParameters({ prompt: 'select_account' });
+
+        let result;
+        try {
+          console.log('Attempting signInWithPopup');
+          result = await signInWithPopup(auth, googleProvider);
+        } catch (popupError) {
+          console.error('Popup error:', popupError.code, popupError.message);
+          if (popupError.code === 'auth/popup-blocked') {
+            alert('Popup blocked by browser. Trying redirect instead.');
+            console.log('Falling back to signInWithRedirect');
+            await signInWithRedirect(auth, googleProvider);
+            return;
+          } else {
+            throw popupError;
+          }
+        }
+
+        const user = result.user;
+        console.log('Google sign-in success:', user.uid, user.email);
+
+        const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
+        const userSnapshot = await getDocs(userQuery);
+
+        if (userSnapshot.empty) {
+          formLoading.classList.remove('active');
+          alert('User not registered, please sign up.');
+          return;
+        }
+
+        alert('Signed in with Google!');
+        formLoading.classList.remove('active');
+        await checkAndRedirect();
       } catch (error) {
         formLoading.classList.remove('active');
         console.error("Google Sign-In Error:", error.code, error.message);
-        alert(`Google sign-up failed: ${error.message}`);
+        let errorMessage = error.message;
+        if (error.code === 'auth/popup-closed-by-user') {
+          errorMessage = "Google sign-in cancelled.";
+        } else if (error.code === 'auth/popup-blocked') {
+          errorMessage = "Popup blocked by browser. Please allow popups.";
+        } else if (error.code === 'auth/unauthorized-domain') {
+          errorMessage = "Unauthorized domain. Check Firebase Console.";
+        } else if (error.code === 'auth/network-request-failed') {
+          errorMessage = "Network error. Check your connection.";
+        }
+        alert(`Google sign-in failed: ${errorMessage}`);
       }
     });
 
-    // Apple sign-up
+    // Apple login
     document.getElementById("appleSignIn").addEventListener("click", async () => {
       formLoading.classList.add('active');
       console.log('Initiating Apple Sign-In');
       try {
+        await waitForAuthInit();
         const appleProvider = new OAuthProvider('apple.com');
         appleProvider.addScope("email");
         appleProvider.addScope("name");
-        await signInWithRedirect(auth, appleProvider);
+
+        const result = await signInWithPopup(auth, appleProvider);
+        const user = result.user;
+        console.log('Apple sign-in success:', user.uid, user.email);
+
+        const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
+        const userSnapshot = await getDocs(userQuery);
+
+        if (userSnapshot.empty) {
+          formLoading.classList.remove('active');
+          alert('User not registered, please sign up.');
+          return;
+        }
+
+        alert('Signed in with Apple!');
+        formLoading.classList.remove('active');
+        await checkAndRedirect();
       } catch (error) {
         formLoading.classList.remove('active');
         console.error("Apple Sign-In Error:", error.code, error.message);
-        alert(`Apple sign-up failed: ${error.message}`);
+        let errorMessage = error.message;
+        if (error.code === 'auth/popup-closed-by-user') {
+          errorMessage = "Apple sign-in cancelled.";
+        } else if (error.code === 'auth/popup-blocked') {
+          errorMessage = "Popup blocked by browser. Please allow popups.";
+        } else if (error.code === 'auth/unauthorized-domain') {
+          errorMessage = "Unauthorized domain. Check Firebase Console.";
+        } else if (error.code === 'auth/network-request-failed') {
+          errorMessage = "Network error. Check your connection.";
+        }
+        alert(`Apple sign-in failed: ${errorMessage}`);
       }
     });
 
@@ -555,49 +633,42 @@
       if (result) {
         formLoading.classList.add('active');
         const user = result.user;
-        console.log('Processing redirect result for:', user.uid);
+        console.log('Processing redirect result:', user.uid);
 
         try {
           const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
           const userSnapshot = await getDocs(userQuery);
 
           if (userSnapshot.empty) {
-            await addDoc(collection(db, "users"), {
-              username: user.displayName || (result.providerId === "apple.com" ? "Apple User" : "Google User"),
-              email: user.email || "No email provided",
-              uid: user.uid,
-              provider: result.providerId === "apple.com" ? "apple" : "google",
-              createdAt: new Date()
-            });
+            formLoading.classList.remove('active');
+            alert('User not registered, please sign up.');
+            return;
           }
 
-          alert(`Signed up with ${result.providerId === "apple.com" ? "Apple" : "Google"}!`);
+          alert(`Signed in with ${result.providerId === "apple.com" ? "Apple" : "Google"}!`);
           formLoading.classList.remove('active');
           await checkAndRedirect();
         } catch (error) {
           formLoading.classList.remove('active');
           console.error("Redirect Result Error:", error.code, error.message);
-          let errorMessage = error.message;
-          if (error.code === 'auth/unauthorized-domain') {
-            errorMessage = "Unauthorized domain - check Firebase Console";
-          } else if (error.code === 'auth/network-request-failed') {
-            errorMessage = "Network error - check your connection";
-          }
-          alert(`Sign-up failed: ${errorMessage}`);
+          alert(`Sign-in failed: ${error.message}`);
         }
       }
     }).catch((error) => {
       formLoading.classList.remove('active');
       console.error("Redirect Error:", error.code, error.message);
+      alert(`Sign-in failed: ${error.message}`);
     });
 
     // Auto-redirect if signed in
-    onAuthStateChanged(auth, (user) => {
-      if (user && window.location.pathname.includes('index.html')) {
-        if (!user.emailVerified && user.providerData[0].providerId === "password") {
-          window.location.href = 'verify.html';
-        } else {
-          checkAndRedirect();
+    onAuthStateChanged(auth, async (user) => {
+      if (user && window.location.pathname.includes('login.html')) {
+        console.log('User signed in, triggering auto-redirect:', user.uid);
+        try {
+          await waitForAuthInit();
+          await checkAndRedirect();
+        } catch (error) {
+          console.error('Auto-redirect error:', error.message);
         }
       }
     });
