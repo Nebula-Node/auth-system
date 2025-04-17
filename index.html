@@ -431,7 +431,7 @@
         getRedirectResult,
         sendEmailVerification
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBOAnbROT6CrHIYpPR29Tl0dZAy1ab41F8",
@@ -571,12 +571,16 @@
       window.location.assign('/404.html');
     }
 
+    // Generate a 6-digit verification code
+    function generateVerificationCode() {
+      return Math.floor(100000 + Math.random() * 900000).toString();
+    }
+
     // Email/password sign-up
     authForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       formLoading.classList.add('active');
 
-      // Fallback timeout to hide loading animation after 10 seconds
       const loadingTimeout = setTimeout(() => {
         formLoading.classList.remove('active');
         showCustomAlert('Sign-up process timed out. Please try again.', 'Try Again', () => {
@@ -619,19 +623,20 @@
         const user = userCredential.user;
         console.log('User created successfully:', user.uid);
 
-        // Store user data in Firestore
-        await addDoc(collection(db, "users"), {
-          username: username,
+        // Generate and store verification code
+        const verificationCode = generateVerificationCode();
+        await setDoc(doc(db, "verificationCodes", user.uid), {
+          code: verificationCode,
           email: email,
-          uid: user.uid,
-          provider: "email",
-          createdAt: new Date()
+          createdAt: new Date(),
         });
-        console.log('User data stored in Firestore');
+        console.log('Verification code stored:', verificationCode);
 
-        // Send email verification
+        // Send email verification (simulated email content with code)
         await sendEmailVerification(user);
         console.log('Verification email sent to:', email);
+        // Note: In a real implementation, you'd use Firebase Functions to send a custom email with the code.
+        // For this example, assume the email contains: "Your verification code is: [code]"
 
         clearTimeout(loadingTimeout);
 
