@@ -628,6 +628,7 @@
         await setDoc(doc(db, "verificationCodes", user.uid), {
           code: verificationCode,
           email: email,
+          username: username, // Store username temporarily for use in verify.html
           createdAt: new Date(),
         });
         console.log('Verification code stored:', verificationCode);
@@ -636,7 +637,6 @@
         await sendEmailVerification(user);
         console.log('Verification email sent to:', email);
         // Note: In a real implementation, you'd use Firebase Functions to send a custom email with the code.
-        // For this example, assume the email contains: "Your verification code is: [code]"
 
         clearTimeout(loadingTimeout);
 
