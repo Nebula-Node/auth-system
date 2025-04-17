@@ -45,6 +45,22 @@
       margin-bottom: 1rem;
     }
 
+    .verify-box input {
+      width: 100%;
+      padding: 0.7rem;
+      margin: 0.5rem 0;
+      background: #222;
+      color: #fff;
+      border: 1px solid #f00;
+      border-radius: 6px;
+    }
+
+    .verify-box input:focus {
+      outline: none;
+      border-color: #ff4444;
+      box-shadow: 0 0 5px #ff4444;
+    }
+
     .verify-box button {
       width: 100%;
       padding: 0.7rem;
@@ -93,6 +109,7 @@
       }
 
       .verify-box p,
+      .verify-box input,
       .verify-box button {
         font-size: 1rem;
       }
@@ -108,6 +125,7 @@
       }
 
       .verify-box p,
+      .verify-box input,
       .verify-box button {
         font-size: 0.9rem;
       }
@@ -118,8 +136,9 @@
 <body>
   <div class="verify-box">
     <h2>Verify Your Email</h2>
-    <p>A verification link has been sent to your email. Please check your inbox (or spam folder) and click the link to verify your email.</p>
-    <button id="checkVerification">I Have Verified</button>
+    <p>A verification code has been sent to your email. Please check your inbox (or spam folder) and enter the code below.</p>
+    <input type="text" id="verificationCode" placeholder="Enter 6-digit code" maxlength="6" required />
+    <button id="verifyCode">Verify Code</button>
     <button id="resendEmail">Resend Email</button>
     <p id="resendTimer" style="display: none; color: #f00; font-size: 0.9rem; margin-top: 0.5rem;"></p>
     <p id="message"></p>
@@ -128,6 +147,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import { getAuth, sendEmailVerification } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBOAnbROT6CrHIYpPR29Tl0dZAy1ab41F8",
@@ -141,9 +161,11 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    const checkVerificationBtn = document.getElementById('checkVerification');
+    const verifyCodeBtn = document.getElementById('verifyCode');
     const resendEmailBtn = document.getElementById('resendEmail');
+    const verificationCodeInput = document.getElementById('verificationCode');
     const resendTimerP = document.getElementById('resendTimer');
     const messageP = document.getElementById('message');
 
@@ -176,28 +198,60 @@
       }, 1000);
     }
 
-    // Check verification status
-    checkVerificationBtn.addEventListener('click', async () => {
+    // Generate a 6-digit verification code
+    function generateVerificationCode() {
+      return Math.floor(100000 + Math.random() * 900000).toString();
+    }
+
+    // Verify the code
+    verifyCodeBtn.addEventListener('click', async () => {
       const user = auth.currentUser;
+      const enteredCode = verificationCodeInput.value.trim();
+
+      if (!enteredCode || enteredCode.length !== 6 || !/^\d{6}$/.test(enteredCode)) {
+        messageP.textContent = "Please enter a valid 6-digit code.";
+        messageP.className = 'error';
+        return;
+      }
+
       if (user) {
         try {
-          await user.reload(); // Refresh user data
-          if (user.emailVerified) {
-            messageP.textContent = "Email verified successfully! Redirecting...";
-            messageP.className = 'success';
-            setTimeout(async () => {
-              if (await checkFileExists('/dashboard.html')) {
-                window.location.href = '/dashboard.html';
-              } else {
-                window.location.href = '/404.html';
-              }
-            }, 2000);
+          const codeDoc = await getDoc(doc(db, "verificationCodes", user.uid));
+          if (codeDoc.exists()) {
+            const storedCode = codeDoc.data().code;
+            const storedUsername = codeDoc.data().username;
+            const storedEmail = codeDoc.data().email;
+
+            if (enteredCode === storedCode) {
+              // Code is correct, add user to users collection and delete verification code
+              await setDoc(doc(db, "users", user.uid), {
+                username: storedUsername,
+                email: storedEmail,
+                uid: user.uid,
+                provider: "email",
+                createdAt: new Date()
+              });
+              await deleteDoc(doc(db, "verificationCodes", user.uid));
+
+              messageP.textContent = "Verification successful! Redirecting...";
+              messageP.className = 'success';
+              setTimeout(async () => {
+                if (await checkFileExists('/dashboard.html')) {
+                  window.location.href = '/dashboard.html';
+                } else {
+                  window.location.href = '/404.html';
+                }
+              }, 2000);
+            } else {
+              messageP.textContent = "Incorrect verification code. Please try again.";
+              messageP.className = 'error';
+            }
           } else {
-            messageP.textContent = "Email not verified yet. Please check your inbox or spam folder.";
+            messageP.textContent = "No verification code found. Please resend the email.";
             messageP.className = 'error';
           }
         } catch (error) {
-          messageP.textContent = `Error checking verification: ${error.message}`;
+          messageP.textContent = `Error verifying code: ${error.message}`;
           messageP.className = 'error';
         }
       }
@@ -208,7 +262,24 @@
       const user = auth.currentUser;
       if (user) {
         try {
+          // Generate and store new verification code
+          const newCode = generateVerificationCode();
+          const codeDoc = await getDoc(doc(db, "verificationCodes", user.uid));
+          if (codeDoc.exists()) {
+            const existingData = codeDoc.data();
+            await setDoc(doc(db, "verificationCodes", user.uid), {
+              code: newCode,
+              email: existingData.email,
+              username: existingData.username,
+              createdAt: new Date(),
+            });
+          }
+
+          // Send email verification (simulated email content with new code)
           await sendEmailVerification(user);
+          console.log('Verification email resent with code:', newCode);
+          // Note: In a real implementation, you'd use Firebase Functions to send a custom email with the code.
+
           messageP.textContent = "Verification email resent successfully.";
           messageP.className = 'success';
           startResendTimer();
