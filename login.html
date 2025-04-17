@@ -264,11 +264,10 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #f00;
+      background: transparent;
       border-radius: 50%;
       padding: 0;
-      box-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
-      transition: background 0.3s ease, transform 0.1s ease;
+      transition: transform 0.1s ease, color 0.3s ease;
       color: #fff;
       font-size: 16px;
       font-weight: bold;
@@ -276,8 +275,8 @@
     }
 
     .alert-close:hover {
-      background: #cc0000;
       transform: scale(1.1);
+      color: #f00;
     }
 
     @media screen and (max-width: 768px) {
@@ -359,7 +358,7 @@
 
   <div id="customAlert">
     <div class="alert-box">
-      <button class="alert-close" id="alertClose">&times;</button>
+      <button class="alert-close" id="alertClose">×</button>
       <p id="alertMessage"></p>
       <button id="alertButton">Go to Sign Up</button>
     </div>
