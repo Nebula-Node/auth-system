@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -231,6 +230,7 @@
       max-width: 400px;
       width: 90%;
       text-align: center;
+      position: relative;
     }
 
     .alert-box p {
@@ -252,6 +252,32 @@
 
     .alert-box button:hover {
       background: #cc0000;
+    }
+
+    .alert-close {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      padding: 0;
+    }
+
+    .alert-close svg {
+      width: 16px;
+      height: 16px;
+      stroke: #f00;
+      stroke-width: 2;
+    }
+
+    .alert-close:hover svg {
+      stroke: #ff4444;
     }
 
     @media screen and (max-width: 768px) {
@@ -333,6 +359,11 @@
 
   <div id="customAlert">
     <div class="alert-box">
+      <button class="alert-close" id="alertClose">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M6 6L18 18M6 18L18 6" />
+        </svg>
+      </button>
       <p id="alertMessage"></p>
       <button id="alertButton">Go to Login</button>
     </div>
@@ -431,6 +462,7 @@
     const customAlert = document.getElementById('customAlert');
     const alertMessage = document.getElementById('alertMessage');
     const alertButton = document.getElementById('alertButton');
+    const alertClose = document.getElementById('alertClose');
 
     // Page load animation
     window.addEventListener('load', () => {
@@ -451,6 +483,9 @@
     function hideCustomAlert() {
       customAlert.classList.remove('active');
     }
+
+    // Close alert on X icon click
+    alertClose.addEventListener('click', hideCustomAlert);
 
     // Password toggle with 2-second auto-revert
     let isPasswordVisible = false;
