@@ -251,7 +251,7 @@
     }
 
     .alert-box button:hover {
-      background: #000000;
+      background: #cc0000;
     }
 
     .alert-close {
@@ -264,9 +264,11 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: transparent;
-      border: none;
+      background: #f00;
+      border: 1px solid #fff;
+      border-radius: 50%;
       padding: 0;
+      transition: background 0.3s ease;
     }
 
     .alert-close svg {
@@ -276,8 +278,12 @@
       stroke-width: 3;
     }
 
+    .alert-close:hover {
+      background: #cc0000;
+    }
+
     .alert-close:hover svg {
-      stroke: #ccc;
+      stroke: #eee;
     }
 
     @media screen and (max-width: 768px) {
@@ -687,32 +693,3 @@
             showCustomAlert('This account is not registered. Please sign up.', 'Go to Sign Up', () => {
               window.location.href = '/index.html';
             });
-            return;
-          }
-
-          formLoading.classList.remove('active');
-          await redirectToDashboard();
-        } catch (error) {
-          formLoading.classList.remove('active');
-          await redirectTo404(`Redirect Error: ${error.code} - ${error.message}`);
-        }
-      }
-    }).catch((error) => {
-      formLoading.classList.remove('active');
-      redirectTo404(`Redirect Error: ${error.code} - ${error.message}`);
-    });
-
-    // Toggle to sign-up page
-    toggleAuth.addEventListener('click', async () => {
-      console.log('Checking for /index.html');
-      if (await checkFileExists('/index.html')) {
-        console.log('index.html found, redirecting');
-        window.location.href = '/index.html';
-      } else {
-        console.log('index.html not found, redirecting to 404');
-        window.location.assign('/404.html');
-      }
-    });
-  </script>
-</body>
-</html>
