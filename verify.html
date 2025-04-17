@@ -4,12 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Verify Email</title>
+
   <style>
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
+
     body {
       font-family: 'Segoe UI', sans-serif;
       background: #000;
@@ -20,19 +22,7 @@
       align-items: center;
       overflow: hidden;
     }
-    .container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      max-width: 1200px;
-      width: 100%;
-      gap: 2rem;
-      opacity: 0;
-      transition: opacity 0.5s ease-in;
-    }
-    .container.loaded {
-      opacity: 1;
-    }
+
     .verify-box {
       background: #111;
       padding: 2rem;
@@ -41,27 +31,20 @@
       width: 100%;
       max-width: 350px;
       border: 1px solid #f00;
-      position: relative;
-    }
-    .verify-box h2 {
       text-align: center;
+    }
+
+    .verify-box h2 {
       color: #f00;
       margin-bottom: 1rem;
     }
-    .verify-box input {
-      width: 100%;
-      padding: 0.7rem;
-      margin: 0.5rem 0;
-      background: #222;
+
+    .verify-box p {
       color: #fff;
-      border: 1px solid #f00;
-      border-radius: 6px;
+      font-size: 1rem;
+      margin-bottom: 1rem;
     }
-    .verify-box input:focus {
-      outline: none;
-      border-color: #ff4444;
-      box-shadow: 0 0 5px #ff4444;
-    }
+
     .verify-box button {
       width: 100%;
       padding: 0.7rem;
@@ -71,126 +54,81 @@
       border: none;
       border-radius: 6px;
       cursor: pointer;
-      margin-top: 1rem;
+      margin: 0.5rem 0;
       transition: background 0.3s ease;
     }
+
     .verify-box button:hover {
       background: #cc0000;
     }
-    .resend-link {
-      text-align: center;
-      margin-top: 0.5rem;
-      color: #ff0000;
-      font-size: 0.9rem;
-      text-decoration: none;
-      cursor: pointer;
+
+    .verify-box button:disabled {
+      background: #555;
+      cursor: not-allowed;
     }
-    .resend-link:hover {
-      text-decoration: underline;
-    }
-    #customAlert {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-    #customAlert.active {
-      display: flex;
-    }
-    .alert-box {
-      background: #111;
-      padding: 1.5rem;
-      border-radius: 12px;
-      border: 1px solid #f00;
-      box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
-      max-width: 400px;
-      width: 90%;
-      text-align: center;
-    }
-    .alert-box p {
+
+    #message {
       color: #fff;
-      font-size: 1rem;
-      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      margin-top: 1rem;
     }
-    .alert-box button {
-      background: #f00;
-      color: white;
-      padding: 0.7rem 1.5rem;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background 0.3s ease;
+
+    #message.error {
+      color: #f00;
     }
-    .alert-box button:hover {
-      background: #cc0000;
+
+    #message.success {
+      color: #0f0;
     }
+
     @media screen and (max-width: 768px) {
-      .container {
-        flex-direction: column;
-        align-items: center;
-        padding: 1rem;
-      }
       .verify-box {
         width: 100%;
         max-width: 90%;
         padding: 1.5rem;
-        margin-top: 1rem;
       }
+
       .verify-box h2 {
         font-size: 1.5rem;
       }
-      .verify-box input,
+
+      .verify-box p,
       .verify-box button {
         font-size: 1rem;
-        padding: 0.6rem;
-      }
-      .resend-link {
-        font-size: 0.9rem;
       }
     }
+
     @media screen and (max-width: 480px) {
       .verify-box {
         padding: 1rem;
       }
+
       .verify-box h2 {
         font-size: 1.3rem;
       }
-      .verify-box input,
+
+      .verify-box p,
       .verify-box button {
         font-size: 0.9rem;
-        padding: 0.5rem;
       }
     }
   </style>
 </head>
+
 <body>
-  <div id="customAlert">
-    <div class="alert-box">
-      <p id="alertMessage"></p>
-      <button id="alertButton">OK</button>
-    </div>
+  <div class="verify-box">
+    <h2>Verify Your Email</h2>
+    <p>A verification link has been sent to your email. Please check your inbox (or spam folder) and click the link to verify your email.</p>
+    <button id="checkVerification">I Have Verified</button>
+    <button id="resendEmail">Resend Email</button>
+    <p id="resendTimer" style="display: none; color: #f00; font-size: 0.9rem; margin-top: 0.5rem;"></p>
+    <p id="message"></p>
   </div>
-  <div class="container">
-    <div class="verify-box">
-      <h2>Verify Email</h2>
-      <form id="verifyForm">
-        <input type="text" name="code" id="code" placeholder="Enter 6-digit code" required maxlength="6" />
-        <button type="submit">Verify</button>
-      </form>
-      <p class="resend-link" id="resendCode">Resend Code</p>
-    </div>
-  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getFirestore, collection, getDocs, query, where, addDoc, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import { getAuth, sendEmailVerification } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
     const firebaseConfig = {
         apiKey: "AIzaSyBOAnbROT6CrHIYpPR29Tl0dZAy1ab41F8",
         authDomain: "signup-auth-ad445.firebaseapp.com",
@@ -200,29 +138,88 @@
         appId: "1:486601898869:web:54ab61f00020e26645713c",
         measurementId: "G-1CSG0CSSZR"
     };
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db = getFirestore(app);
-    const verifyForm = document.getElementById('verifyForm');
-    const resendCode = document.getElementById('resendCode');
-    const container = document.querySelector('.container');
-    const customAlert = document.getElementById('customAlert');
-    const alertMessage = document.getElementById('alertMessage');
-    const alertButton = document.getElementById('alertButton');
-    window.addEventListener('load', () => {
-      setTimeout(() => {
-        container.classList.add('loaded');
-      }, 500);
+
+    const checkVerificationBtn = document.getElementById('checkVerification');
+    const resendEmailBtn = document.getElementById('resendEmail');
+    const resendTimerP = document.getElementById('resendTimer');
+    const messageP = document.getElementById('message');
+
+    let resendCooldown = 30;
+    let resendTimer = null;
+
+    // Check if user is logged in
+    auth.onAuthStateChanged((user) => {
+      if (!user) {
+        window.location.href = '/index.html'; // Redirect to sign-up if not logged in
+      }
     });
-    function showCustomAlert(message, buttonText, buttonAction) {
-      alertMessage.textContent = message;
-      alertButton.textContent = buttonText;
-      alertButton.onclick = buttonAction;
-      customAlert.classList.add('active');
+
+    // Function to start the resend cooldown timer
+    function startResendTimer() {
+      resendEmailBtn.disabled = true;
+      resendTimerP.style.display = 'block';
+      resendTimerP.textContent = `Wait ${resendCooldown} seconds to resend`;
+
+      resendTimer = setInterval(() => {
+        resendCooldown--;
+        resendTimerP.textContent = `Wait ${resendCooldown} seconds to resend`;
+
+        if (resendCooldown <= 0) {
+          clearInterval(resendTimer);
+          resendEmailBtn.disabled = false;
+          resendTimerP.style.display = 'none';
+          resendCooldown = 30;
+        }
+      }, 1000);
     }
-    function hideCustomAlert() {
-      customAlert.classList.remove('active');
-    }
+
+    // Check verification status
+    checkVerificationBtn.addEventListener('click', async () => {
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          await user.reload(); // Refresh user data
+          if (user.emailVerified) {
+            messageP.textContent = "Email verified successfully! Redirecting...";
+            messageP.className = 'success';
+            setTimeout(async () => {
+              if (await checkFileExists('/dashboard.html')) {
+                window.location.href = '/dashboard.html';
+              } else {
+                window.location.href = '/404.html';
+              }
+            }, 2000);
+          } else {
+            messageP.textContent = "Email not verified yet. Please check your inbox or spam folder.";
+            messageP.className = 'error';
+          }
+        } catch (error) {
+          messageP.textContent = `Error checking verification: ${error.message}`;
+          messageP.className = 'error';
+        }
+      }
+    });
+
+    // Resend verification email
+    resendEmailBtn.addEventListener('click', async () => {
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          await sendEmailVerification(user);
+          messageP.textContent = "Verification email resent successfully.";
+          messageP.className = 'success';
+          startResendTimer();
+        } catch (error) {
+          messageP.textContent = `Error resending email: ${error.message}`;
+          messageP.className = 'error';
+        }
+      }
+    });
+
+    // Check file existence helper
     async function checkFileExists(path) {
       try {
         const response = await fetch(path, { method: 'HEAD', cache: 'no-store' });
@@ -231,123 +228,6 @@
         return false;
       }
     }
-    async function redirectToDashboard() {
-      console.log('Checking for /dashboard.html');
-      if (await checkFileExists('/dashboard.html')) {
-        console.log('dashboard.html found, redirecting');
-        window.location.assign('/dashboard.html');
-      } else {
-        console.log('dashboard.html not found, showing alert');
-        showCustomAlert('Dashboard not found.', 'Go to Login', () => {
-          window.location.href = '/login.html';
-        });
-      }
-    }
-    async function redirectTo404(errorMessage) {
-      console.error('Error occurred:', errorMessage);
-      showCustomAlert('Something went wrong. Please try again.', 'Go to Login', () => {
-        window.location.href = '/login.html';
-      });
-    }
-    function generateVerificationCode() {
-      return Math.floor(100000 + Math.random() * 900000).toString();
-    }
-    async function sendVerificationEmail(email, code) {
-      const maxRetries = 2;
-      let attempt = 0;
-      while (attempt <= maxRetries) {
-        try {
-          const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              service_id: 'YOUR_EMAILJS_SERVICE_ID',
-              template_id: 'YOUR_EMAILJS_TEMPLATE_ID',
-              user_id: 'YOUR_EMAILJS_USER_ID',
-              template_params: {
-                to_email: email,
-                from_email: 'info@evaclin.life',
-                from_name: 'Evaclin',
-                verification_code: code,
-              },
-            }),
-          });
-          const responseText = await response.text();
-          console.log(`EmailJS Response (attempt ${attempt + 1}):`, responseText);
-          if (!response.ok) throw new Error(`EmailJS attempt ${attempt + 1} failed: ${response.status} - ${responseText}`);
-          console.log(`Verification email sent to ${email} from info@evaclin.life`);
-          return true;
-        } catch (error) {
-          console.error(`EmailJS Error (attempt ${attempt + 1}):`, error);
-          attempt++;
-          if (attempt > maxRetries) return false;
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      }
-      return false;
-    }
-    verifyForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const code = document.getElementById('code').value;
-      try {
-        const user = auth.currentUser;
-        if (!user) {
-          await redirectTo404('No authenticated user found');
-          return;
-        }
-        const pendingQuery = query(collection(db, "pending_users"), where("uid", "==", user.uid), where("verificationCode", "==", code));
-        const pendingSnapshot = await getDocs(pendingQuery);
-        if (pendingSnapshot.empty) {
-          showCustomAlert('Invalid verification code.', 'Try Again', hideCustomAlert);
-          return;
-        }
-        const pendingDoc = pendingSnapshot.docs[0];
-        const userData = pendingDoc.data();
-        await addDoc(collection(db, "users"), {
-          username: userData.username,
-          email: userData.email,
-          uid: userData.uid,
-          provider: userData.provider,
-          createdAt: userData.createdAt
-        });
-        await deleteDoc(doc(db, "pending_users", pendingDoc.id));
-        await redirectToDashboard();
-      } catch (error) {
-        showCustomAlert(`Verification Error: ${error.message}`, 'Try Again', hideCustomAlert);
-      }
-    });
-    resendCode.addEventListener('click', async () => {
-      try {
-        const user = auth.currentUser;
-        if (!user) {
-          await redirectTo404('No authenticated user found');
-          return;
-        }
-        const pendingQuery = query(collection(db, "pending_users"), where("uid", "==", user.uid));
-        const pendingSnapshot = await getDocs(pendingQuery);
-        if (pendingSnapshot.empty) {
-          await redirectTo404('No pending verification found');
-          return;
-        }
-        const pendingDoc = pendingSnapshot.docs[0];
-        const userData = pendingDoc.data();
-        const newCode = generateVerificationCode();
-        const emailSent = await sendVerificationEmail(userData.email, newCode);
-        if (!emailSent) {
-          showCustomAlert('Failed to resend verification email.', 'Try Again', hideCustomAlert);
-          return;
-        }
-        await updateDoc(doc(db, "pending_users", pendingDoc.id), {
-          verificationCode: newCode,
-          updatedAt: new Date()
-        });
-        showCustomAlert('New verification code sent! Check your email.', 'OK', hideCustomAlert);
-      } catch (error) {
-        showCustomAlert(`Resend Error: ${error.message}`, 'Try Again', hideCustomAlert);
-      }
-    });
   </script>
 </body>
 </html>
