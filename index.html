@@ -428,10 +428,9 @@
         OAuthProvider,
         signInWithPopup,
         signInWithRedirect,
-        getRedirectResult,
-        sendEmailVerification
+        getRedirectResult
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBOAnbROT6CrHIYpPR29Tl0dZAy1ab41F8",
@@ -571,38 +570,21 @@
       window.location.assign('/404.html');
     }
 
-    // Generate a 6-digit verification code
-    function generateVerificationCode() {
-      return Math.floor(100000 + Math.random() * 900000).toString();
-    }
-
     // Email/password sign-up
     authForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       formLoading.classList.add('active');
-
-      const loadingTimeout = setTimeout(() => {
-        formLoading.classList.remove('active');
-        showCustomAlert('Sign-up process timed out. Please try again.', 'Try Again', () => {
-          hideCustomAlert();
-        });
-      }, 10000);
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const username = document.getElementById('username').value;
 
       try {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const username = document.getElementById('username').value;
-
-        console.log('Starting sign-up process for email:', email);
-
         // Check if email exists
         const emailQuery = query(collection(db, "users"), where("email", "==", email));
         const emailSnapshot = await getDocs(emailQuery);
         if (!emailSnapshot.empty) {
-          console.log('Email already registered:', email);
           formLoading.classList.remove('active');
-          clearTimeout(loadingTimeout);
-          showCustomAlert('This email is already registered. Please log in.', 'Go to Login', () => {
+          showCustomAlert('This account is already registered. Please log in.', 'Go to Login', () => {
             window.location.href = '/login.html';
           });
           return;
@@ -612,60 +594,33 @@
         const usernameQuery = query(collection(db, "users"), where("username", "==", username));
         const usernameSnapshot = await getDocs(usernameQuery);
         if (!usernameSnapshot.empty) {
-          console.log('Username already taken:', username);
           formLoading.classList.remove('active');
-          clearTimeout(loadingTimeout);
           showCustomAlert('This username is already taken.', 'Try Again', hideCustomAlert);
           return;
         }
 
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        console.log('User created successfully:', user.uid);
 
-        // Generate and store verification code
-        const verificationCode = generateVerificationCode();
-        await setDoc(doc(db, "verificationCodes", user.uid), {
-          code: verificationCode,
+        await addDoc(collection(db, "users"), {
+          username: username,
           email: email,
-          username: username, // Store username temporarily for use in verify.html
-          createdAt: new Date(),
+          uid: user.uid,
+          provider: "email",
+          createdAt: new Date()
         });
-        console.log('Verification code stored:', verificationCode);
 
-        // Send email verification (simulated email content with code)
-        await sendEmailVerification(user);
-        console.log('Verification email sent to:', email);
-        // Note: In a real implementation, you'd use Firebase Functions to send a custom email with the code.
-
-        clearTimeout(loadingTimeout);
-
-        // Redirect to verify.html
-        if (await checkFileExists('/verify.html')) {
-          console.log('verify.html found, redirecting');
-          window.location.href = '/verify.html';
-        } else {
-          console.log('verify.html not found, redirecting to 404');
-          window.location.assign('/404.html');
-        }
-      } catch (error) {
-        console.error('Sign-up error:', error.code, error.message);
-        await redirectTo404(`Sign Up Error: ${error.code} - ${error.message}`);
-      } finally {
-        clearTimeout(loadingTimeout);
         formLoading.classList.remove('active');
+        await redirectToDashboard();
+      } catch (error) {
+        formLoading.classList.remove('active');
+        await redirectTo404(`Sign Up Error: ${error.code} - ${error.message}`);
       }
     });
 
     // Google sign-up
     document.getElementById("googleSignIn").addEventListener("click", async () => {
       formLoading.classList.add('active');
-
-      const loadingTimeout = setTimeout(() => {
-        formLoading.classList.remove('active');
-        showCustomAlert('Google sign-in process timed out. Please try again.', 'Try Again', hideCustomAlert);
-      }, 10000);
-
       try {
         const googleProvider = new GoogleAuthProvider();
         googleProvider.setCustomParameters({ prompt: 'select_account' });
@@ -693,19 +648,15 @@
             provider: "google",
             createdAt: new Date()
           });
-          clearTimeout(loadingTimeout);
           formLoading.classList.remove('active');
           await redirectToDashboard();
         } else {
-          clearTimeout(loadingTimeout);
           formLoading.classList.remove('active');
           showCustomAlert('This account is already registered. Please log in.', 'Go to Login', () => {
             window.location.href = '/login.html';
           });
         }
       } catch (error) {
-        console.error('Google sign-in error:', error.code, error.message);
-        clearTimeout(loadingTimeout);
         formLoading.classList.remove('active');
         await redirectTo404(`Google Sign-In Error: ${error.code} - ${error.message}`);
       }
@@ -714,12 +665,6 @@
     // Apple sign-up
     document.getElementById("appleSignIn").addEventListener("click", async () => {
       formLoading.classList.add('active');
-
-      const loadingTimeout = setTimeout(() => {
-        formLoading.classList.remove('active');
-        showCustomAlert('Apple sign-in process timed out. Please try again.', 'Try Again', hideCustomAlert);
-      }, 10000);
-
       try {
         const appleProvider = new OAuthProvider('apple.com');
         appleProvider.addScope("email name");
@@ -737,19 +682,15 @@
             provider: "apple",
             createdAt: new Date()
           });
-          clearTimeout(loadingTimeout);
           formLoading.classList.remove('active');
           await redirectToDashboard();
         } else {
-          clearTimeout(loadingTimeout);
           formLoading.classList.remove('active');
           showCustomAlert('This account is already registered. Please log in.', 'Go to Login', () => {
             window.location.href = '/login.html';
           });
         }
       } catch (error) {
-        console.error('Apple sign-in error:', error.code, error.message);
-        clearTimeout(loadingTimeout);
         formLoading.classList.remove('active');
         await redirectTo404(`Apple Sign-In Error: ${error.code} - ${error.message}`);
       }
@@ -759,12 +700,6 @@
     getRedirectResult(auth).then(async (result) => {
       if (result) {
         formLoading.classList.add('active');
-
-        const loadingTimeout = setTimeout(() => {
-          formLoading.classList.remove('active');
-          showCustomAlert('Redirect process timed out. Please try again.', 'Try Again', hideCustomAlert);
-        }, 10000);
-
         try {
           const user = result.user;
           const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
@@ -778,25 +713,20 @@
               provider: result.providerId === "apple.com" ? "apple" : "google",
               createdAt: new Date()
             });
-            clearTimeout(loadingTimeout);
             formLoading.classList.remove('active');
             await redirectToDashboard();
           } else {
-            clearTimeout(loadingTimeout);
             formLoading.classList.remove('active');
             showCustomAlert('This account is already registered. Please log in.', 'Go to Login', () => {
               window.location.href = '/login.html';
             });
           }
         } catch (error) {
-          console.error('Redirect error:', error.code, error.message);
-          clearTimeout(loadingTimeout);
           formLoading.classList.remove('active');
           await redirectTo404(`Redirect Error: ${error.code} - ${error.message}`);
         }
       }
     }).catch((error) => {
-      console.error('Redirect error (catch block):', error.code, error.message);
       formLoading.classList.remove('active');
       redirectTo404(`Redirect Error: ${error.code} - ${error.message}`);
     });
