@@ -865,33 +865,3 @@
   </script>
 </body>
 </html>
-```
-
-### Explanation of Changes
-1. **HTML Additions**:
-   - Added a `verification-box` div alongside `signup-box` with a form (`verifyForm`) for entering a verification code.
-   - Included a loading overlay (`formLoadingVerification`) for the verification form.
-   - Added a "Resend" link to allow users to request a new verification email.
-
-2. **CSS Updates**:
-   - Styled `verification-box` to match `signup-box` for consistency.
-   - Added slide animation classes: `slide-out` (moves left), `slide-in` (centers), and `slide-from-right` (starts off-screen right).
-   - Ensured both boxes have `transition: transform 0.5s ease, opacity 0.5s ease` for smooth sliding.
-
-3. **JavaScript Updates**:
-   - Imported `sendEmailVerification` from Firebase to send verification emails.
-   - Added `showVerificationForm` function to handle the slide animation: hides `signup-box` by sliding left and shows `verification-box` by sliding in from the right.
-   - Modified the email/password sign-up handler to send a verification email and show the verification form instead of redirecting immediately.
-   - Added a `verifyForm` submit handler. Note: Firebase email verification typically uses links, not codes. The code includes a placeholder for code-based verification, but currently informs users to click the email link (as per Firebase's default behavior). For actual code-based verification, you'd need a custom backend.
-   - Added a `resendCode` handler to resend the verification email.
-   - Updated social sign-ins (Google, Apple) to mark users as `verified: true` since these providers handle verification internally.
-
-4. **Notes on Verification**:
-   - Firebase's `sendEmailVerification` sends a link, not a code. If you need code-based verification, you must implement a custom backend (e.g., a server that generates and verifies codes stored in Firestore).
-   - The verification form is included for UI purposes, but the script currently alerts users to use the email link due to Firebase's standard flow.
-   - To fully implement code-based verification, you’d need to:
-     - Generate a code on sign-up and store it (e.g., in Firestore or a server).
-     - Send the code via email (using a service like SendGrid or Firebase Functions).
-     - Verify the code on form submission via a server endpoint.
-
-This implementation provides the sliding UI you requested and integrates with Firebase’s email verification system, with a placeholder for code-based verification if you extend it with a custom backend.
