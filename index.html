@@ -222,7 +222,8 @@
     }
 
     .alert-box {
-      background: #111 forteller: padding: 1.5rem;
+      background: #111;
+      padding: 1.5rem;
       border-radius: 12px;
       border: 1px solid #f00;
       box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
@@ -683,14 +684,24 @@
         }
 
         console.log('Step 5: Adding to temp_users');
-        await addDoc(collection(db, "temp_users"), {
-          username: username,
-          email: email,
-          uid: user.uid,
-          provider: "email",
-          createdAt: new Date(),
-          verified: false
-        });
+        try {
+          const docRef = await addDoc(collection(db, "temp_users"), {
+            username: username,
+            email: email,
+            uid: user.uid,
+            provider: "email",
+            createdAt: new Date(),
+            verified: false
+          });
+          console.log('Document written with ID:', docRef.id);
+        } catch (firestoreError) {
+          console.error('Firestore write failed:', firestoreError.message);
+          showCustomAlert(`Firestore write failed: ${firestoreError.message}. Proceeding to verification.`, 'OK', () => {
+            hideCustomAlert();
+            showVerificationForm();
+          });
+          return; // Stop here to show verification UI
+        }
 
         console.log('Step 6: Showing verification form');
         showVerificationForm();
