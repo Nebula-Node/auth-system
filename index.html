@@ -1,3 +1,8 @@
+To implement a verification prompt that appears after sign-up, where the login form slides to the left and a verification form slides in, I'll modify the provided code. The verification prompt will ask for a code sent to the user's email, assuming Firebase handles sending the verification email after `createUserWithEmailAndPassword`. The transition will use CSS animations for a smooth slide effect, and the JavaScript will be updated to handle the verification process.
+
+Here’s the updated code with the verification prompt integrated:
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -39,7 +44,7 @@
       opacity: 1;
     }
 
-    .signup-box {
+    .signup-box, .verification-box {
       background: #111;
       padding: 2rem;
       border-radius: 12px;
@@ -48,15 +53,16 @@
       max-width: 350px;
       border: 1px solid #f00;
       position: relative;
+      transition: transform 0.5s ease, opacity 0.5s ease;
     }
 
-    .signup-box h2 {
+    .signup-box h2, .verification-box h2 {
       text-align: center;
       color: #f00;
       margin-bottom: 1rem;
     }
 
-    .signup-box input {
+    .signup-box input, .verification-box input {
       width: 100%;
       padding: 0.7rem;
       margin: 0.5rem 0;
@@ -66,13 +72,13 @@
       border-radius: 6px;
     }
 
-    .signup-box input:focus {
+    .signup-box input:focus, .verification-box input:focus {
       outline: none;
       border-color: #ff4444;
       box-shadow: 0 0 5px #ff4444;
     }
 
-    .signup-box button {
+    .signup-box button, .verification-box button {
       width: 100%;
       padding: 0.7rem;
       background: #f00;
@@ -85,7 +91,7 @@
       transition: background 0.3s ease;
     }
 
-    .signup-box button:hover {
+    .signup-box button:hover, .verification-box button:hover {
       background: #cc0000;
     }
 
@@ -278,6 +284,21 @@
       transform: scale(1.1);
     }
 
+    .slide-out {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+
+    .slide-in {
+      transform: translateX(0);
+      opacity: 1;
+    }
+
+    .slide-from-right {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+
     @media screen and (max-width: 768px) {
       .container {
         flex-direction: column;
@@ -290,19 +311,19 @@
         height: 300px;
       }
 
-      .signup-box {
+      .signup-box, .verification-box {
         width: 100%;
         max-width: 90%;
         padding: 1.5rem;
         margin-top: 1rem;
       }
 
-      .signup-box h2 {
+      .signup-box h2, .verification-box h2 {
         font-size: 1.5rem;
       }
 
-      .signup-box input,
-      .signup-box button {
+      .signup-box input, .verification-box input,
+      .signup-box button, .verification-box button {
         font-size: 1rem;
         padding: 0.6rem;
       }
@@ -323,16 +344,16 @@
         height: 300px;
       }
 
-      .signup-box {
+      .signup-box, .verification-box {
         padding: 1rem;
       }
 
-      .signup-box h2 {
+      .signup-box h2, .verification-box h2 {
         font-size: 1.3rem;
       }
 
-      .signup-box input,
-      .signup-box button {
+      .signup-box input, .verification-box input,
+      .signup-box button, .verification-box button {
         font-size: 0.9rem;
         padding: 0.5rem;
       }
@@ -372,7 +393,7 @@
       autoplay>
     </lottie-player>
 
-    <div class="signup-box">
+    <div class="signup-box slide-in">
       <div id="formLoading">
         <lottie-player
           src="Animation - 1744696593398.json"
@@ -417,6 +438,24 @@
 
       <p class="toggle-link" id="toggleAuth">Already have an account? Log in here</p>
     </div>
+
+    <div class="verification-box slide-from-right" style="display: none;">
+      <div id="formLoadingVerification">
+        <lottie-player
+          src="Animation - 1744696593398.json"
+          background="transparent"
+          speed="1"
+          loop
+          autoplay>
+        </lottie-player>
+      </div>
+      <h2>Verify Your Email</h2>
+      <form id="verifyForm">
+        <input type="text" name="verificationCode" id="verificationCode" placeholder="Enter verification code" required />
+        <button type="submit">Verify</button>
+      </form>
+      <p class="toggle-link" id="resendCode">Didn't receive a code? Resend</p>
+    </div>
   </div>
 
   <script type="module">
@@ -428,7 +467,10 @@
         OAuthProvider,
         signInWithPopup,
         signInWithRedirect,
-        getRedirectResult
+        getRedirectResult,
+        sendEmailVerification,
+        applyActionCode,
+        verifyPasswordResetCode
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
     import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
@@ -447,12 +489,17 @@
     const db = getFirestore(app);
 
     const authForm = document.getElementById('authForm');
+    const verifyForm = document.getElementById('verifyForm');
     const passwordInput = document.getElementById('password');
     const togglePassword = document.getElementById('togglePassword');
     const toggleAuth = document.getElementById('toggleAuth');
+    const resendCode = document.getElementById('resendCode');
     const container = document.querySelector('.container');
+    const signupBox = document.querySelector('.signup-box');
+    const verificationBox = document.querySelector('.verification-box');
     const loadingOverlay = document.getElementById('loadingOverlay');
     const formLoading = document.getElementById('formLoading');
+    const formLoadingVerification = document.getElementById('formLoadingVerification');
     const customAlert = document.getElementById('customAlert');
     const alertMessage = document.getElementById('alertMessage');
     const alertButton = document.getElementById('alertButton');
@@ -570,6 +617,17 @@
       window.location.assign('/404.html');
     }
 
+    // Show verification form
+    function showVerificationForm() {
+      signupBox.classList.remove('slide-in');
+      signupBox.classList.add('slide-out');
+      verificationBox.style.display = 'block';
+      setTimeout(() => {
+        verificationBox.classList.remove('slide-from-right');
+        verificationBox.classList.add('slide-in');
+      }, 10);
+    }
+
     // Email/password sign-up
     authForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -602,19 +660,82 @@
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
+        // Send verification email
+        await sendEmailVerification(user);
+
+        // Store user data temporarily (you might want to store this in a temporary collection)
         await addDoc(collection(db, "users"), {
           username: username,
           email: email,
           uid: user.uid,
           provider: "email",
-          createdAt: new Date()
+          createdAt: new Date(),
+          verified: false
         });
 
         formLoading.classList.remove('active');
-        await redirectToDashboard();
+        showVerificationForm();
       } catch (error) {
         formLoading.classList.remove('active');
         await redirectTo404(`Sign Up Error: ${error.code} - ${error.message}`);
+      }
+    });
+
+    // Verification form submission
+    verifyForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      formLoadingVerification.classList.add('active');
+      const verificationCode = document.getElementById('verificationCode').value;
+
+      try {
+        // Firebase doesn't directly support code-based verification for emails out of the box.
+        // Typically, Firebase sends a link, not a code. For code-based verification, you need a custom backend.
+        // Here, we'll simulate checking the code (you'd replace this with your backend logic).
+        // For demonstration, assume the code is valid if it matches a dummy value or use Firebase Admin SDK on a server.
+
+        // For Firebase email verification, we expect the user to click the link sent to their email.
+        // If you want code-based, you'd need a custom server to generate and verify codes.
+        // For now, we'll show an alert indicating the link-based flow.
+
+        showCustomAlert(
+          'Please check your email and click the verification link sent to complete the process.',
+          'OK',
+          hideCustomAlert
+        );
+
+        // If you have a custom backend, you'd send the code to verify here.
+        // Example: await fetch('/verify', { method: 'POST', body: JSON.stringify({ code: verificationCode, uid: auth.currentUser.uid }) });
+
+        formLoadingVerification.classList.remove('active');
+      } catch (error) {
+        formLoadingVerification.classList.remove('active');
+        showCustomAlert('Invalid verification code. Please try again.', 'Try Again', hideCustomAlert);
+      }
+    });
+
+    // Resend verification code
+    resendCode.addEventListener('click', async () => {
+      formLoadingVerification.classList.add('active');
+      try {
+        const user = auth.currentUser;
+        if (user) {
+          await sendEmailVerification(user);
+          showCustomAlert('Verification email resent. Please check your inbox.', 'OK', hideCustomAlert);
+        } else {
+          showCustomAlert('No user is signed in. Please sign up again.', 'OK', () => {
+            verificationBox.classList.remove('slide-in');
+            verificationBox.classList.add('slide-from-right');
+            signupBox.classList.remove('slide-out');
+            signupBox.classList.add('slide-in');
+            setTimeout(() => {
+              verificationBox.style.display = 'none';
+            }, 500);
+          });
+        }
+        formLoadingVerification.classList.remove('active');
+      } catch (error) {
+        formLoadingVerification.classList.remove('active');
+        showCustomAlert('Error resending verification email.', 'Try Again', hideCustomAlert);
       }
     });
 
@@ -646,7 +767,8 @@
             email: user.email || "No email provided",
             uid: user.uid,
             provider: "google",
-            createdAt: new Date()
+            createdAt: new Date(),
+            verified: true // Google users are auto-verified
           });
           formLoading.classList.remove('active');
           await redirectToDashboard();
@@ -680,7 +802,8 @@
             email: user.email || "No email provided",
             uid: user.uid,
             provider: "apple",
-            createdAt: new Date()
+            createdAt: new Date(),
+            verified: true // Apple users are auto-verified
           });
           formLoading.classList.remove('active');
           await redirectToDashboard();
@@ -711,7 +834,8 @@
               email: user.email || "No email provided",
               uid: user.uid,
               provider: result.providerId === "apple.com" ? "apple" : "google",
-              createdAt: new Date()
+              createdAt: new Date(),
+              verified: true // Social logins are auto-verified
             });
             formLoading.classList.remove('active');
             await redirectToDashboard();
@@ -745,3 +869,33 @@
   </script>
 </body>
 </html>
+```
+
+### Explanation of Changes
+1. **HTML Additions**:
+   - Added a `verification-box` div alongside `signup-box` with a form (`verifyForm`) for entering a verification code.
+   - Included a loading overlay (`formLoadingVerification`) for the verification form.
+   - Added a "Resend" link to allow users to request a new verification email.
+
+2. **CSS Updates**:
+   - Styled `verification-box` to match `signup-box` for consistency.
+   - Added slide animation classes: `slide-out` (moves left), `slide-in` (centers), and `slide-from-right` (starts off-screen right).
+   - Ensured both boxes have `transition: transform 0.5s ease, opacity 0.5s ease` for smooth sliding.
+
+3. **JavaScript Updates**:
+   - Imported `sendEmailVerification` from Firebase to send verification emails.
+   - Added `showVerificationForm` function to handle the slide animation: hides `signup-box` by sliding left and shows `verification-box` by sliding in from the right.
+   - Modified the email/password sign-up handler to send a verification email and show the verification form instead of redirecting immediately.
+   - Added a `verifyForm` submit handler. Note: Firebase email verification typically uses links, not codes. The code includes a placeholder for code-based verification, but currently informs users to click the email link (as per Firebase's default behavior). For actual code-based verification, you'd need a custom backend.
+   - Added a `resendCode` handler to resend the verification email.
+   - Updated social sign-ins (Google, Apple) to mark users as `verified: true` since these providers handle verification internally.
+
+4. **Notes on Verification**:
+   - Firebase's `sendEmailVerification` sends a link, not a code. If you need code-based verification, you must implement a custom backend (e.g., a server that generates and verifies codes stored in Firestore).
+   - The verification form is included for UI purposes, but the script currently alerts users to use the email link due to Firebase's standard flow.
+   - To fully implement code-based verification, you’d need to:
+     - Generate a code on sign-up and store it (e.g., in Firestore or a server).
+     - Send the code via email (using a service like SendGrid or Firebase Functions).
+     - Verify the code on form submission via a server endpoint.
+
+This implementation provides the sliding UI you requested and integrates with Firebase’s email verification system, with a placeholder for code-based verification if you extend it with a custom backend.
