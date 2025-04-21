@@ -571,6 +571,9 @@
       window.location.assign('/404.html');
     }
 
+    // Delay function
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
     // Email/password sign-up
     authForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -613,7 +616,10 @@
           console.warn('Email verification failed, proceeding anyway:', emailError.message);
         }
 
-        console.log('Step 5: Adding to temp_users');
+        console.log('Step 5: Waiting for auth to fully propagate');
+        await delay(500); // Wait 500ms to ensure auth state is ready
+
+        console.log('Step 6: Adding to temp_users');
         try {
           const docRef = await addDoc(collection(db, "temp_users"), {
             username: username,
@@ -633,7 +639,7 @@
           return;
         }
 
-        console.log('Step 6: Redirecting to verify.html');
+        console.log('Step 7: Redirecting to verify.html');
         redirectToVerify();
       } catch (error) {
         hideFormLoading();
