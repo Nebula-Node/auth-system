@@ -278,39 +278,6 @@
       transform: scale(1.1);
     }
 
-    .form-container {
-      position: relative;
-      overflow: hidden;
-    }
-
-    .signup-form, .verify-form {
-      width: 100%;
-      transition: transform 0.5s ease, opacity 0.5s ease;
-      position: absolute;
-      top: 0;
-      left: 0;
-      opacity: 1;
-    }
-
-    .signup-form {
-      position: static;
-    }
-
-    .signup-form.slide-out {
-      transform: translateX(-100%);
-      opacity: 0;
-    }
-
-    .verify-form {
-      transform: translateX(100%);
-      opacity: 0;
-    }
-
-    .verify-form.slide-in {
-      transform: translateX(0);
-      opacity: 1;
-    }
-
     @media screen and (max-width: 768px) {
       .container {
         flex-direction: column;
@@ -452,14 +419,6 @@
 
           <p class="toggle-link" id="toggleAuth">Already have an account? Log in here</p>
         </div>
-        <div class="verify-form">
-          <h2>Verify Email</h2>
-          <form id="verifyForm">
-            <input type="text" name="verificationCode" id="verificationCode" placeholder="Enter code" required />
-            <button type="submit">Verify</button>
-          </form>
-          <p class="toggle-link" id="resendCode">Resend code</p>
-        </div>
       </div>
     </div>
   </div>
@@ -493,36 +452,16 @@
     const db = getFirestore(app);
 
     const authForm = document.getElementById('authForm');
-    const verifyForm = document.getElementById('verifyForm');
     const passwordInput = document.getElementById('password');
     const togglePassword = document.getElementById('togglePassword');
     const toggleAuth = document.getElementById('toggleAuth');
-    const resendCode = document.getElementById('resendCode');
     const container = document.querySelector('.container');
-    const signupForm = document.querySelector('.signup-form');
-    const verifyFormElement = document.querySelector('.verify-form');
     const loadingOverlay = document.getElementById('loadingOverlay');
     const formLoading = document.getElementById('formLoading');
     const customAlert = document.getElementById('customAlert');
     const alertMessage = document.getElementById('alertMessage');
     const alertButton = document.getElementById('alertButton');
     const alertClose = document.getElementById('alertClose');
-
-    // Debug form load
-    document.addEventListener('DOMContentLoaded', () => {
-      console.log('DOM loaded, checking signup-form visibility');
-      if (!signupForm) {
-        console.error('signupForm not found in DOM');
-      } else {
-        signupForm.style.display = 'block';
-        console.log('signupForm set to display: block');
-      }
-    });
-
-    // Hide form loading
-    const hideFormLoading = () => {
-      formLoading.classList.remove('active');
-    };
 
     // Page load
     window.addEventListener('load', () => {
@@ -545,6 +484,11 @@
       hideFormLoading();
     }
     alertClose.addEventListener('click', hideCustomAlert);
+
+    // Hide form loading
+    const hideFormLoading = () => {
+      formLoading.classList.remove('active');
+    };
 
     // Password toggle (2s)
     let isPasswordVisible = false;
@@ -609,37 +553,22 @@
     }
 
     // Redirects
-    async function redirectToDashboard() {
-      console.log('Checking for /dashboard.html');
+    async function redirectToVerify() {
+      console.log('Checking for /verify.html');
       hideFormLoading();
-      if (await checkFileExists('/dashboard.html')) {
-        console.log('dashboard.html found, redirecting');
-        window.location.assign('/dashboard.html');
+      if (await checkFileExists('/verify.html')) {
+        console.log('verify.html found, redirecting');
+        window.location.assign('/verify.html');
       } else {
-        console.log('dashboard.html not found, redirecting to 404');
+        console.log('verify.html not found, redirecting to 404');
         window.location.assign('/404.html');
       }
     }
+
     async function redirectTo404(errorMessage) {
       console.error('Error occurred:', errorMessage);
       hideFormLoading();
       window.location.assign('/404.html');
-    }
-
-    // Show verification
-    function showVerificationForm() {
-      console.log('Showing verification form');
-      if (!signupForm || !verifyFormElement) {
-        console.error('signupForm or verifyFormElement not found');
-        return;
-      }
-      signupForm.classList.add('slide-out');
-      verifyFormElement.classList.add('slide-in');
-      setTimeout(() => {
-        signupForm.style.display = 'none';
-        verifyFormElement.style.position = 'static';
-        hideFormLoading();
-      }, 500);
     }
 
     // Email/password sign-up
@@ -699,70 +628,17 @@
           console.error('Firestore write failed:', firestoreError.message);
           showCustomAlert(`Firestore write failed: ${firestoreError.message}. Proceeding to verification.`, 'OK', () => {
             hideCustomAlert();
-            showVerificationForm();
+            redirectToVerify();
           });
           return;
         }
 
-        console.log('Step 6: Showing verification form');
-        showVerificationForm();
+        console.log('Step 6: Redirecting to verify.html');
+        redirectToVerify();
       } catch (error) {
         hideFormLoading();
         console.error('Sign-up error:', error.message);
         showCustomAlert(`Sign-up failed: ${error.message}`, 'OK', hideCustomAlert);
-      }
-    });
-
-    // Verify (mock)
-    verifyForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      formLoading.classList.add('active');
-      setTimeout(hideFormLoading, 5000);
-      const verificationCode = document.getElementById('verificationCode').value;
-
-      try {
-        if (verificationCode === "123456") {
-          const user = auth.currentUser;
-          await addDoc(collection(db, "users"), {
-            username: document.getElementById('username').value,
-            email: user.email,
-            uid: user.uid,
-            provider: "email",
-            createdAt: new Date(),
-            verified: true
-          });
-          await redirectToDashboard();
-        } else {
-          throw new Error("Invalid code");
-        }
-      } catch (error) {
-        hideFormLoading();
-        showCustomAlert('Invalid code. Try again.', 'OK', hideCustomAlert);
-      }
-    });
-
-    // Resend
-    resendCode.addEventListener('click', async () => {
-      formLoading.classList.add('active');
-      setTimeout(hideFormLoading, 5000);
-      try {
-        const user = auth.currentUser;
-        if (user) {
-          await sendEmailVerification(user);
-          showCustomAlert('Email resent. Check inbox.', 'OK', hideCustomAlert);
-        } else {
-          showCustomAlert('No user signed in. Sign up again.', 'OK', () => {
-            verifyFormElement.classList.remove('slide-in');
-            signupForm.classList.remove('slide-out');
-            signupForm.style.display = 'block';
-            verifyFormElement.style.position = 'absolute';
-            verifyFormElement.style.transform = 'translateX(100%)';
-            hideFormLoading();
-          });
-        }
-      } catch (error) {
-        hideFormLoading();
-        showCustomAlert('Error resending email.', 'OK', hideCustomAlert);
       }
     });
 
@@ -887,6 +763,19 @@
         window.location.assign('/404.html');
       }
     });
+
+    // Redirect to dashboard (for Google/Apple sign-in)
+    async function redirectToDashboard() {
+      console.log('Checking for /dashboard.html');
+      hideFormLoading();
+      if (await checkFileExists('/dashboard.html')) {
+        console.log('dashboard.html found, redirecting');
+        window.location.assign('/dashboard.html');
+      } else {
+        console.log('dashboard.html not found, redirecting to 404');
+        window.location.assign('/404.html');
+      }
+    }
   </script>
 </body>
 </html>
