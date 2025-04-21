@@ -98,7 +98,6 @@
     .toggle-link {
       text-align: center;
       margin-top: 1rem;
-      cursor: pointer;
       color: #ff0000;
       text-decoration: none;
       font-size: 0.9rem;
@@ -107,6 +106,24 @@
 
     .toggle-link:hover {
       text-decoration: underline;
+    }
+
+    .toggle-link.disabled {
+      color: #555;
+      pointer-events: none;
+      text-decoration: none;
+    }
+
+    #resendTimer {
+      text-align: center;
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      color: #fff;
+    }
+
+    #resendTimer span {
+      color: #ff0000;
+      font-weight: bold;
     }
 
     #loadingOverlay {
@@ -260,7 +277,8 @@
         padding: 0.6rem;
       }
 
-      .toggle-link {
+      .toggle-link,
+      #resendTimer {
         font-size: 0.9rem;
       }
     }
@@ -285,7 +303,8 @@
         padding: 0.5rem;
       }
 
-      .toggle-link {
+      .toggle-link,
+      #resendTimer {
         font-size: 0.85rem;
       }
     }
@@ -336,6 +355,7 @@
         <button type="submit">Verify</button>
       </form>
       <p class="toggle-link" id="resendCode">Resend code</p>
+      <p id="resendTimer">Resend available in <span id="timerSeconds">60</span>s</p>
     </div>
   </div>
 
@@ -363,6 +383,8 @@
 
     const verifyForm = document.getElementById('verifyForm');
     const resendCode = document.getElementById('resendCode');
+    const resendTimer = document.getElementById('resendTimer');
+    const timerSeconds = document.getElementById('timerSeconds');
     const container = document.querySelector('.container');
     const loadingOverlay = document.getElementById('loadingOverlay');
     const formLoading = document.getElementById('formLoading');
@@ -371,11 +393,34 @@
     const alertButton = document.getElementById('alertButton');
     const alertClose = document.getElementById('alertClose');
 
+    // Timer logic
+    let countdown = 60;
+    let timerInterval = null;
+
+    function startTimer() {
+      countdown = 60;
+      timerSeconds.textContent = countdown;
+      resendCode.classList.add('disabled');
+      resendTimer.style.display = 'block';
+
+      timerInterval = setInterval(() => {
+        countdown--;
+        timerSeconds.textContent = countdown;
+
+        if (countdown <= 0) {
+          clearInterval(timerInterval);
+          resendCode.classList.remove('disabled');
+          resendTimer.style.display = 'none';
+        }
+      }, 1000);
+    }
+
     // Page load
     window.addEventListener('load', () => {
       setTimeout(() => {
         loadingOverlay.classList.add('hidden');
         container.classList.add('loaded');
+        startTimer(); // Start timer on page load
       }, 2000);
     });
 
@@ -473,6 +518,8 @@
 
     // Resend
     resendCode.addEventListener('click', async () => {
+      if (resendCode.classList.contains('disabled')) return;
+
       formLoading.classList.add('active');
       setTimeout(hideFormLoading, 5000);
       try {
@@ -480,6 +527,7 @@
         if (user) {
           await sendEmailVerification(user);
           showCustomAlert('Email resent. Check inbox.', 'OK', hideCustomAlert);
+          startTimer(); // Reset and start timer after resend
         } else {
           showCustomAlert('No user signed in. Sign up again.', 'OK', () => {
             redirectToSignUp();
@@ -492,5 +540,5 @@
       }
     });
   </script>
-</body>
+,周<body>
 </html>
