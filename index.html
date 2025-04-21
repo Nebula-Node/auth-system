@@ -292,6 +292,10 @@
       opacity: 1;
     }
 
+    .signup-form {
+      position: static;
+    }
+
     .signup-form.slide-out {
       transform: translateX(-100%);
       opacity: 0;
@@ -504,6 +508,17 @@
     const alertButton = document.getElementById('alertButton');
     const alertClose = document.getElementById('alertClose');
 
+    // Debug form load
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM loaded, checking signup-form visibility');
+      if (!signupForm) {
+        console.error('signupForm not found in DOM');
+      } else {
+        signupForm.style.display = 'block';
+        console.log('signupForm set to display: block');
+      }
+    });
+
     // Hide form loading
     const hideFormLoading = () => {
       formLoading.classList.remove('active');
@@ -675,7 +690,7 @@
       const verificationCode = document.getElementById('verificationCode').value;
 
       try {
-        if (verificationCode === "123456") { // Replace with backend
+        if (verificationCode === "123456") {
           const user = auth.currentUser;
           await addDoc(collection(db, "users"), {
             username: document.getElementById('username').value,
