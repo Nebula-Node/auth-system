@@ -617,7 +617,7 @@
         }
 
         console.log('Step 5: Waiting for auth to fully propagate');
-        await delay(500); // Wait 500ms to ensure auth state is ready
+        await delay(500);
 
         console.log('Step 6: Adding to temp_users');
         try {
@@ -632,11 +632,7 @@
           console.log('Document written with ID:', docRef.id);
         } catch (firestoreError) {
           console.error('Firestore write failed:', firestoreError.message);
-          showCustomAlert(`Firestore write failed: ${firestoreError.message}. Proceeding to verification.`, 'OK', () => {
-            hideCustomAlert();
-            redirectToVerify();
-          });
-          return;
+          // Proceed silently without alerting the user
         }
 
         console.log('Step 7: Redirecting to verify.html');
