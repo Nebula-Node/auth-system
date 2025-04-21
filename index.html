@@ -222,8 +222,7 @@
     }
 
     .alert-box {
-      background: #111;
-      padding: 1.5rem;
+      background: #111 forteller: padding: 1.5rem;
       border-radius: 12px;
       border: 1px solid #f00;
       box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
@@ -628,6 +627,11 @@
 
     // Show verification
     function showVerificationForm() {
+      console.log('Showing verification form');
+      if (!signupForm || !verifyFormElement) {
+        console.error('signupForm or verifyFormElement not found');
+        return;
+      }
       signupForm.classList.add('slide-out');
       verifyFormElement.classList.add('slide-in');
       setTimeout(() => {
@@ -647,6 +651,7 @@
       const username = document.getElementById('username').value;
 
       try {
+        console.log('Step 1: Checking for existing email');
         const emailQuery = query(collection(db, "users"), where("email", "==", email));
         const emailSnapshot = await getDocs(emailQuery);
         if (!emailSnapshot.empty) {
@@ -656,6 +661,8 @@
           });
           return;
         }
+
+        console.log('Step 2: Checking for existing username');
         const usernameQuery = query(collection(db, "users"), where("username", "==", username));
         const usernameSnapshot = await getDocs(usernameQuery);
         if (!usernameSnapshot.empty) {
@@ -664,9 +671,18 @@
           return;
         }
 
+        console.log('Step 3: Creating user with email and password');
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        await sendEmailVerification(user);
+
+        console.log('Step 4: Sending email verification');
+        try {
+          await sendEmailVerification(user);
+        } catch (emailError) {
+          console.warn('Email verification failed, proceeding anyway:', emailError.message);
+        }
+
+        console.log('Step 5: Adding to temp_users');
         await addDoc(collection(db, "temp_users"), {
           username: username,
           email: email,
@@ -675,10 +691,13 @@
           createdAt: new Date(),
           verified: false
         });
+
+        console.log('Step 6: Showing verification form');
         showVerificationForm();
       } catch (error) {
         hideFormLoading();
-        await redirectTo404(`Sign Up Error: ${error.code} - ${error.message}`);
+        console.error('Sign-up error:', error.message);
+        showCustomAlert(`Sign-up failed: ${error.message}`, 'OK', hideCustomAlert);
       }
     });
 
