@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -7,7 +7,12 @@
   <title>Sign Up</title>
 
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
       font-family: 'Segoe UI', sans-serif;
       background: #000;
@@ -18,6 +23,7 @@
       align-items: center;
       overflow: hidden;
     }
+
     .container {
       display: flex;
       justify-content: space-between;
@@ -28,7 +34,11 @@
       opacity: 0;
       transition: opacity 0.5s ease-in;
     }
-    .container.loaded { opacity: 1; }
+
+    .container.loaded {
+      opacity: 1;
+    }
+
     .signup-box {
       background: #111;
       padding: 2rem;
@@ -39,11 +49,13 @@
       border: 1px solid #f00;
       position: relative;
     }
+
     .signup-box h2 {
       text-align: center;
       color: #f00;
       margin-bottom: 1rem;
     }
+
     .signup-box input {
       width: 100%;
       padding: 0.7rem;
@@ -53,11 +65,13 @@
       border: 1px solid #f00;
       border-radius: 6px;
     }
+
     .signup-box input:focus {
       outline: none;
       border-color: #ff4444;
       box-shadow: 0 0 5px #ff4444;
     }
+
     .signup-box button {
       width: 100%;
       padding: 0.7rem;
@@ -70,16 +84,22 @@
       margin-top: 1rem;
       transition: background 0.3s ease;
     }
-    .signup-box button:hover { background: #cc0000; }
+
+    .signup-box button:hover {
+      background: #cc0000;
+    }
+
     lottie-player {
       width: 750px;
       height: 750px;
       flex-shrink: 0;
     }
+
     .social-signin {
       text-align: center;
       margin-top: 20px;
     }
+
     .social-signin button {
       width: 100%;
       margin: 8px 0;
@@ -94,28 +114,34 @@
       transition: all 0.3s ease;
       border: 2px solid transparent;
     }
+
     #googleSignIn {
       background-color: white;
       color: #db4437;
       border-color: #db4437;
     }
+
     #googleSignIn:hover {
       background-color: #db4437;
       color: white;
     }
+
     #appleSignIn {
       background-color: white;
       color: #000;
       border-color: #000;
     }
+
     #appleSignIn:hover {
       background-color: #000;
       color: white;
     }
+
     .social-signin svg {
       width: 20px;
       height: 20px;
     }
+
     .toggle-link {
       text-align: center;
       margin-top: 1rem;
@@ -123,8 +149,13 @@
       color: #ff0000;
       text-decoration: none;
       font-size: 0.9rem;
+      transition: color 0.3s ease;
     }
-    .toggle-link:hover { text-decoration: underline; }
+
+    .toggle-link:hover {
+      text-decoration: underline;
+    }
+
     #loadingOverlay {
       position: fixed;
       top: 0;
@@ -139,14 +170,17 @@
       opacity: 1;
       transition: opacity 0.5s ease;
     }
+
     #loadingOverlay.hidden {
       opacity: 0;
       pointer-events: none;
     }
+
     #loadingOverlay lottie-player {
       width: 300px;
       height: 300px;
     }
+
     #formLoading {
       position: absolute;
       top: 0;
@@ -160,11 +194,16 @@
       z-index: 10;
       border-radius: 12px;
     }
-    #formLoading.active { display: flex; }
+
+    #formLoading.active {
+      display: flex;
+    }
+
     #formLoading lottie-player {
       width: 100px;
       height: 100px;
     }
+
     #customAlert {
       position: fixed;
       top: 0;
@@ -177,7 +216,11 @@
       align-items: center;
       z-index: 1000;
     }
-    #customAlert.active { display: flex; }
+
+    #customAlert.active {
+      display: flex;
+    }
+
     .alert-box {
       background: #111;
       padding: 1.5rem;
@@ -189,11 +232,13 @@
       text-align: center;
       position: relative;
     }
+
     .alert-box p {
       color: #fff;
       font-size: 1rem;
       margin-bottom: 1rem;
     }
+
     .alert-box button {
       background: #f00;
       color: white;
@@ -204,7 +249,11 @@
       font-weight: bold;
       transition: background 0.3s ease;
     }
-    .alert-box button:hover { background: #cc0000; }
+
+    .alert-box button:hover {
+      background: #cc0000;
+    }
+
     .alert-box .alert-close {
       position: absolute;
       top: 0.5rem;
@@ -216,438 +265,181 @@
       align-items: center;
       justify-content: center;
       background: transparent !important;
+      border-radius: 50%;
+      padding: 0;
+      transition: transform 0.1s ease;
       color: #fff;
       font-size: 16px;
       font-weight: bold;
       line-height: 1;
     }
-    .alert-box .alert-close:hover { transform: scale(1.1); }
-    .form-container {
-      position: relative;
-      overflow: hidden;
+
+    .alert-box .alert-close:hover {
+      transform: scale(1.1);
     }
-    .signup-form, .verify-form {
-      width: 100%;
-      transition: transform 0.5s ease, opacity 0.5s ease;
-      position: absolute;
-      top: 0;
-      left: 0;
-      opacity: 1;
-    }
-    .signup-form.slide-out {
-      transform: translateX(-100%);
-      opacity: 0;
-    }
-    .verify-form {
-      transform: translateX(100%);
-      opacity: 0;
-    }
-    .verify-form.slide-in {
-      transform: translateX(0);
-      opacity: 1;
-    }
+
     @media screen and (max-width: 768px) {
-      .container { flex-direction: column; padding: 1rem; }
-      lottie-player { width: 300px; height: 300px; }
-      .signup-box { width: 100%; max-width: 90%; padding: 1.5rem; margin-top: 1rem; }
-      .signup-box h2 { font-size: 1.5rem; }
-      .signup-box input, .signup-box button { font-size: 1rem; padding: 0.6rem; }
-      .social-signin button { font-size: 0.9rem; padding: 0.6rem; }
-      .toggle-link { font-size: 0.9rem; }
+      .container {
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem;
+      }
+
+      lottie-player {
+        width: 300px;
+        height: 300px;
+      }
+
+      .signup-box {
+        width: 100%;
+        max-width: 90%;
+        padding: 1.5rem;
+        margin-top: 1rem;
+      }
+
+      .signup-box h2 {
+        font-size: 1.5rem;
+      }
+
+      .signup-box input,
+      .signup-box button {
+        font-size: 1rem;
+        padding: 0.6rem;
+      }
+
+      .social-signin button {
+        font-size: 0.9rem;
+        padding: 0.6rem;
+      }
+
+      .toggle-link {
+        font-size: 0.9rem;
+      }
     }
+
     @media screen and (max-width: 480px) {
-      lottie-player { width: 300px; height: 300px; }
-      .signup-box { padding: 1rem; }
-      .signup-box h2 { font-size: 1.3rem; }
-      .signup-box input, .signup-box button { font-size: 0.9rem; padding: 0.5rem; }
-      .social-signin button { font-size: 0.85rem; }
+      lottie-player {
+        width: 300px;
+        height: 300px;
+      }
+
+      .signup-box {
+        padding: 1rem;
+      }
+
+      .signup-box h2 {
+        font-size: 1.3rem;
+      }
+
+      .signup-box input,
+      .signup-box button {
+        font-size: 0.9rem;
+        padding: 0.5rem;
+      }
+
+      .social-signin button {
+        font-size: 0.85rem;
+      }
     }
   </style>
 </head>
 
 <body>
   <div id="loadingOverlay">
-    <lottie-player src="Animation - 1744696593398.json" background="transparent" speed="1" loop autoplay></lottie-player>
+    <lottie-player
+      src="Animation - 1744696593398.json"
+      background="transparent"
+      speed="1"
+      loop
+      autoplay>
+    </lottie-player>
   </div>
 
   <div id="customAlert">
     <div class="alert-box">
       <button class="alert-close" id="alertClose">×</button>
       <p id="alertMessage"></p>
-      <button id="alertButton">OK</button>
+      <button id="alertButton">Go to Login</button>
     </div>
   </div>
 
   <div class="container">
-    <lottie-player src="Animation - 1744470672068.json" background="transparent" speed="1" loop autoplay></lottie-player>
+    <lottie-player
+      src="Animation - 1744470672068.json"
+      background="transparent"
+      speed="1"
+      loop
+      autoplay>
+    </lottie-player>
 
     <div class="signup-box">
       <div id="formLoading">
-        <lottie-player src="Animation - 1744696593398.json" background="transparent" speed="1" loop autoplay></lottie-player>
+        <lottie-player
+          src="Animation - 1744696593398.json"
+          background="transparent"
+          speed="1"
+          loop
+          autoplay>
+        </lottie-player>
       </div>
-      <div class="form-container">
-        <div class="signup-form">
-          <h2>Sign Up</h2>
-          <form id="authForm">
-            <input type="text" name="username" id="username" placeholder="Username" required />
-            <input type="email" name="email" id="email" placeholder="Email" required />
-            <div style="position: relative; margin: 0.5rem 0;">
-              <input type="password" name="password" id="password" placeholder="Password" required style="padding-right: 3rem;" />
-              <svg id="togglePassword" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#f00" stroke-width="2" style="position: absolute; right: 0.7rem; top: 50%; transform: translateY(-50%); cursor: pointer;">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>
-              </svg>
-            </div>
-            <button type="submit">Sign Up</button>
-          </form>
-          <div class="social-signin">
-            <p>Or sign up with:</p>
-            <button id="googleSignIn">
-              <svg viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg" width="20" height="20">
-                <path fill="#4285f4" d="M533.5 278.4c0-17.3-1.6-34.3-4.7-50.7H272v95.9h146.9c-6.4 34.8-25.9 64.2-55.2 83.8v69.3h89.1c52.1-48 80.7-118.8 80.7-198.3z"/>
-                <path fill="#34a853" d="M272 544.3c73.5 0 135.1-24.3 180.1-66.1l-89.1-69.3c-24.7 16.6-56.4 26.4-91 26.4-69.9 0-129.2-47.2-150.4-110.6H30v69.7c45.3 89.2 137.2 149.9 242 149.9z"/>
-                <path fill="#fbbc04" d="M121.6 324.7c-10.2-30-10.2-62.4 0-92.4V162.6H30c-41.9 83.4-41.9 180.7 0 264.1l91.6-70z"/>
-                <path fill="#ea4335" d="M272 107.1c39.9-.6 78.1 14.1 107.3 40.6l80.4-80.4C408.5 25.9 342.6 0 272 0 167.2 0 75.3 60.7 30 149.9l91.6 70c21.2-63.4 80.5-110.6 150.4-110.6z"/>
-              </svg>
-              Continue with Google
-            </button>
-            <button id="appleSignIn">
-              <svg viewBox="0 0 848 1000" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor">
-                <path d="M789 748c-8 19-17 38-27 55-14 24-26 42-36 53-14 17-29 35-48 Aalright, I hear your frustration loud and clear, and I’m sorry the earlier attempts didn’t nail it. Let’s do this right: you want the sign-up form in `index.html` to slide out left and a verification form to slide in from the right, all within the same `signup-box` on the same page, no extra boxes or redirects. I’ll keep it dead simple, stick to your black-and-red vibe, Firebase setup, 2-second password toggle, Lottie animations (`Animation - 1744696593398.json` and `Animation - 1744470672068.json`), and transparent `.alert-close` (April 17, 2025). You’ve pushed for code-based verification before (April 17, 2025), so I’ll mock that with a dummy code, but since Firebase uses email links, you’ll need a backend for real code checks. This is the cleanest, most focused solution to get you what you need.
-
-### What’s Going On
-- **HTML**: A `form-container` inside `signup-box` holds the sign-up form (`signup-form`) and verification form (`verify-form`). Verification starts off-screen right.
-- **CSS**: Minimal slide animations: `signup-form` slides left to hide, `verify-form` slides in from right.
-- **JavaScript**: On sign-up, slide to verification. Mock code verification with “123456” (swap for backend). Social logins skip verification.
-- **Firebase**: Uses `sendEmailVerification` for email links. Stores users in `temp_users` on sign-up, moves to `users` after verification (April 17, 2025).
-- **Security**: Your client-side Firebase config is exposed (April 13, 2025, concern), so ensure Firestore rules are tight.
-
-### The Code
-Here’s `index.html`, stripped to the essentials for the sliding verification form in `signup-box`. Only critical styles and scripts are included.
-
-<xaiArtifact artifact_id="0da59245-74c3-44ad-95b2-ede75681c020" artifact_version_id="9cda2260-e6fa-4e65-bc21-04aa7c6a5129" title="index.html" contentType="text/html">
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
-  <title>Sign Up</title>
-
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #000;
-      color: #fff;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    .container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      max-width: 1200px;
-      width: 100%;
-      gap: 2rem;
-      opacity: 0;
-      transition: opacity 0.5s ease-in;
-    }
-    .container.loaded { opacity: 1; }
-    .signup-box {
-      background: #111;
-      padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
-      width: 100%;
-      max-width: 350px;
-      border: 1px solid #f00;
-      position: relative;
-    }
-    .signup-box h2 {
-      text-align: center;
-      color: #f00;
-      margin-bottom: 1rem;
-    }
-    .signup-box input {
-      width: 100%;
-      padding: 0.7rem;
-      margin: 0.5rem 0;
-      background: #222;
-      color: #fff;
-      border: 1px solid #f00;
-      border-radius: 6px;
-    }
-    .signup-box input:focus {
-      outline: none;
-      border-color: #ff4444;
-      box-shadow: 0 0 5px #ff4444;
-    }
-    .signup-box button {
-      width: 100%;
-      padding: 0.7rem;
-      background: #f00;
-      color: white;
-      font-weight: bold;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      margin-top: 1rem;
-    }
-    .signup-box button:hover { background: #cc0000; }
-    lottie-player {
-      width: 750px;
-      height: 750px;
-    }
-    .social-signin {
-      text-align: center;
-      margin-top: 20px;
-    }
-    .social-signin button {
-      width: 100%;
-      margin: 8px 0;
-      padding: 12px;
-      border-radius: 8px;
-      font-size: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      border: 2px solid transparent;
-    }
-    #googleSignIn {
-      background-color: white;
-      color: #db4437;
-      border-color: #db4437;
-    }
-    #googleSignIn:hover {
-      background-color: #db4437;
-      color: white;
-    }
-    #appleSignIn {
-      background-color: white;
-      color: #000;
-      border-color: #000;
-    }
-    #appleSignIn:hover {
-      background-color: #000;
-      color: white;
-    }
-    .social-signin svg { width: 20px; height: 20px; }
-    .toggle-link {
-      text-align: center;
-      margin-top: 1rem;
-      cursor: pointer;
-      color: #ff0000;
-      font-size: 0.9rem;
-    }
-    .toggle-link:hover { text-decoration: underline; }
-    #loadingOverlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: #000;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-      opacity: 1;
-      transition: opacity 0.5s ease;
-    }
-    #loadingOverlay.hidden { opacity: 0; pointer-events: none; }
-    #loadingOverlay lottie-player { width: 300px; height: 300px; }
-    #formLoading {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 10;
-      border-radius: 12px;
-    }
-    #formLoading.active { display: flex; }
-    #formLoading lottie-player { width: 100px; height: 100px; }
-    #customAlert {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-    #customAlert.active { display: flex; }
-    .alert-box {
-      background: #111;
-      padding: 1.5rem;
-      border-radius: 12px;
-      border: 1px solid #f00;
-      box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
-      max-width: 400px;
-      width: 90%;
-      text-align: center;
-    }
-    .alert-box p {
-      color: #fff;
-      font-size: 1rem;
-      margin-bottom: 1rem;
-    }
-    .alert-box button {
-      background: #f00;
-      color: white;
-      padding: 0.7rem 1.5rem;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    .alert-box button:hover { background: #cc0000; }
-    .alert-box .alert-close {
-      position: absolute;
-      top: 0.5rem;
-      right: 0.5rem;
-      width: 24px;
-      height: 24px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: transparent !important;
-      color: #fff;
-      font-size: 16px;
-      font-weight: bold;
-    }
-    .alert-box .alert-close:hover { transform: scale(1.1); }
-    .form-container { position: relative; overflow: hidden; }
-    .signup-form, .verify-form {
-      width: 100%;
-      transition: transform 0.5s ease, opacity 0.5s ease;
-      position: absolute;
-      top: 0;
-      left: 0;
-      opacity: 1;
-    }
-    .signup-form.slide-out { transform: translateX(-100%); opacity: 0; }
-    .verify-form { transform: translateX(100%); opacity: 0; }
-    .verify-form.slide-in { transform: translateX(0); opacity: 1; }
-    @media screen and (max-width: 768px) {
-      .container { flex-direction: column; padding: 1rem; }
-      lottie-player { width: 300px; height: 300px; }
-      .signup-box { width: 100%; max-width: 90%; padding: 1.5rem; margin-top: 1rem; }
-      .signup-box h2 { font-size: 1.5rem; }
-      .signup-box input, .signup-box button { font-size: 1rem; padding: 0.6rem; }
-      .social-signin button { font-size: 0.9rem; padding: 0.6rem; }
-      .toggle-link { font-size: 0.9rem; }
-    }
-    @media screen and (max-width: 480px) {
-      .signup-box { padding: 1rem; }
-      .signup-box h2 { font-size: 1.3rem; }
-      .signup-box input, .signup-box button { font-size: 0.9rem; padding: 0.5rem; }
-      .social-signin button { font-size: 0.85rem; }
-    }
-  </style>
-</head>
-
-<body>
-  <div id="loadingOverlay">
-    <lottie-player src="Animation - 1744696593398.json" background="transparent" speed="1" loop autoplay></lottie-player>
-  </div>
-
-  <div id="customAlert">
-    <div class="alert-box">
-      <button class="alert-close" id="alertClose">×</button>
-      <p id="alertMessage"></p>
-      <button id="alertButton">OK</button>
-    </div>
-  </div>
-
-  <div class="container">
-    <lottie-player src="Animation - 1744470672068.json" background="transparent" speed="1" loop autoplay></lottie-player>
-
-    <div class="signup-box">
-      <div id="formLoading">
-        <lottie-player src="Animation - 1744696593398.json" background="transparent" speed="1" loop autoplay></lottie-player>
-      </div>
-      <div class="form-container">
-        <div class="signup-form">
-          <h2>Sign Up</h2>
-          <form id="authForm">
-            <input type="text" name="username" id="username" placeholder="Username" required />
-            <input type="email" name="email" id="email" placeholder="Email" required />
-            <div style="position: relative; margin: 0.5rem 0;">
-              <input type="password" name="password" id="password" placeholder="Password" required style="padding-right: 3rem;" />
-              <svg id="togglePassword" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#f00" stroke-width="2" style="position: absolute; right: 0.7rem; top: 50%; transform: translateY(-50%); cursor: pointer;">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>
-              </svg>
-            </div>
-            <button type="submit">Sign Up</button>
-          </form>
-          <div class="social-signin">
-            <p>Or sign up with:</p>
-            <button id="googleSignIn">
-              <svg viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg" width="20" height="20">
-                <path fill="#4285f4" d="M533.5 278.4c0-17.3-1.6-34.3-4.7-50.7H272v95.9h146.9c-6.4 34.8-25.9 64.2-55.2 83.8v69.3h89.1c52.1-48 80.7-118.8 80.7-198.3z"/>
-                <path fill="#34a853" d="M272 544.3c73.5 0 135.1-24.3 180.1-66.1l-89.1-69.3c-24.7 16.6-56.4 26.4-91 26.4-69.9 0-129.2-47.2-150.4-110.6H30v69.7c45.3 89.2 137.2 149.9 242 149.9z"/>
-                <path fill="#fbbc04" d="M121.6 324.7c-10.2-30-10.2-62.4 0-92.4V162.6H30c-41.9 83.4-41.9 180.7 0 264.1l91.6-70z"/>
-                <path fill="#ea4335" d="M272 107.1c39.9-.6 78.1 14.1 107.3 40.6l80.4-80.4C408.5 25.9 342.6 0 272 0 167.2 0 75.3 60.7 30 149.9l91.6 70c21.2-63.4 80.5-110.6 150.4-110.6z"/>
-              </svg>
-              Google
-            </button>
-            <button id="appleSignIn">
-              <svg viewBox="0 0 848 1000" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor">
-                <path d="M789 748c-8 19-17 38-27 55-14 24-26 42-36 53-14 17-29 35-48 53-19 18-39 32-61 43-24 11-48 17-74 17-19 0-42-6-70-17s-53-17-77-17c-26 0-53 6-81 17-29 11-52 17-70 17-27 0-53-6-77-17-24-11-46-27-66-46-23-21-42-45-58-72-18-29-32-63-44-101-12-38-17-75-17-110 0-61 13-113 39-155 20-34 46-61 79-81 33-19 68-29 105-29 22 0 50 6 83 17 34 11 55 17 63 17 5 0 23-6 55-17 30-9 59-14 86-14 57 0 105 24 143 71-57 35-86 84-86 147 0 44 12 81 37 112 22 27 51 45 87 56zm-163-700c0 34-13 67-39 100-31 37-67 59-106 56 0-3 1-8 2-15 3-32 16-64 39-94 21-26 47-46 78-59 10-4 19-7 27-7 1 6 1 13 1 19z"/>
-              </svg>
-              Apple
-            </button>
-          </div>
-          <p class="toggle-link" id="toggleAuth">Have an account? Log in</p>
+      <h2>Sign Up</h2>
+      <form id="authForm">
+        <input type="text" name="username" id="username" placeholder="Username" required />
+        <input type="email" name="email" id="email" placeholder="Email" required />
+        <div style="position: relative; margin: 0.5rem 0;">
+          <input type="password" name="password" id="password" placeholder="Password" required style="padding-right: 3rem;" />
+          <svg id="togglePassword" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#f00" stroke-width="2" style="position: absolute; right: 0.7rem; top: 50%; transform: translateY(-50%); cursor: pointer; z-index: 10; pointer-events: auto;">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+            <path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>
+          </svg>
         </div>
-        <div class="verify-form">
-          <h2>Verify Email</h2>
-          <form id="verifyForm">
-            <input type="text" name="verificationCode" id="verificationCode" placeholder="Enter code" required />
-            <button type="submit">Verify</button>
-          </form>
-          <p class="toggle-link" id="resendCode">Resend code</p>
-        </div>
+        <button type="submit">Sign Up</button>
+      </form>
+
+      <div class="social-signin">
+        <p>Or sign up with:</p>
+        <button id="googleSignIn">
+          <svg viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg" width="20" height="20">
+            <path fill="#4285f4" d="M533.5 278.4c0-17.3-1.6-34.3-4.7-50.7H272v95.9h146.9c-6.4 34.8-25.9 64.2-55.2 83.8v69.3h89.1c52.1-48 80.7-118.8 80.7-198.3z"/>
+            <path fill="#34a853" d="M272 544.3c73.5 0 135.1-24.3 180.1-66.1l-89.1-69.3c-24.7 16.6-56.4 26.4-91 26.4-69.9 0-129.2-47.2-150.4-110.6H30v69.7c45.3 89.2 137.2 149.9 242 149.9z"/>
+            <path fill="#fbbc04" d="M121.6 324.7c-10.2-30-10.2-62.4 0-92.4V162.6H30c-41.9 83.4-41.9 180.7 0 264.1l91.6-70z"/>
+            <path fill="#ea4335" d="M272 107.1c39.9-.6 78.1 14.1 107.3 40.6l80.4-80.4C408.5 25.9 342.6 0 272 0 167.2 0 75.3 60.7 30 149.9l91.6 70c21.2-63.4 80.5-110.6 150.4-110.6z"/>
+          </svg>
+          Continue with Google
+        </button>
+        <button id="appleSignIn">
+          <svg viewBox="0 0 848 1000" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor">
+            <path d="M789 748c-8 19-17 38-27 55-14 24-26 42-36 53-14 17-29 35-48 53-19 18-39 32-61 43-24 11-48 17-74 17-19 0-42-6-70-17s-53-17-77-17c-26 0-53 6-81 17-29 11-52 17-70 17-27 0-53-6-77-17-24-11-46-27-66-46-23-21-42-45-58-72-18-29-32-63-44-101-12-38-17-75-17-110 0-61 13-113 39-155 20-34 46-61 79-81 33-19 68-29 105-29 22 0 50 6 83 17 34 11 55 17 63 17 5 0 23-6 55-17 30-9 59-14 86-14 57 0 105 24 143 71-57 35-86 84-86 147 0 44 12 81 37 112 22 27 51 45 87 56zm-163-700c0 34-13 67-39 100-31 37-67 59-106 56 0-3 1-8 2-15 3-32 16-64 39-94 21-26 47-46 78-59 10-4 19-7 27-7 1 6 1 13 1 19z"/>
+          </svg>
+          Continue with Apple
+        </button>
       </div>
+
+      <p class="toggle-link" id="toggleAuth">Already have an account? Log in here</p>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import {
-      getAuth,
-      createUserWithEmailAndPassword,
-      GoogleAuthProvider,
-      OAuthProvider,
-      signInWithPopup,
-      signInWithRedirect,
-      getRedirectResult,
-      sendEmailVerification
+        getAuth,
+        createUserWithEmailAndPassword,
+        GoogleAuthProvider,
+        OAuthProvider,
+        signInWithPopup,
+        signInWithRedirect,
+        getRedirectResult
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
     import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyBOAnbROT6CrHIYpPR29Tl0dZAy1ab41F8",
-      authDomain: "signup-auth-ad445.firebaseapp.com",
-      projectId: "signup-auth-ad445",
-      storageBucket: "signup-auth-ad445.firebasestorage.app",
-      messagingSenderId: "486601898869",
-      appId: "1:486601898869:web:54ab61f00020e26645713c",
-      measurementId: "G-1CSG0CSSZR"
+        apiKey: "AIzaSyBOAnbROT6CrHIYpPR29Tl0dZAy1ab41F8",
+        authDomain: "signup-auth-ad445.firebaseapp.com",
+        projectId: "signup-auth-ad445",
+        storageBucket: "signup-auth-ad445.firebasestorage.app",
+        messagingSenderId: "486601898869",
+        appId: "1:486601898869:web:54ab61f00020e26645713c",
+        measurementId: "G-1CSG0CSSZR"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -655,14 +447,10 @@ Here’s `index.html`, stripped to the essentials for the sliding verification f
     const db = getFirestore(app);
 
     const authForm = document.getElementById('authForm');
-    const verifyForm = document.getElementById('verifyForm');
     const passwordInput = document.getElementById('password');
     const togglePassword = document.getElementById('togglePassword');
     const toggleAuth = document.getElementById('toggleAuth');
-    const resendCode = document.getElementById('resendCode');
     const container = document.querySelector('.container');
-    const signupForm = document.querySelector('.signup-form');
-    const verifyFormElement = document.querySelector('.verify-form');
     const loadingOverlay = document.getElementById('loadingOverlay');
     const formLoading = document.getElementById('formLoading');
     const customAlert = document.getElementById('customAlert');
@@ -670,7 +458,7 @@ Here’s `index.html`, stripped to the essentials for the sliding verification f
     const alertButton = document.getElementById('alertButton');
     const alertClose = document.getElementById('alertClose');
 
-    // Page load
+    // Page load animation
     window.addEventListener('load', () => {
       setTimeout(() => {
         loadingOverlay.classList.add('hidden');
@@ -678,40 +466,83 @@ Here’s `index.html`, stripped to the essentials for the sliding verification f
       }, 2000);
     });
 
-    // Alert functions
+    // Custom alert function
     function showCustomAlert(message, buttonText, buttonAction) {
       alertMessage.textContent = message;
       alertButton.textContent = buttonText;
       alertButton.onclick = buttonAction;
       customAlert.classList.add('active');
     }
-    function hideCustomAlert() { customAlert.classList.remove('active'); }
+
+    function hideCustomAlert() {
+      customAlert.classList.remove('active');
+    }
+
+    // Close alert on button click
     alertClose.addEventListener('click', hideCustomAlert);
 
-    // Password toggle (2s revert)
+    // Password toggle with 2-second auto-revert
     let isPasswordVisible = false;
     let autoHideTimeout = null;
+
     const togglePasswordVisibility = () => {
+      console.log('Toggling password visibility');
       isPasswordVisible = !isPasswordVisible;
-      if (autoHideTimeout) clearTimeout(autoHideTimeout);
+
+      if (autoHideTimeout) {
+        clearTimeout(autoHideTimeout);
+        autoHideTimeout = null;
+      }
+
       passwordInput.type = isPasswordVisible ? 'text' : 'password';
       togglePassword.innerHTML = isPasswordVisible
         ? `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />`
         : `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>`;
+
+      passwordInput.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+      togglePassword.style.transition = 'opacity 0.3s ease';
+      passwordInput.style.opacity = '0.7';
+      passwordInput.style.transform = 'scale(0.98)';
+      togglePassword.style.opacity = '0.7';
+
+      setTimeout(() => {
+        passwordInput.style.opacity = '1';
+        passwordInput.style.transform = 'scale(1)';
+        togglePassword.style.opacity = '1';
+      }, 300);
+
       if (isPasswordVisible) {
         autoHideTimeout = setTimeout(() => {
-          isPasswordVisible = false;
-          passwordInput.type = 'password';
-          togglePassword.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>`;
+          if (isPasswordVisible) {
+            console.log('Auto-reverting password visibility');
+            isPasswordVisible = false;
+            passwordInput.type = 'password';
+            togglePassword.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>`;
+
+            passwordInput.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            togglePassword.style.transition = 'opacity 0.3s ease';
+            passwordInput.style.opacity = '0.7';
+            passwordInput.style.transform = 'scale(0.98)';
+            togglePassword.style.opacity = '0.7';
+
+            setTimeout(() => {
+              passwordInput.style.opacity = '1';
+              passwordInput.style.transform = 'scale(1)';
+              togglePassword.style.opacity = '1';
+            }, 300);
+          }
+          autoHideTimeout = null;
         }, 2000);
       }
     };
+
     togglePassword.addEventListener('click', (e) => {
       e.preventDefault();
+      e.stopPropagation();
       togglePasswordVisibility();
     });
 
-    // File check
+    // Check file existence
     async function checkFileExists(path) {
       try {
         const response = await fetch(path, { method: 'HEAD', cache: 'no-store' });
@@ -721,30 +552,25 @@ Here’s `index.html`, stripped to the essentials for the sliding verification f
       }
     }
 
-    // Redirects
+    // Redirect to dashboard or 404
     async function redirectToDashboard() {
+      console.log('Checking for /dashboard.html');
       if (await checkFileExists('/dashboard.html')) {
+        console.log('dashboard.html found, redirecting');
         window.location.assign('/dashboard.html');
       } else {
+        console.log('dashboard.html not found, redirecting to 404');
         window.location.assign('/404.html');
       }
     }
+
+    // Redirect to 404 on error
     async function redirectTo404(errorMessage) {
-      console.error('Error:', errorMessage);
+      console.error('Error occurred:', errorMessage);
       window.location.assign('/404.html');
     }
 
-    // Show verification
-    function showVerificationForm() {
-      signupForm.classList.add('slide-out');
-      verifyFormElement.classList.add('slide-in');
-      setTimeout(() => {
-        signupForm.style.display = 'none';
-        verifyFormElement.style.position = 'static';
-      }, 500);
-    }
-
-    // Sign-up
+    // Email/password sign-up
     authForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       formLoading.classList.add('active');
@@ -753,98 +579,52 @@ Here’s `index.html`, stripped to the essentials for the sliding verification f
       const username = document.getElementById('username').value;
 
       try {
+        // Check if email exists
         const emailQuery = query(collection(db, "users"), where("email", "==", email));
         const emailSnapshot = await getDocs(emailQuery);
         if (!emailSnapshot.empty) {
           formLoading.classList.remove('active');
-          showCustomAlert('Email already registered.', 'Go to Login', () => { window.location.href = '/login.html'; });
+          showCustomAlert('This account is already registered. Please log in.', 'Go to Login', () => {
+            window.location.href = '/login.html';
+          });
           return;
         }
+
+        // Check if username is taken
         const usernameQuery = query(collection(db, "users"), where("username", "==", username));
         const usernameSnapshot = await getDocs(usernameQuery);
         if (!usernameSnapshot.empty) {
           formLoading.classList.remove('active');
-          showCustomAlert('Username taken.', 'Try Again', hideCustomAlert);
+          showCustomAlert('This username is already taken.', 'Try Again', hideCustomAlert);
           return;
         }
 
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        await sendEmailVerification(user);
-        await addDoc(collection(db, "temp_users"), {
+
+        await addDoc(collection(db, "users"), {
           username: username,
           email: email,
           uid: user.uid,
           provider: "email",
-          createdAt: new Date(),
-          verified: false
+          createdAt: new Date()
         });
+
         formLoading.classList.remove('active');
-        showVerificationForm();
+        await redirectToDashboard();
       } catch (error) {
         formLoading.classList.remove('active');
         await redirectTo404(`Sign Up Error: ${error.code} - ${error.message}`);
       }
     });
 
-    // Verify (mock)
-    verifyForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      formLoading.classList.add('active');
-      const verificationCode = document.getElementById('verificationCode').value;
-
-      try {
-        if (verificationCode === "123456") { // Replace with backend
-          const user = auth.currentUser;
-          await addDoc(collection(db, "users"), {
-            username: document.getElementById('username').value,
-            email: user.email,
-            uid: user.uid,
-            provider: "email",
-            createdAt: new Date(),
-            verified: true
-          });
-          formLoading.classList.remove('active');
-          await redirectToDashboard();
-        } else {
-          throw new Error("Invalid code");
-        }
-      } catch (error) {
-        formLoading.classList.remove('active');
-        showCustomAlert('Invalid code. Try again.', 'OK', hideCustomAlert);
-      }
-    });
-
-    // Resend
-    resendCode.addEventListener('click', async () => {
-      formLoading.classList.add('active');
-      try {
-        const user = auth.currentUser;
-        if (user) {
-          await sendEmailVerification(user);
-          showCustomAlert('Email resent. Check inbox.', 'OK', hideCustomAlert);
-        } else {
-          showCustomAlert('No user signed in. Sign up again.', 'OK', () => {
-            verifyFormElement.classList.remove('slide-in');
-            signupForm.classList.remove('slide-out');
-            signupForm.style.display = 'block';
-            verifyFormElement.style.position = 'absolute';
-            verifyFormElement.style.transform = 'translateX(100%)';
-          });
-        }
-        formLoading.classList.remove('active');
-      } catch (error) {
-        formLoading.classList.remove('active');
-        showCustomAlert('Error resending email.', 'OK', hideCustomAlert);
-      }
-    });
-
-    // Google sign-in
+    // Google sign-up
     document.getElementById("googleSignIn").addEventListener("click", async () => {
       formLoading.classList.add('active');
       try {
         const googleProvider = new GoogleAuthProvider();
         googleProvider.setCustomParameters({ prompt: 'select_account' });
+
         let result;
         try {
           result = await signInWithPopup(auth, googleProvider);
@@ -855,62 +635,68 @@ Here’s `index.html`, stripped to the essentials for the sliding verification f
           }
           throw popupError;
         }
+
         const user = result.user;
         const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
         const userSnapshot = await getDocs(userQuery);
+
         if (userSnapshot.empty) {
           await addDoc(collection(db, "users"), {
             username: user.displayName || "Google User",
-            email: user.email || "No email",
+            email: user.email || "No email provided",
             uid: user.uid,
             provider: "google",
-            createdAt: new Date(),
-            verified: true
+            createdAt: new Date()
           });
           formLoading.classList.remove('active');
           await redirectToDashboard();
         } else {
           formLoading.classList.remove('active');
-          showCustomAlert('Account registered.', 'Go to Login', () => { window.location.href = '/login.html'; });
+          showCustomAlert('This account is already registered. Please log in.', 'Go to Login', () => {
+            window.location.href = '/login.html';
+          });
         }
       } catch (error) {
         formLoading.classList.remove('active');
-        await redirectTo404(`Google Error: ${error.code} - ${error.message}`);
+        await redirectTo404(`Google Sign-In Error: ${error.code} - ${error.message}`);
       }
     });
 
-    // Apple sign-in
+    // Apple sign-up
     document.getElementById("appleSignIn").addEventListener("click", async () => {
       formLoading.classList.add('active');
       try {
         const appleProvider = new OAuthProvider('apple.com');
         appleProvider.addScope("email name");
+
         const result = await signInWithPopup(auth, appleProvider);
         const user = result.user;
         const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
         const userSnapshot = await getDocs(userQuery);
+
         if (userSnapshot.empty) {
           await addDoc(collection(db, "users"), {
             username: user.displayName || "Apple User",
-            email: user.email || "No email",
+            email: user.email || "No email provided",
             uid: user.uid,
             provider: "apple",
-            createdAt: new Date(),
-            verified: true
+            createdAt: new Date()
           });
           formLoading.classList.remove('active');
           await redirectToDashboard();
         } else {
           formLoading.classList.remove('active');
-          showCustomAlert('Account registered.', 'Go to Login', () => { window.location.href = '/login.html'; });
+          showCustomAlert('This account is already registered. Please log in.', 'Go to Login', () => {
+            window.location.href = '/login.html';
+          });
         }
       } catch (error) {
         formLoading.classList.remove('active');
-        await redirectTo404(`Apple Error: ${error.code} - ${error.message}`);
+        await redirectTo404(`Apple Sign-In Error: ${error.code} - ${error.message}`);
       }
     });
 
-    // Redirect results
+    // Handle redirect results
     getRedirectResult(auth).then(async (result) => {
       if (result) {
         formLoading.classList.add('active');
@@ -918,20 +704,22 @@ Here’s `index.html`, stripped to the essentials for the sliding verification f
           const user = result.user;
           const userQuery = query(collection(db, "users"), where("uid", "==", user.uid));
           const userSnapshot = await getDocs(userQuery);
+
           if (userSnapshot.empty) {
             await addDoc(collection(db, "users"), {
               username: user.displayName || (result.providerId === "apple.com" ? "Apple User" : "Google User"),
-              email: user.email || "No email",
+              email: user.email || "No email provided",
               uid: user.uid,
               provider: result.providerId === "apple.com" ? "apple" : "google",
-              createdAt: new Date(),
-              verified: true
+              createdAt: new Date()
             });
             formLoading.classList.remove('active');
             await redirectToDashboard();
           } else {
             formLoading.classList.remove('active');
-            showCustomAlert('Account registered.', 'Go to Login', () => { window.location.href = '/login.html'; });
+            showCustomAlert('This account is already registered. Please log in.', 'Go to Login', () => {
+              window.location.href = '/login.html';
+            });
           }
         } catch (error) {
           formLoading.classList.remove('active');
@@ -943,14 +731,17 @@ Here’s `index.html`, stripped to the essentials for the sliding verification f
       redirectTo404(`Redirect Error: ${error.code} - ${error.message}`);
     });
 
-    // Login toggle
+    // Toggle to login page
     toggleAuth.addEventListener('click', async () => {
+      console.log('Checking for /login.html');
       if (await checkFileExists('/login.html')) {
+        console.log('login.html found, redirecting');
         window.location.href = '/login.html';
       } else {
+        console.log('login.html not found, redirecting to 404');
         window.location.assign('/404.html');
       }
     });
   </script>
 </body>
-</html>
+</html>  
