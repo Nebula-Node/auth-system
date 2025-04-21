@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
   <title>Verify Email</title>
 
   <style>
@@ -23,6 +24,21 @@
       overflow: hidden;
     }
 
+    .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      width: 100%;
+      gap: 2rem;
+      opacity: 0;
+      transition: opacity 0.5s ease-in;
+    }
+
+    .container.loaded {
+      opacity: 1;
+    }
+
     .verify-box {
       background: #111;
       padding: 2rem;
@@ -31,17 +47,12 @@
       width: 100%;
       max-width: 350px;
       border: 1px solid #f00;
-      text-align: center;
+      position: relative;
     }
 
     .verify-box h2 {
+      text-align: center;
       color: #f00;
-      margin-bottom: 1rem;
-    }
-
-    .verify-box p {
-      color: #fff;
-      font-size: 1rem;
       margin-bottom: 1rem;
     }
 
@@ -70,7 +81,7 @@
       border: none;
       border-radius: 6px;
       cursor: pointer;
-      margin: 0.5rem 0;
+      margin-top: 1rem;
       transition: background 0.3s ease;
     }
 
@@ -78,44 +89,188 @@
       background: #cc0000;
     }
 
-    .verify-box button:disabled {
-      background: #555;
-      cursor: not-allowed;
+    lottie-player {
+      width: 750px;
+      height: 750px;
+      flex-shrink: 0;
     }
 
-    #message {
-      color: #fff;
-      font-size: 0.9rem;
+    .toggle-link {
+      text-align: center;
       margin-top: 1rem;
+      cursor: pointer;
+      color: #ff0000;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.3s ease;
     }
 
-    #message.error {
-      color: #f00;
+    .toggle-link:hover {
+      text-decoration: underline;
     }
 
-    #message.success {
-      color: #0f0;
+    #loadingOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+
+    #loadingOverlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #loadingOverlay lottie-player {
+      width: 300px;
+      height: 300px;
+    }
+
+    #formLoading {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+      border-radius: 12px;
+    }
+
+    #formLoading.active {
+      display: flex;
+    }
+
+    #formLoading lottie-player {
+      width: 100px;
+      height: 100px;
+    }
+
+    #customAlert {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    #customAlert.active {
+      display: flex;
+    }
+
+    .alert-box {
+      background: #111;
+      padding: 1.5rem;
+      border-radius: 12px;
+      border: 1px solid #f00;
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+      position: relative;
+    }
+
+    .alert-box p {
+      color: #fff;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .alert-box button {
+      background: #f00;
+      color: white;
+      padding: 0.7rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s ease;
+    }
+
+    .alert-box button:hover {
+      background: #cc0000;
+    }
+
+    .alert-box .alert-close {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent !important;
+      border-radius: 50%;
+      padding: 0;
+      transition: transform 0.1s ease;
+      color: #fff;
+      font-size: 16px;
+      font-weight: bold;
+      line-height: 1;
+    }
+
+    .alert-box .alert-close:hover {
+      transform: scale(1.1);
     }
 
     @media screen and (max-width: 768px) {
+      .container {
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem;
+      }
+
+      lottie-player {
+        width: 300px;
+        height: 300px;
+      }
+
       .verify-box {
         width: 100%;
         max-width: 90%;
         padding: 1.5rem;
+        margin-top: 1rem;
       }
 
       .verify-box h2 {
         font-size: 1.5rem;
       }
 
-      .verify-box p,
       .verify-box input,
       .verify-box button {
         font-size: 1rem;
+        padding: 0.6rem;
+      }
+
+      .toggle-link {
+        font-size: 0.9rem;
       }
     }
 
     @media screen and (max-width: 480px) {
+      lottie-player {
+        width: 300px;
+        height: 300px;
+      }
+
       .verify-box {
         padding: 1rem;
       }
@@ -124,173 +279,126 @@
         font-size: 1.3rem;
       }
 
-      .verify-box p,
       .verify-box input,
       .verify-box button {
         font-size: 0.9rem;
+        padding: 0.5rem;
+      }
+
+      .toggle-link {
+        font-size: 0.85rem;
       }
     }
   </style>
 </head>
 
 <body>
-  <div class="verify-box">
-    <h2>Verify Your Email</h2>
-    <p>A verification code has been sent to your email. Please check your inbox (or spam folder) and enter the code below.</p>
-    <input type="text" id="verificationCode" placeholder="Enter 6-digit code" maxlength="6" required />
-    <button id="verifyCode">Verify Code</button>
-    <button id="resendEmail">Resend Email</button>
-    <p id="resendTimer" style="display: none; color: #f00; font-size: 0.9rem; margin-top: 0.5rem;"></p>
-    <p id="message"></p>
+  <div id="loadingOverlay">
+    <lottie-player
+      src="Animation - 1744696593398.json"
+      background="transparent"
+      speed="1"
+      loop
+      autoplay>
+    </lottie-player>
+  </div>
+
+  <div id="customAlert">
+    <div class="alert-box">
+      <button class="alert-close" id="alertClose">×</button>
+      <p id="alertMessage"></p>
+      <button id="alertButton">OK</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <lottie-player
+      src="Animation - 1744470672068.json"
+      background="transparent"
+      speed="1"
+      loop
+      autoplay>
+    </lottie-player>
+
+    <div class="verify-box">
+      <div id="formLoading">
+        <lottie-player
+          src="Animation - 1744696593398.json"
+          background="transparent"
+          speed="1"
+          loop
+          autoplay>
+        </lottie-player>
+      </div>
+      <h2>Verify Email</h2>
+      <form id="verifyForm">
+        <input type="text" name="verificationCode" id="verificationCode" placeholder="Enter code" required />
+        <button type="submit">Verify</button>
+      </form>
+      <p class="toggle-link" id="resendCode">Resend code</p>
+    </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getAuth, sendEmailVerification } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import {
+      getAuth,
+      sendEmailVerification
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const firebaseConfig = {
-        apiKey: "AIzaSyBOAnbROT6CrHIYpPR29Tl0dZAy1ab41F8",
-        authDomain: "signup-auth-ad445.firebaseapp.com",
-        projectId: "signup-auth-ad445",
-        storageBucket: "signup-auth-ad445.firebasestorage.app",
-        messagingSenderId: "486601898869",
-        appId: "1:486601898869:web:54ab61f00020e26645713c",
-        measurementId: "G-1CSG0CSSZR"
+      apiKey: "AIzaSyBOAnbROT6CrHIYpPR29Tl0dZAy1ab41F8",
+      authDomain: "signup-auth-ad445.firebaseapp.com",
+      projectId: "signup-auth-ad445",
+      storageBucket: "signup-auth-ad445.firebasestorage.app",
+      messagingSenderId: "486601898869",
+      appId: "1:486601898869:web:54ab61f00020e26645713c",
+      measurementId: "G-1CSG0CSSZR"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const verifyCodeBtn = document.getElementById('verifyCode');
-    const resendEmailBtn = document.getElementById('resendEmail');
-    const verificationCodeInput = document.getElementById('verificationCode');
-    const resendTimerP = document.getElementById('resendTimer');
-    const messageP = document.getElementById('message');
+    const verifyForm = document.getElementById('verifyForm');
+    const resendCode = document.getElementById('resendCode');
+    const container = document.querySelector('.container');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const formLoading = document.getElementById('formLoading');
+    const customAlert = document.getElementById('customAlert');
+    const alertMessage = document.getElementById('alertMessage');
+    const alertButton = document.getElementById('alertButton');
+    const alertClose = document.getElementById('alertClose');
 
-    let resendCooldown = 30;
-    let resendTimer = null;
-
-    // Check if user is logged in
-    auth.onAuthStateChanged((user) => {
-      if (!user) {
-        window.location.href = '/index.html'; // Redirect to sign-up if not logged in
-      }
+    // Page load
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        loadingOverlay.classList.add('hidden');
+        container.classList.add('loaded');
+      }, 2000);
     });
 
-    // Function to start the resend cooldown timer
-    function startResendTimer() {
-      resendEmailBtn.disabled = true;
-      resendTimerP.style.display = 'block';
-      resendTimerP.textContent = `Wait ${resendCooldown} seconds to resend`;
-
-      resendTimer = setInterval(() => {
-        resendCooldown--;
-        resendTimerP.textContent = `Wait ${resendCooldown} seconds to resend`;
-
-        if (resendCooldown <= 0) {
-          clearInterval(resendTimer);
-          resendEmailBtn.disabled = false;
-          resendTimerP.style.display = 'none';
-          resendCooldown = 30;
-        }
-      }, 1000);
+    // Alerts
+    function showCustomAlert(message, buttonText, buttonAction) {
+      alertMessage.textContent = message;
+      alertButton.textContent = buttonText;
+      alertButton.onclick = buttonAction;
+      customAlert.classList.add('active');
+      hideFormLoading();
     }
-
-    // Generate a 6-digit verification code
-    function generateVerificationCode() {
-      return Math.floor(100000 + Math.random() * 900000).toString();
+    function hideCustomAlert() {
+      customAlert.classList.remove('active');
+      hideFormLoading();
     }
+    alertClose.addEventListener('click', hideCustomAlert);
 
-    // Verify the code
-    verifyCodeBtn.addEventListener('click', async () => {
-      const user = auth.currentUser;
-      const enteredCode = verificationCodeInput.value.trim();
+    // Hide form loading
+    const hideFormLoading = () => {
+      formLoading.classList.remove('active');
+    };
 
-      if (!enteredCode || enteredCode.length !== 6 || !/^\d{6}$/.test(enteredCode)) {
-        messageP.textContent = "Please enter a valid 6-digit code.";
-        messageP.className = 'error';
-        return;
-      }
-
-      if (user) {
-        try {
-          const codeDoc = await getDoc(doc(db, "verificationCodes", user.uid));
-          if (codeDoc.exists()) {
-            const storedCode = codeDoc.data().code;
-            const storedUsername = codeDoc.data().username;
-            const storedEmail = codeDoc.data().email;
-
-            if (enteredCode === storedCode) {
-              // Code is correct, add user to users collection and delete verification code
-              await setDoc(doc(db, "users", user.uid), {
-                username: storedUsername,
-                email: storedEmail,
-                uid: user.uid,
-                provider: "email",
-                createdAt: new Date()
-              });
-              await deleteDoc(doc(db, "verificationCodes", user.uid));
-
-              messageP.textContent = "Verification successful! Redirecting...";
-              messageP.className = 'success';
-              setTimeout(async () => {
-                if (await checkFileExists('/dashboard.html')) {
-                  window.location.href = '/dashboard.html';
-                } else {
-                  window.location.href = '/404.html';
-                }
-              }, 2000);
-            } else {
-              messageP.textContent = "Incorrect verification code. Please try again.";
-              messageP.className = 'error';
-            }
-          } else {
-            messageP.textContent = "No verification code found. Please resend the email.";
-            messageP.className = 'error';
-          }
-        } catch (error) {
-          messageP.textContent = `Error verifying code: ${error.message}`;
-          messageP.className = 'error';
-        }
-      }
-    });
-
-    // Resend verification email
-    resendEmailBtn.addEventListener('click', async () => {
-      const user = auth.currentUser;
-      if (user) {
-        try {
-          // Generate and store new verification code
-          const newCode = generateVerificationCode();
-          const codeDoc = await getDoc(doc(db, "verificationCodes", user.uid));
-          if (codeDoc.exists()) {
-            const existingData = codeDoc.data();
-            await setDoc(doc(db, "verificationCodes", user.uid), {
-              code: newCode,
-              email: existingData.email,
-              username: existingData.username,
-              createdAt: new Date(),
-            });
-          }
-
-          // Send email verification (simulated email content with new code)
-          await sendEmailVerification(user);
-          console.log('Verification email resent with code:', newCode);
-          // Note: In a real implementation, you'd use Firebase Functions to send a custom email with the code.
-
-          messageP.textContent = "Verification email resent successfully.";
-          messageP.className = 'success';
-          startResendTimer();
-        } catch (error) {
-          messageP.textContent = `Error resending email: ${error.message}`;
-          messageP.className = 'error';
-        }
-      }
-    });
-
-    // Check file existence helper
+    // File check
     async function checkFileExists(path) {
       try {
         const response = await fetch(path, { method: 'HEAD', cache: 'no-store' });
@@ -299,6 +407,90 @@
         return false;
       }
     }
+
+    // Redirects
+    async function redirectToDashboard() {
+      console.log('Checking for /dashboard.html');
+      hideFormLoading();
+      if (await checkFileExists('/dashboard.html')) {
+        console.log('dashboard.html found, redirecting');
+        window.location.assign('/dashboard.html');
+      } else {
+        console.log('dashboard.html not found, redirecting to 404');
+        window.location.assign('/404.html');
+      }
+    }
+
+    async function redirectToSignUp() {
+      console.log('Checking for /index.html');
+      hideFormLoading();
+      if (await checkFileExists('/index.html')) {
+        console.log('index.html found, redirecting');
+        window.location.assign('/index.html');
+      } else {
+        console.log('index.html not found, redirecting to 404');
+        window.location.assign('/404.html');
+      }
+    }
+
+    async function redirectTo404(errorMessage) {
+      console.error('Error occurred:', errorMessage);
+      hideFormLoading();
+      window.location.assign('/404.html');
+    }
+
+    // Verify (mock)
+    verifyForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      formLoading.classList.add('active');
+      setTimeout(hideFormLoading, 5000);
+      const verificationCode = document.getElementById('verificationCode').value;
+
+      try {
+        if (verificationCode === "123456") {
+          const user = auth.currentUser;
+          if (!user) {
+            throw new Error("No user signed in");
+          }
+          await addDoc(collection(db, "users"), {
+            username: "temp_username", // We'll need to pass this from index.html in a real setup
+            email: user.email,
+            uid: user.uid,
+            provider: "email",
+            createdAt: new Date(),
+            verified: true
+          });
+          await redirectToDashboard();
+        } else {
+          throw new Error("Invalid code");
+        }
+      } catch (error) {
+        hideFormLoading();
+        console.error('Verification error:', error.message);
+        showCustomAlert(`Verification failed: ${error.message}`, 'OK', hideCustomAlert);
+      }
+    });
+
+    // Resend
+    resendCode.addEventListener('click', async () => {
+      formLoading.classList.add('active');
+      setTimeout(hideFormLoading, 5000);
+      try {
+        const user = auth.currentUser;
+        if (user) {
+          await sendEmailVerification(user);
+          showCustomAlert('Email resent. Check inbox.', 'OK', hideCustomAlert);
+        } else {
+          showCustomAlert('No user signed in. Sign up again.', 'OK', () => {
+            redirectToSignUp();
+          });
+        }
+      } catch (error) {
+        hideFormLoading();
+        console.error('Resend error:', error.message);
+        showCustomAlert('Error resending email.', 'OK', hideCustomAlert);
+      }
+    });
   </script>
 </body>
 </html>
