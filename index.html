@@ -188,7 +188,10 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba
+
+
+      (0, 0, 0, 0.8);
       display: none;
       justify-content: center;
       align-items: center;
@@ -507,8 +510,7 @@
     <div class="captcha-box">
       <button class="captcha-close" id="captchaClose">×</button>
       <p>Please complete the CAPTCHA to proceed</p>
-      <div class="g-recaptcha" data-sitekey="6LefgCErAAAAAE1PskV-zEq789ZQgPXLLlq0dxm9"></div>
-      <button id="captchaSubmit">Verify</button>
+      <div class="g-recaptcha" data-sitekey="6LefgCErAAAAAE1PskV-zEq789ZQgPXLLlq0dxm9" data-callback="onRecaptchaSuccess"></div>
       <button id="captchaCancel">Cancel</button>
     </div>
   </div>
@@ -625,7 +627,6 @@
     const alertButton = document.getElementById('alertButton');
     const alertClose = document.getElementById('alertClose');
     const captchaOverlay = document.getElementById('captchaOverlay');
-    const captchaSubmit = document.getElementById('captchaSubmit');
     const captchaCancel = document.getElementById('captchaCancel');
     const captchaClose = document.getElementById('captchaClose');
     const passwordStrengthContainer = document.getElementById('passwordStrengthContainer');
@@ -833,7 +834,8 @@
       showCaptchaOverlay();
     });
 
-    captchaSubmit.addEventListener('click', async () => {
+    // reCAPTCHA callback
+    window.onRecaptchaSuccess = async () => {
       const captchaResponse = grecaptcha.getResponse();
       if (captchaResponse.length === 0) {
         showCustomAlert('Please complete the CAPTCHA.', 'OK', hideCustomAlert);
@@ -902,7 +904,7 @@
         console.error('Sign-up error:', error.message);
         showCustomAlert(`Sign-up failed: ${error.message}`, 'OK', hideCustomAlert);
       }
-    });
+    };
 
     // Google sign-up
     document.getElementById("googleSignIn").addEventListener("click", async () => {
