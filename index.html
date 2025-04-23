@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   <title>Sign Up</title>
 
   <style>
@@ -278,6 +279,81 @@
       transform: scale(1.1);
     }
 
+    #captchaOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    #captchaOverlay.active {
+      display: flex;
+    }
+
+    .captcha-box {
+      background: #111;
+      padding: 1.5rem;
+      border-radius: 12px;
+      border: 1px solid #f00;
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+      position: relative;
+    }
+
+    .captcha-box p {
+      color: #fff;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .captcha-box button {
+      background: #f00;
+      color: white;
+      padding: 0.7rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s ease;
+      margin: 0.5rem;
+    }
+
+    .captcha-box button:hover {
+      background: #cc0000;
+    }
+
+    .captcha-box .captcha-close {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent !important;
+      border-radius: 50%;
+      padding: 0;
+      transition: transform 0.1s ease;
+      color: #fff;
+      font-size: 16px;
+      font-weight: bold;
+      line-height: 1;
+    }
+
+    .captcha-box .captcha-close:hover {
+      transform: scale(1.1);
+    }
+
     @media screen and (max-width: 768px) {
       .container {
         flex-direction: column;
@@ -363,6 +439,16 @@
     </div>
   </div>
 
+  <div id="captchaOverlay">
+    <div class="captcha-box">
+      <button class="captcha-close" id="captchaClose">×</button>
+      <p>Please complete the CAPTCHA to proceed</p>
+      <div class="g-recaptcha" data-sitekey="6LefgCErAAAAAE1PskV-zEq789ZQgPXLLlq0dxm9"></div>
+      <button id="captchaSubmit">Verify</button>
+      <button id="captchaCancel">Cancel</button>
+    </div>
+  </div>
+
   <div class="container">
     <lottie-player
       src="Animation - 1744470672068.json"
@@ -391,7 +477,7 @@
             <div style="position: relative; margin: 0.5rem 0;">
               <input type="password" name="password" id="password" placeholder="Password" required style="padding-right: 3rem;" />
               <svg id="togglePassword" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#f00" stroke-width="2" style="position: absolute; right: 0.7rem; top: 50%; transform: translateY(-50%); cursor: pointer; z-index: 10; pointer-events: auto;">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <path d="M1 12s4 επ-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                 <path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>
               </svg>
             </div>
@@ -462,6 +548,10 @@
     const alertMessage = document.getElementById('alertMessage');
     const alertButton = document.getElementById('alertButton');
     const alertClose = document.getElementById('alertClose');
+    const captchaOverlay = document.getElementById('captchaOverlay');
+    const captchaSubmit = document.getElementById('captchaSubmit');
+    const captchaCancel = document.getElementById('captchaCancel');
+    const captchaClose = document.getElementById('captchaClose');
 
     // Page load
     window.addEventListener('load', () => {
@@ -484,6 +574,17 @@
       hideFormLoading();
     }
     alertClose.addEventListener('click', hideCustomAlert);
+
+    // CAPTCHA handling
+    function showCaptchaOverlay() {
+      captchaOverlay.classList.add('active');
+    }
+    function hideCaptchaOverlay() {
+      captchaOverlay.classList.remove('active');
+      grecaptcha.reset();
+    }
+    captchaCancel.addEventListener('click', hideCaptchaOverlay);
+    captchaClose.addEventListener('click', hideCaptchaOverlay);
 
     // Hide form loading
     const hideFormLoading = () => {
@@ -574,18 +675,31 @@
     // Delay function
     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-    // Email/password sign-up
+    // Email/password sign-up with CAPTCHA
+    let formData = null;
     authForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      formData = {
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value,
+        username: document.getElementById('username').value
+      };
+      showCaptchaOverlay();
+    });
+
+    captchaSubmit.addEventListener('click', async () => {
+      const captchaResponse = grecaptcha.getResponse();
+      if (captchaResponse.length === 0) {
+        showCustomAlert('Please complete the CAPTCHA.', 'OK', hideCustomAlert);
+        return;
+      }
+      hideCaptchaOverlay();
       formLoading.classList.add('active');
       setTimeout(hideFormLoading, 5000);
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const username = document.getElementById('username').value;
 
       try {
         console.log('Step 1: Checking for existing email');
-        const emailQuery = query(collection(db, "users"), where("email", "==", email));
+        const emailQuery = query(collection(db, "users"), where("email", "==", formData.email));
         const emailSnapshot = await getDocs(emailQuery);
         if (!emailSnapshot.empty) {
           hideFormLoading();
@@ -596,7 +710,7 @@
         }
 
         console.log('Step 2: Checking for existing username');
-        const usernameQuery = query(collection(db, "users"), where("username", "==", username));
+        const usernameQuery = query(collection(db, "users"), where("username", "==", formData.username));
         const usernameSnapshot = await getDocs(usernameQuery);
         if (!usernameSnapshot.empty) {
           hideFormLoading();
@@ -605,7 +719,7 @@
         }
 
         console.log('Step 3: Creating user with email and password');
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
         const user = userCredential.user;
         console.log('User created with UID:', user.uid);
 
@@ -622,8 +736,8 @@
         console.log('Step 6: Adding to temp_users');
         try {
           const docRef = await addDoc(collection(db, "temp_users"), {
-            username: username,
-            email: email,
+            username: formData.username,
+            email: formData.email,
             uid: user.uid,
             provider: "email",
             createdAt: new Date(),
