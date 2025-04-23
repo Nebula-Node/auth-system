@@ -354,6 +354,26 @@
       transform: scale(1.1);
     }
 
+    /* Password Strength Indicator Styles */
+    #passwordStrength {
+      font-size: 0.9rem;
+      margin-top: 0.3rem;
+      text-align: left;
+      transition: color 0.3s ease;
+    }
+
+    #passwordStrength.weak {
+      color: #ff4444;
+    }
+
+    #passwordStrength.medium {
+      color: #ffbb33;
+    }
+
+    #passwordStrength.strong {
+      color: #00C851;
+    }
+
     @media screen and (max-width: 768px) {
       .container {
         flex-direction: column;
@@ -477,10 +497,11 @@
             <div style="position: relative; margin: 0.5rem 0;">
               <input type="password" name="password" id="password" placeholder="Password" required style="padding-right: 3rem;" />
               <svg id="togglePassword" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#f00" stroke-width="2" style="position: absolute; right: 0.7rem; top: 50%; transform: translateY(-50%); cursor: pointer; z-index: 10; pointer-events: auto;">
-                <path d="M1 12s4 επ-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                 <path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>
               </svg>
             </div>
+            <div id="passwordStrength"></div>
             <button type="submit">Sign Up</button>
           </form>
 
@@ -552,6 +573,7 @@
     const captchaSubmit = document.getElementById('captchaSubmit');
     const captchaCancel = document.getElementById('captchaCancel');
     const captchaClose = document.getElementById('captchaClose');
+    const passwordStrength = document.getElementById('passwordStrength');
 
     // Page load
     window.addEventListener('load', () => {
@@ -641,6 +663,41 @@
       e.preventDefault();
       e.stopPropagation();
       togglePasswordVisibility();
+    });
+
+    // Password strength checker
+    function checkPasswordStrength(password) {
+      let strength = 0;
+      const minLength = 8;
+      const strongLength = 12;
+
+      // Check length
+      if (password.length >= strongLength) strength += 2;
+      else if (password.length >= minLength) strength += 1;
+
+      // Check character types
+      if (/[A-Z]/.test(password)) strength += 1; // Uppercase
+      if (/[a-z]/.test(password)) strength += 1; // Lowercase
+      if (/[0-9]/.test(password)) strength += 1; // Numbers
+      if (/[^A-Za-z0-9]/.test(password)) strength += 1; // Special characters
+
+      // Determine strength level
+      if (password.length === 0) {
+        return { text: '', class: '' };
+      } else if (strength <= 3 || password.length < minLength) {
+        return { text: 'Weak', class: 'weak' };
+      } else if (strength <= 5) {
+        return { text: 'Medium', class: 'medium' };
+      } else {
+        return { text: 'Strong', class: 'strong' };
+      }
+    }
+
+    passwordInput.addEventListener('input', () => {
+      const password = passwordInput.value;
+      const { text, class: strengthClass } = checkPasswordStrength(password);
+      passwordStrength.textContent = text ? `Password Strength: ${text}` : '';
+      passwordStrength.className = strengthClass;
     });
 
     // File check
