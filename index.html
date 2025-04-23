@@ -355,23 +355,59 @@
     }
 
     /* Password Strength Indicator Styles */
-    #passwordStrength {
-      font-size: 0.9rem;
-      margin-top: 0.3rem;
-      text-align: left;
-      transition: color 0.3s ease;
+    .password-strength-container {
+      margin-top: 0.5rem;
+      display: none;
     }
 
-    #passwordStrength.weak {
-      color: #ff4444;
+    .password-strength-container.active {
+      display: block;
     }
 
-    #passwordStrength.medium {
-      color: #ffbb33;
+    .strength-bar {
+      height: 5px;
+      background: #444;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 0.5rem;
     }
 
-    #passwordStrength.strong {
-      color: #00C851;
+    .strength-bar-fill {
+      height: 100%;
+      transition: width 0.3s ease, background-color 0.3s ease;
+    }
+
+    .strength-bar-fill.weak {
+      background-color: #ff4444;
+    }
+
+    .strength-bar-fill.medium {
+      background-color: #ffbb33;
+    }
+
+    .strength-bar-fill.strong {
+      background-color: #00C851;
+    }
+
+    .password-criteria {
+      font-size: 0.85rem;
+      color: #ccc;
+    }
+
+    .password-criteria li {
+      display: flex;
+      align-items: center;
+      margin: 0.3rem 0;
+    }
+
+    .password-criteria li.met::before {
+      content: '✅';
+      margin-right: 0.5rem;
+    }
+
+    .password-criteria li:not(.met)::before {
+      content: '❌';
+      margin-right: 0.5rem;
     }
 
     @media screen and (max-width: 768px) {
@@ -411,6 +447,10 @@
       .toggle-link {
         font-size: 0.9rem;
       }
+
+      .password-criteria {
+        font-size: 0.8rem;
+      }
     }
 
     @media screen and (max-width: 480px) {
@@ -435,6 +475,10 @@
 
       .social-signin button {
         font-size: 0.85rem;
+      }
+
+      .password-criteria {
+        font-size: 0.75rem;
       }
     }
   </style>
@@ -501,7 +545,18 @@
                 <path d="M4 4l16 16" stroke="#f00" stroke-width="2"/>
               </svg>
             </div>
-            <div id="passwordStrength"></div>
+            <div class="password-strength-container" id="passwordStrengthContainer">
+              <div class="strength-bar">
+                <div class="strength-bar-fill" id="strengthBarFill"></div>
+              </div>
+              <ul class="password-criteria">
+                <li id="lengthCriteria">At least 8 characters</li>
+                <li id="uppercaseCriteria">Contains uppercase letter</li>
+                <li id="lowercaseCriteria">Contains lowercase letter</li>
+                <li id="numberCriteria">Contains number</li>
+                <li id="specialCriteria">Contains special character</li>
+              </ul>
+            </div>
             <button type="submit">Sign Up</button>
           </form>
 
@@ -573,7 +628,13 @@
     const captchaSubmit = document.getElementById('captchaSubmit');
     const captchaCancel = document.getElementById('captchaCancel');
     const captchaClose = document.getElementById('captchaClose');
-    const passwordStrength = document.getElementById('passwordStrength');
+    const passwordStrengthContainer = document.getElementById('passwordStrengthContainer');
+    const strengthBarFill = document.getElementById('strengthBarFill');
+    const lengthCriteria = document.getElementById('lengthCriteria');
+    const uppercaseCriteria = document.getElementById('uppercaseCriteria');
+    const lowercaseCriteria = document.getElementById('lowercaseCriteria');
+    const numberCriteria = document.getElementById('numberCriteria');
+    const specialCriteria = document.getElementById('specialCriteria');
 
     // Page load
     window.addEventListener('load', () => {
@@ -667,37 +728,65 @@
 
     // Password strength checker
     function checkPasswordStrength(password) {
-      let strength = 0;
-      const minLength = 8;
-      const strongLength = 12;
+      let score = 0;
 
-      // Check length
-      if (password.length >= strongLength) strength += 2;
-      else if (password.length >= minLength) strength += 1;
+      // Length score (up to 20 points)
+      const lengthScore = Math.min(20, password.length * 1.25);
+      score += lengthScore;
 
-      // Check character types
-      if (/[A-Z]/.test(password)) strength += 1; // Uppercase
-      if (/[a-z]/.test(password)) strength += 1; // Lowercase
-      if (/[0-9]/.test(password)) strength += 1; // Numbers
-      if (/[^A-Za-z0-9]/.test(password)) strength += 1; // Special characters
+      // Character type scores (15 points each)
+      if (/[A-Z]/.test(password)) score += 15; // Uppercase
+      if (/[a-z]/.test(password)) score += 15; // Lowercase
+      if (/[0-9]/.test(password)) score += 15; // Numbers
+      if (/[^A-Za-z0-9]/.test(password)) score += 15; // Special characters
 
-      // Determine strength level
-      if (password.length === 0) {
-        return { text: '', class: '' };
-      } else if (strength <= 3 || password.length < minLength) {
-        return { text: 'Weak', class: 'weak' };
-      } else if (strength <= 5) {
-        return { text: 'Medium', class: 'medium' };
-      } else {
-        return { text: 'Strong', class: 'strong' };
-      }
+      // Variety score (up to 20 points)
+      const uniqueChars = new Set(password).size;
+      const varietyScore = Math.min(20, (uniqueChars / password.length) * 20);
+      score += varietyScore;
+
+      // Cap score at 100
+      score = Math.min(100, Math.round(score));
+
+      // Determine strength class
+      let strengthClass = '';
+      if (score <= 40) strengthClass = 'weak';
+      else if (score <= 70) strengthClass = 'medium';
+      else strengthClass = 'strong';
+
+      // Check criteria
+      const criteria = {
+        length: password.length >= 8,
+        uppercase: /[A-Z]/.test(password),
+        lowercase: /[a-z]/.test(password),
+        number: /[0-9]/.test(password),
+        special: /[^A-Za-z0-9]/.test(password)
+      };
+
+      return { score, strengthClass, criteria };
     }
 
     passwordInput.addEventListener('input', () => {
       const password = passwordInput.value;
-      const { text, class: strengthClass } = checkPasswordStrength(password);
-      passwordStrength.textContent = text ? `Password Strength: ${text}` : '';
-      passwordStrength.className = strengthClass;
+      const { score, strengthClass, criteria } = checkPasswordStrength(password);
+
+      // Show/hide strength container
+      if (password.length > 0) {
+        passwordStrengthContainer.classList.add('active');
+      } else {
+        passwordStrengthContainer.classList.remove('active');
+      }
+
+      // Update strength bar
+      strengthBarFill.style.width = `${score}%`;
+      strengthBarFill.className = `strength-bar-fill ${strengthClass}`;
+
+      // Update criteria
+      lengthCriteria.className = criteria.length ? 'met' : '';
+      uppercaseCriteria.className = criteria.uppercase ? 'met' : '';
+      lowercaseCriteria.className = criteria.lowercase ? 'met' : '';
+      numberCriteria.className = criteria.number ? 'met' : '';
+      specialCriteria.className = criteria.special ? 'met' : '';
     });
 
     // File check
