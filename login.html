@@ -278,6 +278,20 @@
       transform: scale(1.1);
     }
 
+    /* Shake animation for incorrect password (inspired by Kali Linux lock screen) */
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      20% { transform: translateX(-10px); }
+      40% { transform: translateX(10px); }
+      60% { transform: translateX(-10px); }
+      80% { transform: translateX(10px); }
+      100% { transform: translateX(0); }
+    }
+
+    .shake {
+      animation: shake 0.5s ease-in-out;
+    }
+
     @media screen and (max-width: 768px) {
       .container {
         flex-direction: column;
@@ -569,15 +583,16 @@
       window.location.assign('/404.html');
     }
 
-    // Email/password login
+    // Email/password login with password check and shake animation
     authForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       formLoading.classList.add('active');
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
+      const passwordInput = document.getElementById('password'); // Reference to password input
 
       try {
-        // Check if email exists
+        // Check if email exists in Firestore
         const emailQuery = query(collection(db, "users"), where("email", "==", email));
         const emailSnapshot = await getDocs(emailQuery);
         if (emailSnapshot.empty) {
@@ -588,14 +603,25 @@
           return;
         }
 
+        // Attempt to sign in with email and password (this checks if the password is correct)
         await signInWithEmailAndPassword(auth, email, password);
+        
+        // Password is correct - grant access
+        console.log('Password is correct. Granting access pass to user:', email);
         formLoading.classList.remove('active');
         await redirectToDashboard();
       } catch (error) {
         formLoading.classList.remove('active');
         if (error.code === 'auth/wrong-password') {
-          showCustomAlert('Incorrect password.', 'Try Again', hideCustomAlert);
+          // Password is incorrect - deny access and trigger shake animation
+          console.log('Password is incorrect. Denying access pass to user:', email);
+          passwordInput.classList.add('shake'); // Trigger the shake animation
+          // Show the alert after the animation completes (0.5s)
+          setTimeout(() => {
+            showCustomAlert('Incorrect password. Access denied.', 'Try Again', hideCustomAlert);
+          }, 500);
         } else {
+          // Other errors (e.g., network issues, user disabled) - redirect to 404
           await redirectTo404(`Login Error: ${error.code} - ${error.message}`);
         }
       }
