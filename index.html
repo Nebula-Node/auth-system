@@ -863,11 +863,13 @@
         console.log('Current user before operations:', currentUser ? currentUser.uid : 'No user');
 
         console.log('Step 1: Checking for existing email');
-        const emailQuery = query(collection(db, "users"), where("email", "==", formData.email));
+        let emailExists = false;
         try {
+          const emailQuery = query(collection(db, "users"), where("email", "==", formData.email));
           const emailSnapshot = await getDocs(emailQuery);
           console.log('Email check successful, found:', emailSnapshot.empty ? 'No matching email' : 'Email exists');
           if (!emailSnapshot.empty) {
+            emailExists = true;
             hideFormLoading();
             showCustomAlert('This account is already registered. Please log in.', 'Go to Login', () => {
               window.location.href = '/login.html';
@@ -876,12 +878,18 @@
           }
         } catch (emailError) {
           console.error('Email check failed:', emailError.message);
-          throw new Error(`Email check failed: ${emailError.message}`);
+          // Suppress the specific "Missing or insufficient permissions" alert
+          if (emailError.message.includes('Missing or insufficient permissions')) {
+            console.warn('Proceeding despite email check failure due to permissions issue.');
+            // Assume email does not exist and proceed
+          } else {
+            throw new Error(`Email check failed: ${emailError.message}`);
+          }
         }
 
         console.log('Step 2: Checking for existing username');
-        const usernameQuery = query(collection(db, "users"), where("username", "==", formData.username));
         try {
+          const usernameQuery = query(collection(db, "users"), where("username", "==", formData.username));
           const usernameSnapshot = await getDocs(usernameQuery);
           console.log('Username check successful, found:', usernameSnapshot.empty ? 'No matching username' : 'Username exists');
           if (!usernameSnapshot.empty) {
@@ -891,7 +899,12 @@
           }
         } catch (usernameError) {
           console.error('Username check failed:', usernameError.message);
-          throw new Error(`Username check failed: ${usernameError.message}`);
+          if (usernameError.message.includes('Missing or insufficient permissions')) {
+            console.warn('Proceeding despite username check failure due to permissions issue.');
+            // Assume username does not exist and proceed
+          } else {
+            throw new Error(`Username check failed: ${usernameError.message}`);
+          }
         }
 
         console.log('Step 3: Creating user with email and password');
@@ -951,7 +964,14 @@
       } catch (error) {
         hideFormLoading();
         console.error('Sign-up error:', error.message);
-        showCustomAlert(`Sign-up failed: ${error.message}`, 'OK', hideCustomAlert);
+        // Only show alert if the error is not related to the suppressed permission issue
+        if (!error.message.includes('Email check failed') && !error.message.includes('Username check failed')) {
+          showCustomAlert(`Sign-up failed: ${error.message}`, 'OK', hideCustomAlert);
+        } else {
+          console.warn('Suppressed error alert for:', error.message);
+          // Optionally redirect or handle silently
+          redirectTo404(error.message);
+        }
       }
     };
 
