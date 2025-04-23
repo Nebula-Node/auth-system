@@ -188,10 +188,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba
-
-
-      (0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.8);
       display: none;
       justify-content: center;
       align-items: center;
@@ -395,6 +392,14 @@
     .password-criteria {
       font-size: 0.85rem;
       color: #ccc;
+      transition: opacity 0.3s ease;
+    }
+
+    .password-criteria.hidden {
+      opacity: 0;
+      height: 0;
+      margin: 0;
+      overflow: hidden;
     }
 
     .password-criteria li {
@@ -551,7 +556,7 @@
               <div class="strength-bar">
                 <div class="strength-bar-fill" id="strengthBarFill"></div>
               </div>
-              <ul class="password-criteria">
+              <ul class="password-criteria" id="passwordCriteria">
                 <li id="lengthCriteria">At least 8 characters</li>
                 <li id="uppercaseCriteria">Contains uppercase letter</li>
                 <li id="lowercaseCriteria">Contains lowercase letter</li>
@@ -575,7 +580,7 @@
             </button>
             <button id="appleSignIn">
               <svg viewBox="0 0 848 1000" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor">
-                <path d="M789 748c-8 19-17 38-27 55-14 24-26 42-36 53-14 17-29 35-48 53-19 18-39 32-61 43-24 11-48 17-74 17-19 0-42-6-70-17s-53-17-77-17c-26 0-53 6-81 17-29 11-52 17-70 17-27 0-53-6-77-17-24-11-46-27-66-46-23-21-42-45-58-72-18-29-32-63-44-101-12-38-17-75-17-110 0-61 13-113 39-155 20-34 46-61 79-81 33-19 68-29 105-29 22 0 50 6 83 17 34 11 55 17 63 17 5 0 23-6 55-17 30-9 59-14 86-14 57 0 105 24 143 71-57 35-86 84-86 147 0 44 12 81 37 112 22 27 51 45 87 56zm-163-700c0 34-13 67-39 100-31 37-67 59-106 56 0-3 1-8 2-15 3-32 16-64 39-94 21-26 47-46 78-59 10-4 19-7 27-7 1 6 1 13 1 19z"/>
+                <path d="M789 748c-8 19-17 38-27 55-14 24-26 42-36 53-14 17-29 35-48 53-19 18-39 32-61 43-24 11-48 17-74 17-19 0-42-6-70-17s-53-17-77-17c-26 0-53 6-81 17-29 11-52 17-70 17-27 0-53-6-77-17-24-11-46-27-66-46-23-21-42-45-58-72-18-29-32-63-44-101-12-38-17-75-17-110 0-61 13-113 39-155 20-34 46-61 79-81 33-19 68-29 105-29 22 0 50 6 83 17 34 11 55 17 63 17 5 0 23-6 55-17 30-9 59-14 86-14 57 0 105 24 148 71-57 35-86 84-86 147 0 44 12 81 37 112 22 27 51 45 87 56zm-163-700c0 34-13 67-39 100-31 37-67 59-106 56 0-3 1-8 2-15 3-32 16-64 39-94 21-26 47-46 78-59 10-4 19-7 27-7 1 6 1 13 1 19z"/>
               </svg>
               Continue with Apple
             </button>
@@ -597,7 +602,8 @@
       signInWithPopup,
       signInWithRedirect,
       getRedirectResult,
-      sendEmailVerification
+      sendEmailVerification,
+      onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
     import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
@@ -631,6 +637,7 @@
     const captchaClose = document.getElementById('captchaClose');
     const passwordStrengthContainer = document.getElementById('passwordStrengthContainer');
     const strengthBarFill = document.getElementById('strengthBarFill');
+    const passwordCriteria = document.getElementById('passwordCriteria');
     const lengthCriteria = document.getElementById('lengthCriteria');
     const uppercaseCriteria = document.getElementById('uppercaseCriteria');
     const lowercaseCriteria = document.getElementById('lowercaseCriteria');
@@ -730,32 +737,6 @@
     // Password strength checker
     function checkPasswordStrength(password) {
       let score = 0;
-
-      // Length score (up to 20 points)
-      const lengthScore = Math.min(20, password.length * 1.25);
-      score += lengthScore;
-
-      // Character type scores (15 points each)
-      if (/[A-Z]/.test(password)) score += 15; // Uppercase
-      if (/[a-z]/.test(password)) score += 15; // Lowercase
-      if (/[0-9]/.test(password)) score += 15; // Numbers
-      if (/[^A-Za-z0-9]/.test(password)) score += 15; // Special characters
-
-      // Variety score (up to 20 points)
-      const uniqueChars = new Set(password).size;
-      const varietyScore = Math.min(20, (uniqueChars / password.length) * 20);
-      score += varietyScore;
-
-      // Cap score at 100
-      score = Math.min(100, Math.round(score));
-
-      // Determine strength class
-      let strengthClass = '';
-      if (score <= 40) strengthClass = 'weak';
-      else if (score <= 70) strengthClass = 'medium';
-      else strengthClass = 'strong';
-
-      // Check criteria
       const criteria = {
         length: password.length >= 8,
         uppercase: /[A-Z]/.test(password),
@@ -764,30 +745,55 @@
         special: /[^A-Za-z0-9]/.test(password)
       };
 
-      return { score, strengthClass, criteria };
+      // Base score for each criterion (20 points each)
+      if (criteria.length) score += 20;
+      if (criteria.uppercase) score += 20;
+      if (criteria.lowercase) score += 20;
+      if (criteria.number) score += 20;
+      if (criteria.special) score += 20;
+
+      // Ensure score is 100 if all criteria are met
+      const allCriteriaMet = Object.values(criteria).every(val => val);
+      if (allCriteriaMet) {
+        score = 100;
+      }
+
+      // Determine strength class
+      let strengthClass = '';
+      if (score <= 40) strengthClass = 'weak';
+      else if (score <= 70) strengthClass = 'medium';
+      else strengthClass = 'strong';
+
+      return { score, strengthClass, criteria, allCriteriaMet };
     }
 
     passwordInput.addEventListener('input', () => {
       const password = passwordInput.value;
-      const { score, strengthClass, criteria } = checkPasswordStrength(password);
+      const { score, strengthClass, criteria, allCriteriaMet } = checkPasswordStrength(password);
 
       // Show/hide strength container
       if (password.length > 0) {
         passwordStrengthContainer.classList.add('active');
       } else {
         passwordStrengthContainer.classList.remove('active');
+        passwordCriteria.classList.remove('hidden');
       }
 
       // Update strength bar
       strengthBarFill.style.width = `${score}%`;
       strengthBarFill.className = `strength-bar-fill ${strengthClass}`;
 
-      // Update criteria
-      lengthCriteria.className = criteria.length ? 'met' : '';
-      uppercaseCriteria.className = criteria.uppercase ? 'met' : '';
-      lowercaseCriteria.className = criteria.lowercase ? 'met' : '';
-      numberCriteria.className = criteria.number ? 'met' : '';
-      specialCriteria.className = criteria.special ? 'met' : '';
+      // Update criteria visibility
+      if (allCriteriaMet) {
+        passwordCriteria.classList.add('hidden');
+      } else {
+        passwordCriteria.classList.remove('hidden');
+        lengthCriteria.className = criteria.length ? 'met' : '';
+        uppercaseCriteria.className = criteria.uppercase ? 'met' : '';
+        lowercaseCriteria.className = criteria.lowercase ? 'met' : '';
+        numberCriteria.className = criteria.number ? 'met' : '';
+        specialCriteria.className = criteria.special ? 'met' : '';
+      }
     });
 
     // File check
@@ -831,6 +837,11 @@
         password: document.getElementById('password').value,
         username: document.getElementById('username').value
       };
+      const { allCriteriaMet } = checkPasswordStrength(formData.password);
+      if (!allCriteriaMet) {
+        showCustomAlert('Please ensure your password meets all criteria.', 'OK', hideCustomAlert);
+        return;
+      }
       showCaptchaOverlay();
     });
 
@@ -846,40 +857,78 @@
       setTimeout(hideFormLoading, 5000);
 
       try {
+        // Check current auth state before proceeding
+        console.log('Checking initial auth state');
+        let currentUser = auth.currentUser;
+        console.log('Current user before operations:', currentUser ? currentUser.uid : 'No user');
+
         console.log('Step 1: Checking for existing email');
         const emailQuery = query(collection(db, "users"), where("email", "==", formData.email));
-        const emailSnapshot = await getDocs(emailQuery);
-        if (!emailSnapshot.empty) {
-          hideFormLoading();
-          showCustomAlert('This account is already registered. Please log in.', 'Go to Login', () => {
-            window.location.href = '/login.html';
-          });
-          return;
+        try {
+          const emailSnapshot = await getDocs(emailQuery);
+          console.log('Email check successful, found:', emailSnapshot.empty ? 'No matching email' : 'Email exists');
+          if (!emailSnapshot.empty) {
+            hideFormLoading();
+            showCustomAlert('This account is already registered. Please log in.', 'Go to Login', () => {
+              window.location.href = '/login.html';
+            });
+            return;
+          }
+        } catch (emailError) {
+          console.error('Email check failed:', emailError.message);
+          throw new Error(`Email check failed: ${emailError.message}`);
         }
 
         console.log('Step 2: Checking for existing username');
         const usernameQuery = query(collection(db, "users"), where("username", "==", formData.username));
-        const usernameSnapshot = await getDocs(usernameQuery);
-        if (!usernameSnapshot.empty) {
-          hideFormLoading();
-          showCustomAlert('This username is already taken.', 'Try Again', hideCustomAlert);
-          return;
+        try {
+          const usernameSnapshot = await getDocs(usernameQuery);
+          console.log('Username check successful, found:', usernameSnapshot.empty ? 'No matching username' : 'Username exists');
+          if (!usernameSnapshot.empty) {
+            hideFormLoading();
+            showCustomAlert('This username is already taken.', 'Try Again', hideCustomAlert);
+            return;
+          }
+        } catch (usernameError) {
+          console.error('Username check failed:', usernameError.message);
+          throw new Error(`Username check failed: ${usernameError.message}`);
         }
 
         console.log('Step 3: Creating user with email and password');
         const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-        const user = userCredential.user;
-        console.log('User created with UID:', user.uid);
 
-        console.log('Step 4: Sending email verification');
+        // Step 4: Wait for auth state to update
+        console.log('Step 4: Waiting for auth state to update');
+        const waitForAuth = new Promise((resolve, reject) => {
+          const unsubscribe = onAuthStateChanged(auth, (user) => {
+            unsubscribe();
+            if (user) {
+              console.log('Auth state updated, user authenticated:', user.uid);
+              resolve(user);
+            } else {
+              console.error('Auth state not updated, no user found');
+              reject(new Error('User authentication state not updated'));
+            }
+          });
+        });
+
+        const user = await waitForAuth;
+        console.log('User created and authenticated with UID:', user.uid);
+
+        // Double-check auth state before Firestore write
+        currentUser = auth.currentUser;
+        if (!currentUser) {
+          throw new Error('User not authenticated before Firestore write');
+        }
+        console.log('Confirmed user is authenticated before Firestore write:', currentUser.uid);
+
+        console.log('Step 5: Sending email verification');
         try {
           await sendEmailVerification(user);
+          console.log('Email verification sent successfully');
         } catch (emailError) {
           console.warn('Email verification failed, proceeding anyway:', emailError.message);
         }
-
-        console.log('Step 5: Waiting for auth to fully propagate');
-        await delay(500);
 
         console.log('Step 6: Adding to temp_users');
         try {
@@ -891,10 +940,10 @@
             createdAt: new Date(),
             verified: false
           });
-          console.log('Document written with ID:', docRef.id);
+          console.log('Document written to temp_users with ID:', docRef.id);
         } catch (firestoreError) {
-          console.error('Firestore write failed:', firestoreError.message);
-          // Proceed silently without alerting the user
+          console.error('Firestore write to temp_users failed:', firestoreError.message);
+          throw new Error(`Firestore write failed: ${firestoreError.message}`);
         }
 
         console.log('Step 7: Redirecting to verify.html');
