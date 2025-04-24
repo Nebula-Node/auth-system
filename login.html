@@ -583,7 +583,7 @@
       window.location.assign('/404.html');
     }
 
-    // Email/password login with password check and shake animation
+    // Email/password login with improved error handling
     authForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       formLoading.classList.add('active');
@@ -612,16 +612,28 @@
         await redirectToDashboard();
       } catch (error) {
         formLoading.classList.remove('active');
-        if (error.code === 'auth/wrong-password') {
-          // Password is incorrect - deny access and trigger shake animation
-          console.log('Password is incorrect. Denying access pass to user:', email);
+        console.error('Login error:', error.code, error.message); // Log the exact error
+
+        if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+          // Password is incorrect or credential is invalid - deny access and trigger shake animation
+          console.log('Password is incorrect or invalid credential. Denying access pass to user:', email);
           passwordInput.classList.add('shake'); // Trigger the shake animation
           // Show the alert after the animation completes (0.5s)
           setTimeout(() => {
-            showCustomAlert('Incorrect password. Access denied.', 'Try Again', hideCustomAlert);
+            showCustomAlert('Incorrect password or invalid credential. Access denied.', 'Try Again', hideCustomAlert);
           }, 500);
+        } else if (error.code === 'auth/user-not-found') {
+          // User not found in Firebase Authentication (shouldn't happen since email exists in Firestore)
+          console.log('User not found in Firebase Authentication:', email);
+          showCustomAlert('User not found. Please sign up.', 'Go to Sign Up', () => {
+            window.location.href = '/index.html';
+          });
+        } else if (error.code === 'auth/user-disabled') {
+          // User account is disabled in Firebase Authentication
+          console.log('User account is disabled:', email);
+          showCustomAlert('Your account is disabled. Please contact support.', 'OK', hideCustomAlert);
         } else {
-          // Other errors (e.g., network issues, user disabled) - redirect to 404
+          // Other errors (e.g., network issues, configuration errors) - redirect to 404
           await redirectTo404(`Login Error: ${error.code} - ${error.message}`);
         }
       }
