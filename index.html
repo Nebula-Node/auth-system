@@ -819,10 +819,27 @@
       }
     }
 
-    async function redirectTo404(errorMessage) {
+    async function redirectToDashboard() {
+      console.log('Checking for /dashboard.html');
+      hideFormLoading();
+      if (await checkFileExists('/dashboard.html')) {
+        console.log('dashboard.html found, redirecting');
+        window.location.assign('/dashboard.html');
+      } else {
+        console.log('dashboard.html not found, redirecting to 404');
+        window.location.assign('/404.html');
+      }
+    }
+
+    async function redirectToError(errorMessage, errorCode = '') {
       console.error('Error occurred:', errorMessage);
       hideFormLoading();
-      window.location.assign('/404.html');
+      // Handle authentication-related errors
+      if (errorCode.startsWith('auth/') || errorMessage.includes('Missing or insufficient permissions') || errorMessage.includes('User authentication state not updated')) {
+        window.location.assign('/unauthorized');
+      } else {
+        window.location.assign('/error');
+      }
     }
 
     // Delay function
@@ -872,16 +889,14 @@
             emailExists = true;
             hideFormLoading();
             showCustomAlert('This account is already registered. Please log in.', 'Go to Login', () => {
-              window.location.href = '/login.html';
+              window.location.href = '/login-failed';
             });
             return;
           }
         } catch (emailError) {
           console.error('Email check failed:', emailError.message);
-          // Suppress the specific "Missing or insufficient permissions" alert
           if (emailError.message.includes('Missing or insufficient permissions')) {
             console.warn('Proceeding despite email check failure due to permissions issue.');
-            // Assume email does not exist and proceed
           } else {
             throw new Error(`Email check failed: ${emailError.message}`);
           }
@@ -901,7 +916,6 @@
           console.error('Username check failed:', usernameError.message);
           if (usernameError.message.includes('Missing or insufficient permissions')) {
             console.warn('Proceeding despite username check failure due to permissions issue.');
-            // Assume username does not exist and proceed
           } else {
             throw new Error(`Username check failed: ${usernameError.message}`);
           }
@@ -964,13 +978,12 @@
       } catch (error) {
         hideFormLoading();
         console.error('Sign-up error:', error.message);
-        // Only show alert if the error is not related to the suppressed permission issue
-        if (!error.message.includes('Email check failed') && !error.message.includes('Username check failed')) {
-          showCustomAlert(`Sign-up failed: ${error.message}`, 'OK', hideCustomAlert);
+        if (error.message.includes('Email check failed') || error.message.includes('Username check failed')) {
+          console.warn('Permission-related error, redirecting to unauthorized');
+          redirectToError(error.message, 'auth/insufficient-permissions');
         } else {
-          console.warn('Suppressed error alert for:', error.message);
-          // Optionally redirect or handle silently
-          redirectTo404(error.message);
+          showCustomAlert(`Sign-up failed: ${error.message}`, 'OK', hideCustomAlert);
+          redirectToError(error.message, error.code);
         }
       }
     };
@@ -1008,12 +1021,12 @@
         } else {
           hideFormLoading();
           showCustomAlert('This account is already registered. Please log in.', 'Go to Login', () => {
-            window.location.href = '/login.html';
+            window.location.href = '/login-failed';
           });
         }
       } catch (error) {
         hideFormLoading();
-        await redirectTo404(`Google Sign-In Error: ${error.code} - ${error.message}`);
+        await redirectToError(`Google Sign-In Error: ${error.code} - ${error.message}`, error.code);
       }
     });
 
@@ -1041,12 +1054,12 @@
         } else {
           hideFormLoading();
           showCustomAlert('This account is already registered. Please log in.', 'Go to Login', () => {
-            window.location.href = '/login.html';
+            window.location.href = '/login-failed';
           });
         }
       } catch (error) {
         hideFormLoading();
-        await redirectTo404(`Apple Sign-In Error: ${error.code} - ${error.message}`);
+        await redirectToError(`Apple Sign-In Error: ${error.code} - ${error.message}`, error.code);
       }
     });
 
@@ -1072,17 +1085,17 @@
           } else {
             hideFormLoading();
             showCustomAlert('This account is already registered. Please log in.', 'Go to Login', () => {
-              window.location.href = '/login.html';
+              window.location.href = '/login-failed';
             });
           }
         } catch (error) {
           hideFormLoading();
-          await redirectTo404(`Redirect Error: ${error.code} - ${error.message}`);
+          await redirectToError(`Redirect Error: ${error.code} - ${error.message}`, error.code);
         }
       }
     }).catch((error) => {
       hideFormLoading();
-      redirectTo404(`Redirect Error: ${error.code} - ${error.message}`);
+      redirectToError(`Redirect Error: ${error.code} - ${error.message}`, error.code);
     });
 
     // Toggle to login
@@ -1096,19 +1109,6 @@
         window.location.assign('/404.html');
       }
     });
-
-    // Redirect to dashboard (for Google/Apple sign-in)
-    async function redirectToDashboard() {
-      console.log('Checking for /dashboard.html');
-      hideFormLoading();
-      if (await checkFileExists('/dashboard.html')) {
-        console.log('dashboard.html found, redirecting');
-        window.location.assign('/dashboard.html');
-      } else {
-        console.log('dashboard.html not found, redirecting to 404');
-        window.location.assign('/404.html');
-      }
-    }
   </script>
 </body>
 </html>
