@@ -485,10 +485,12 @@
       alertButton.textContent = buttonText;
       alertButton.onclick = buttonAction;
       customAlert.classList.add('active');
+      formLoading.classList.remove('active');
     }
 
     function hideCustomAlert() {
       customAlert.classList.remove('active');
+      formLoading.classList.remove('active');
     }
 
     // Close alert on button click
@@ -577,10 +579,15 @@
       }
     }
 
-    // Redirect to 404 on error
-    async function redirectTo404(errorMessage) {
+    // Redirect to error routes
+    async function redirectToError(errorMessage, errorCode = '') {
       console.error('Error occurred:', errorMessage);
-      window.location.assign('/404.html');
+      formLoading.classList.remove('active');
+      if (errorCode.startsWith('auth/') || errorMessage.includes('Missing or insufficient permissions')) {
+        window.location.assign('/unauthorized');
+      } else {
+        window.location.assign('/error');
+      }
     }
 
     // Email/password login with improved error handling
@@ -589,7 +596,7 @@
       formLoading.classList.add('active');
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
-      const passwordInput = document.getElementById('password'); // Reference to password input
+      const passwordInput = document.getElementById('password');
 
       try {
         // Check if email exists in Firestore
@@ -598,43 +605,42 @@
         if (emailSnapshot.empty) {
           formLoading.classList.remove('active');
           showCustomAlert('This email is not registered. Please sign up.', 'Go to Sign Up', () => {
-            window.location.href = '/index.html';
+            window.location.href = '/login-failed';
           });
           return;
         }
 
-        // Attempt to sign in with email and password (this checks if the password is correct)
+        // Attempt to sign in with email and password
         await signInWithEmailAndPassword(auth, email, password);
-        
-        // Password is correct - grant access
         console.log('Password is correct. Granting access pass to user:', email);
         formLoading.classList.remove('active');
         await redirectToDashboard();
       } catch (error) {
         formLoading.classList.remove('active');
-        console.error('Login error:', error.code, error.message); // Log the exact error
+        console.error('Login error:', error.code, error.message);
 
         if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-          // Password is incorrect or credential is invalid - deny access and trigger shake animation
           console.log('Password is incorrect or invalid credential. Denying access pass to user:', email);
-          passwordInput.classList.add('shake'); // Trigger the shake animation
-          // Show the alert after the animation completes (0.5s)
+          passwordInput.classList.add('shake');
           setTimeout(() => {
-            showCustomAlert('Incorrect password or invalid credential. Access denied.', 'Try Again', hideCustomAlert);
+            showCustomAlert('Incorrect password or invalid credential. Access denied.', 'Try Again', () => {
+              hideCustomAlert();
+              window.location.assign('/unauthorized');
+            });
           }, 500);
         } else if (error.code === 'auth/user-not-found') {
-          // User not found in Firebase Authentication (shouldn't happen since email exists in Firestore)
           console.log('User not found in Firebase Authentication:', email);
           showCustomAlert('User not found. Please sign up.', 'Go to Sign Up', () => {
-            window.location.href = '/index.html';
+            window.location.href = '/login-failed';
           });
         } else if (error.code === 'auth/user-disabled') {
-          // User account is disabled in Firebase Authentication
           console.log('User account is disabled:', email);
-          showCustomAlert('Your account is disabled. Please contact support.', 'OK', hideCustomAlert);
+          showCustomAlert('Your account is disabled. Please contact support.', 'OK', () => {
+            hideCustomAlert();
+            window.location.assign('/unauthorized');
+          });
         } else {
-          // Other errors (e.g., network issues, configuration errors) - redirect to 404
-          await redirectTo404(`Login Error: ${error.code} - ${error.message}`);
+          await redirectToError(`Login Error: ${error.code} - ${error.message}`, error.code);
         }
       }
     });
@@ -664,7 +670,7 @@
         if (userSnapshot.empty) {
           formLoading.classList.remove('active');
           showCustomAlert('This account is not registered. Please sign up.', 'Go to Sign Up', () => {
-            window.location.href = '/index.html';
+            window.location.href = '/login-failed';
           });
           return;
         }
@@ -673,7 +679,7 @@
         await redirectToDashboard();
       } catch (error) {
         formLoading.classList.remove('active');
-        await redirectTo404(`Google Login Error: ${error.code} - ${error.message}`);
+        await redirectToError(`Google Login Error: ${error.code} - ${error.message}`, error.code);
       }
     });
 
@@ -692,7 +698,7 @@
         if (userSnapshot.empty) {
           formLoading.classList.remove('active');
           showCustomAlert('This account is not registered. Please sign up.', 'Go to Sign Up', () => {
-            window.location.href = '/index.html';
+            window.location.href = '/login-failed';
           });
           return;
         }
@@ -701,7 +707,7 @@
         await redirectToDashboard();
       } catch (error) {
         formLoading.classList.remove('active');
-        await redirectTo404(`Apple Login Error: ${error.code} - ${error.message}`);
+        await redirectToError(`Apple Login Error: ${error.code} - ${error.message}`, error.code);
       }
     });
 
@@ -717,7 +723,7 @@
           if (userSnapshot.empty) {
             formLoading.classList.remove('active');
             showCustomAlert('This account is not registered. Please sign up.', 'Go to Sign Up', () => {
-              window.location.href = '/index.html';
+              window.location.href = '/login-failed';
             });
             return;
           }
@@ -726,12 +732,12 @@
           await redirectToDashboard();
         } catch (error) {
           formLoading.classList.remove('active');
-          await redirectTo404(`Redirect Error: ${error.code} - ${error.message}`);
+          await redirectToError(`Redirect Error: ${error.code} - ${error.message}`, error.code);
         }
       }
     }).catch((error) => {
       formLoading.classList.remove('active');
-      redirectTo404(`Redirect Error: ${error.code} - ${error.message}`);
+      redirectToError(`Redirect Error: ${error.code} - ${error.message}`, error.code);
     });
 
     // Toggle to sign-up page
